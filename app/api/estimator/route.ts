@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
-import { verifySessionToken } from "@/lib/auth";
 
 const SEED_ESTIMATES = [
   { service: "Laptop Repair", brand: "HP", price: "₹2,500 – ₹5,500", time: "Same Day", warranty: "365-day warranty" },
@@ -44,7 +42,6 @@ function readLocalCache(): typeof SEED_ESTIMATES {
   } catch (err) {
     console.error("Failed to read local pricing cache, regenerating...", err);
   }
-  // Initialize with seed data if file doesn't exist or is corrupted
   writeLocalCache(SEED_ESTIMATES);
   return SEED_ESTIMATES;
 }
@@ -52,7 +49,6 @@ function readLocalCache(): typeof SEED_ESTIMATES {
 function writeLocalCache(data: typeof SEED_ESTIMATES) {
   const filePath = getLocalCachePath();
   try {
-    // Ensure parent directories exist
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -63,15 +59,13 @@ function writeLocalCache(data: typeof SEED_ESTIMATES) {
   }
 }
 
-async function checkAdminAuth(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const platformSession = cookieStore.get("platform_session")?.value;
-  const session = await verifySessionToken(platformSession);
-  return !!session && (session.role === "super_admin" || session.role === "admin");
+function checkAuth(req: NextRequest): boolean {
+  const session = req.cookies.get("admin_session")?.value;
+  return !!session;
 }
 
+// GET: Fetch estimator price rules
 export async function GET() {
-  // Try loading from Supabase first
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const { createServerClient } = await import("@/lib/supabase");
@@ -84,32 +78,47 @@ export async function GET() {
       if (!error && data && data.length > 0) {
         return NextResponse.json(data);
       }
-      if (error) {
-        console.error("Supabase pricing fetch error, falling back to local file:", error.message);
-      }
     } catch (dbErr) {
       console.error("Failed connecting to Supabase database, falling back to local file:", dbErr);
     }
   }
 
-  // Fallback to local cache
   const localPrices = readLocalCache();
   return NextResponse.json(localPrices);
 }
 
+// POST: Add, Edit, or Sync Estimator Price rules
 export async function POST(req: NextRequest) {
-  // Authorization check
-  const isAuthorized = await checkAdminAuth();
-  if (!isAuthorized) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { service, brand, price, time, warranty } = body;
+    const { action, service, brand, price, time, warranty } = body;
+
+    // Seeding trigger
+    if (action === "sync_defaults") {
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+          const { createServerClient } = await import("@/lib/supabase");
+          const supabase = createServerClient();
+          
+          await supabase.from("estimator_prices").delete().neq("service", "keep-none");
+          const { error } = await supabase.from("estimator_prices").insert(SEED_ESTIMATES);
+          if (error) {
+            return NextResponse.json({ error: `Sync failed: ${error.message}` }, { status: 500 });
+          }
+        } catch (dbErr) {
+          console.error("Database connection failure on price sync:", dbErr);
+        }
+      }
+      writeLocalCache(SEED_ESTIMATES);
+      return NextResponse.json({ success: true, message: "Default prices synced" });
+    }
 
     if (!service || !brand || !price || !time || !warranty) {
-      return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     // 1. Try to upsert to Supabase
@@ -117,7 +126,7 @@ export async function POST(req: NextRequest) {
       try {
         const { createServerClient } = await import("@/lib/supabase");
         const supabase = createServerClient();
-        const { error } = await supabase.from("estimator_prices").upsert(
+        await supabase.from("estimator_prices").upsert(
           {
             service,
             brand,
@@ -128,12 +137,8 @@ export async function POST(req: NextRequest) {
           },
           { onConflict: "service,brand" }
         );
-
-        if (error) {
-          console.error("Supabase pricing upsert failed:", error.message);
-        }
       } catch (dbErr) {
-        console.error("Database connection failure on price upsert:", dbErr);
+        console.error("Database connection failure on price save:", dbErr);
       }
     }
 
@@ -152,10 +157,50 @@ export async function POST(req: NextRequest) {
     }
 
     writeLocalCache(localPrices);
-
-    return NextResponse.json({ success: true, message: "Price detail saved successfully" });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Error saving price detail:", err);
-    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// DELETE: Delete estimator price rule
+export async function DELETE(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const service = searchParams.get("service");
+    const brand = searchParams.get("brand");
+
+    if (!service || !brand) {
+      return NextResponse.json({ error: "Service and brand required" }, { status: 400 });
+    }
+
+    // 1. Delete from Supabase
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const { createServerClient } = await import("@/lib/supabase");
+        const supabase = createServerClient();
+        await supabase.from("estimator_prices").delete().eq("service", service).eq("brand", brand);
+      } catch (dbErr) {
+        console.error("Database connection failure on price delete:", dbErr);
+      }
+    }
+
+    // 2. Delete from local cache
+    const localPrices = readLocalCache();
+    const filtered = localPrices.filter(
+      (p) => !(p.service.toLowerCase() === service.toLowerCase() && p.brand.toLowerCase() === brand.toLowerCase())
+    );
+    writeLocalCache(filtered);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Estimator delete error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+export const dynamic = "force-dynamic";

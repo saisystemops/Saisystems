@@ -18,7 +18,8 @@ import {
   Phone,
   MessageCircle,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Calculator
 } from "lucide-react";
 import type { Product } from "@/lib/data/default-products";
 
@@ -41,7 +42,7 @@ type Ticket = {
   created_at: string;
 };
 
-type SidebarSection = "all" | "laptops" | "desktops" | "cctv" | "spare-parts" | "accessories" | "tickets";
+type SidebarSection = "all" | "laptops" | "desktops" | "cctv" | "spare-parts" | "accessories" | "tickets" | "estimator";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,6 +59,19 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dbStatus, setDbStatus] = useState<DBStatus>({ productsTable: "missing", adminUsersTable: "missing" });
+  
+  // Cost Estimator pricing states
+  const [estimates, setEstimates] = useState<any[]>([]);
+  const [showAddEstimate, setShowAddEstimate] = useState(false);
+  const [newEstimate, setNewEstimate] = useState({
+    service: "Laptop Repair",
+    brand: "HP",
+    price: "",
+    time: "Same Day",
+    warranty: "365-day warranty",
+  });
+  const [editingEstimateKey, setEditingEstimateKey] = useState<string | null>(null);
+  const [editEstimate, setEditEstimate] = useState<any | null>(null);
   const [fetchingData, setFetchingData] = useState(false);
 
   // Inline edit state
@@ -122,6 +136,13 @@ export default function AdminPage() {
         setProducts(data.products || []);
       } else if (res.status === 401) {
         setIsAuthenticated(false);
+      }
+
+      // Fetch estimator prices
+      const estRes = await fetch("/api/estimator");
+      if (estRes.ok) {
+        const estData = await estRes.json();
+        setEstimates(estData || []);
       }
     } catch (err) {
       console.error("Failed to load admin logs:", err);
@@ -293,6 +314,99 @@ export default function AdminPage() {
       ...newProduct,
       specs: (newProduct.specs || []).filter((_, i) => i !== idx)
     });
+  };
+
+  // Estimator Pricing CRUD Handlers
+  const handleCreateEstimate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/estimator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEstimate),
+      });
+      if (res.ok) {
+        setNewEstimate({
+          service: "Laptop Repair",
+          brand: "HP",
+          price: "",
+          time: "Same Day",
+          warranty: "365-day warranty",
+        });
+        setShowAddEstimate(false);
+        fetchAdminData();
+      } else {
+        alert("Failed to save estimate pricing");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEditEstimate = async () => {
+    if (!editEstimate) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/estimator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editEstimate),
+      });
+      if (res.ok) {
+        setEditingEstimateKey(null);
+        setEditEstimate(null);
+        fetchAdminData();
+      } else {
+        alert("Failed to update estimate pricing");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteEstimate = async (service: string, brand: string) => {
+    if (!confirm(`Are you sure you want to delete the estimate for ${service} (${brand})?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/estimator?service=${encodeURIComponent(service)}&brand=${encodeURIComponent(brand)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchAdminData();
+      } else {
+        alert("Failed to delete estimate");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSyncEstimates = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/estimator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_defaults" }),
+      });
+      if (res.ok) {
+        alert("Estimates synced to Supabase and local cache successfully!");
+        fetchAdminData();
+      } else {
+        alert("Failed to sync default estimates");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Counters for sidebar items
@@ -472,6 +586,18 @@ export default function AdminPage() {
                 <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("accessories")}</span>
               </button>
 
+              <button
+                onClick={() => setActiveSection("estimator")}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                  activeSection === "estimator"
+                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                }`}
+              >
+                <span className="flex items-center gap-2"><Calculator size={13} /> Cost Estimator</span>
+                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{estimates.length}</span>
+              </button>
+
               <div className="h-px bg-gray-800 my-4" />
               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2">Service Communications</p>
 
@@ -530,7 +656,7 @@ export default function AdminPage() {
               </p>
             </div>
 
-            {activeSection !== "tickets" && (
+            {activeSection !== "tickets" && activeSection !== "estimator" && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSyncDefaults}
@@ -698,8 +824,218 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── SECTION: Showroom Products List ─────────────────────────────── */}
-          {activeSection !== "tickets" ? (
+          {/* ── SECTION: Showroom Products List or Estimator ─────────────────── */}
+          {activeSection === "tickets" ? null : activeSection === "estimator" ? (
+            /* ── SECTION: Cost Estimator Pricing Grid ── */
+            <div className="space-y-6">
+              {/* Header and Add Form */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                <div>
+                  <h3 className="text-lg font-black text-white">Service Estimator Matrix</h3>
+                  <p className="text-xs text-gray-400 mt-1">Manage interactive pricing calculator rules displayed in client diagnose flows.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSyncEstimates}
+                    disabled={loading}
+                    className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-extrabold rounded-xl transition-colors"
+                  >
+                    Sync Default Estimates
+                  </button>
+                  <button
+                    onClick={() => setShowAddEstimate(!showAddEstimate)}
+                    className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all"
+                  >
+                    + Add Estimate Rule
+                  </button>
+                </div>
+              </div>
+
+              {/* Add Estimate Form */}
+              {showAddEstimate && (
+                <div className="bg-gray-900 border border-gray-850 p-6 rounded-3xl">
+                  <form onSubmit={handleCreateEstimate} className="space-y-4">
+                    <h3 className="text-base font-black text-white">Create New Pricing Estimate</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Service Type</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Screen Repair / Laptop Repair"
+                          value={newEstimate.service}
+                          onChange={(e) => setNewEstimate({ ...newEstimate, service: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Device Brand</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Dell / HP / Apple / Other"
+                          value={newEstimate.brand}
+                          onChange={(e) => setNewEstimate({ ...newEstimate, brand: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Price Range</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. ₹2,500 – ₹5,500"
+                          value={newEstimate.price}
+                          onChange={(e) => setNewEstimate({ ...newEstimate, price: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Completion Time</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Same Day / 1 Hour / 1-2 Days"
+                          value={newEstimate.time}
+                          onChange={(e) => setNewEstimate({ ...newEstimate, time: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Warranty Term</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. 365-day warranty / 90-day warranty"
+                          value={newEstimate.warranty}
+                          onChange={(e) => setNewEstimate({ ...newEstimate, warranty: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 border-t border-gray-800 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddEstimate(false)}
+                        className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl"
+                      >
+                        Add Rule
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Estimates Listing Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {estimates.map((est, index) => {
+                  const key = `${est.service}-${est.brand}`;
+                  const isEditing = editingEstimateKey === key;
+
+                  return (
+                    <div key={index} className="bg-gray-900 border border-gray-850 p-5 rounded-3xl space-y-4">
+                      {isEditing && editEstimate ? (
+                        <div className="space-y-3">
+                          <div className="text-xs font-black text-orange-500 uppercase">Editing Rule: {est.service} ({est.brand})</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Price Range</label>
+                              <input
+                                type="text"
+                                value={editEstimate.price}
+                                onChange={(e) => setEditEstimate({ ...editEstimate, price: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Repair Time</label>
+                              <input
+                                type="text"
+                                value={editEstimate.time}
+                                onChange={(e) => setEditEstimate({ ...editEstimate, time: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Warranty Term</label>
+                              <input
+                                type="text"
+                                value={editEstimate.warranty}
+                                onChange={(e) => setEditEstimate({ ...editEstimate, warranty: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
+                            <button
+                              onClick={() => {
+                                setEditingEstimateKey(null);
+                                setEditEstimate(null);
+                              }}
+                              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveEditEstimate}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-lg transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[9px] font-black uppercase rounded">
+                                {est.service}
+                              </span>
+                              <span className="px-2 py-0.5 bg-white/5 text-gray-300 text-[9px] font-black uppercase rounded">
+                                {est.brand}
+                              </span>
+                            </div>
+                            <h4 className="text-sm font-extrabold text-white">{est.service} Estimate for {est.brand}</h4>
+                            <div className="text-xs text-gray-400 space-y-1">
+                              <div>💰 Price Range: <span className="text-orange-400 font-extrabold">{est.price}</span></div>
+                              <div>⏱️ Completion: <span className="text-white font-bold">{est.time}</span></div>
+                              <div>🛡️ Warranty: <span className="text-white font-bold">{est.warranty}</span></div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingEstimateKey(key);
+                                setEditEstimate({ ...est });
+                              }}
+                              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all"
+                              title="Edit Estimate"
+                            >
+                              <Save size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEstimate(est.service, est.brand)}
+                              className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-xl transition-all"
+                              title="Delete Estimate"
+                            >
+                              <Trash size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
             <div className="space-y-6">
               
               {/* Search filter panel */}
@@ -923,8 +1259,11 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
-            </div>
-          ) : (
+              </div>
+            )
+          }
+
+          {activeSection === "tickets" && (
             /* ── SECTION: Chatbot Tickets & Leads ────────────────────────────── */
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
