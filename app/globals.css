@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-green-50: var(--theme-green-50);
+  --color-green-100: var(--theme-green-100);
+  --color-green-200: var(--theme-green-200);
+  --color-green-300: var(--theme-green-300);
+  --color-green-400: var(--theme-green-400);
+  --color-green-500: var(--theme-green-500);
+  --color-green-600: var(--theme-green-600);
+  --color-green-700: var(--theme-green-700);
+  --color-green-800: var(--theme-green-800);
+  --color-green-900: var(--theme-green-900);
+  --color-green-950: var(--theme-green-950);
+  
+  --color-emerald-50: var(--theme-green-50);
+  --color-emerald-100: var(--theme-green-100);
+  --color-emerald-200: var(--theme-green-200);
+  --color-emerald-300: var(--theme-green-300);
+  --color-emerald-400: var(--theme-green-400);
+  --color-emerald-500: var(--theme-green-500);
+  --color-emerald-600: var(--theme-green-600);
+  --color-emerald-700: var(--theme-green-700);
+  --color-emerald-800: var(--theme-green-800);
+  --color-emerald-900: var(--theme-green-900);
+  --color-emerald-950: var(--theme-green-950);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --primary: 22 90% 48%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 45 90% 50%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 22 90% 48%;
+    --radius: 0.75rem;
+    --green-primary: #ea580c;
+    --green-light: #fb923c;
+    --green-dark: #7c2d12;
+    --green-dark-bg: #0b0f19;
+    
+    --theme-green-50: #fff7ed;
+    --theme-green-100: #ffedd5;
+    --theme-green-200: #fed7aa;
+    --theme-green-300: #fdba74;
+    --theme-green-400: #fb923c;
+    --theme-green-500: #f97316;
+    --theme-green-600: #ea580c;
+    --theme-green-700: #c2410c;
+    --theme-green-800: #9a3412;
+    --theme-green-900: #7c2d12;
+    --theme-green-950: #1c0d02;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --primary: 22 90% 50%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 45 90% 50%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 22 90% 50%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.font-sans-mode body {
+    font-family: var(--font-inter), sans-serif !important;
+  }
+  html.font-outfit-mode body {
+    font-family: var(--font-outfit), sans-serif !important;
+  }
+  html.font-mono-mode body {
+    font-family: var(--font-fira), monospace !important;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-light) 100%);
+  }
+  .gradient-dark {
+    background: linear-gradient(135deg, var(--green-dark-bg) 0%, var(--green-dark) 100%);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--green-primary), var(--green-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(234, 88, 12, 0.15);
+  }
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+  @media (max-width: 768px) {
+    .section-padding {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #ea580c;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #fb923c;
+}
+
+/* WhatsApp pulse animation */
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+.whatsapp-pulse {
+  animation: pulse-green 2s infinite;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 15s linear infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1.5deg); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 7s ease-in-out infinite;
+  animation-delay: 2s;
+}
+.glow-gold {
+  box-shadow: 0 0 50px rgba(234, 88, 12, 0.15);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+  animation-direction: reverse;
+}
+

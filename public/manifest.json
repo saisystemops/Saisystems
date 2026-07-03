@@ -1,0 +1,16 @@
+{
+  "name": "Sai Systems",
+  "short_name": "Sai Systems",
+  "description": "Refurbished Laptops & Desktops, CCTV & IT Services Dindigul",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#ea580c",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

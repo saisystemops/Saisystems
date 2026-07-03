@@ -1,0 +1,52 @@
+{
+  "name": "sai-systems",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@headlessui/react": "^2.2.10",
+    "@hookform/resolvers": "^5.4.0",
+    "@next-auth/supabase-adapter": "^0.2.1",
+    "@radix-ui/react-dialog": "^1.1.16",
+    "@radix-ui/react-progress": "^1.1.9",
+    "@radix-ui/react-scroll-area": "^1.2.11",
+    "@radix-ui/react-select": "^2.3.0",
+    "@radix-ui/react-tabs": "^1.1.14",
+    "@supabase/supabase-js": "^2.108.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.18.0",
+    "next": "16.2.9",
+    "next-auth": "^4.24.14",
+    "nextjs-toploader": "^3.9.17",
+    "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
+    "react-dom": "19.2.4",
+    "react-dropzone": "^15.0.0",
+    "react-hook-form": "^7.79.0",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.8.1",
+    "resend": "^6.12.4",
+    "sonner": "^2.0.7",
+    "swiper": "^12.2.0",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
