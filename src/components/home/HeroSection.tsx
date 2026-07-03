@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ShieldAlert } from "lucide-react";
+import { Phone, MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import { trackCallClick, trackWhatsAppClick, trackBookingClick } from "@/lib/analytics";
 
@@ -21,18 +21,40 @@ const badges = [
 ];
 
 export default function HeroSection() {
-  const [dealLaptop, setDealLaptop] = useState({
-    title: "Lenovo ThinkPad T480",
-    price: "₹15,499",
-    originalPrice: "₹52,000",
-    badge: "Deal of the Week",
-    specs: ["Intel Core i5", "16GB DDR4 RAM", "512GB High-Speed SSD"]
-  });
+  const [deals, setDeals] = useState<any[]>([
+    {
+      title: "Lenovo ThinkPad T480",
+      price: "₹15,499",
+      originalPrice: "₹52,000",
+      badge: "Premium Grade",
+      category: "laptops",
+      specs: ["Intel Core i5", "16GB DDR4 RAM", "512GB High-Speed SSD"]
+    },
+    {
+      title: "HP EliteBook 840 G5",
+      price: "₹14,999",
+      originalPrice: "₹45,000",
+      badge: "Best Seller",
+      category: "laptops",
+      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB NVMe SSD"]
+    },
+    {
+      title: "Dell Latitude 5490",
+      price: "₹13,999",
+      originalPrice: "₹42,000",
+      badge: "Value Deal",
+      category: "laptops",
+      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB SSD Storage"]
+    }
+  ]);
 
   const [dealCctv, setDealCctv] = useState({
     title: "4-Camera Full HD CCTV Kit",
     price: "₹7,999"
   });
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const loadHeroDeals = async () => {
@@ -41,22 +63,21 @@ export default function HeroSection() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            // Pick a laptop for "Deal of the Week" (either with 'Premium Grade' badge or the first laptop)
-            const laptop = data.find((p: any) => p.category === "laptops" && p.badge === "Premium Grade") || 
-                           data.find((p: any) => p.category === "laptops");
-            if (laptop) {
-              setDealLaptop({
-                title: laptop.title,
-                price: laptop.price,
-                originalPrice: laptop.originalPrice || "",
-                badge: laptop.badge || "Deal of the Week",
-                specs: Array.isArray(laptop.specs) && laptop.specs.length >= 3 
-                  ? laptop.specs.slice(0, 3) 
-                  : ["Intel Core i5", "8GB DDR4 RAM", "256GB SSD"]
-              });
+            const featured = data.filter((p: any) => 
+              p.category === "laptops" || p.category === "desktops" || p.category === "cctv"
+            );
+            if (featured.length > 0) {
+              const mappedDeals = featured.slice(0, 6).map((p: any) => ({
+                title: p.title,
+                price: p.price,
+                originalPrice: p.originalPrice || "",
+                badge: p.badge || "Hot Deal",
+                category: p.category,
+                specs: Array.isArray(p.specs) ? p.specs : []
+              }));
+              setDeals(mappedDeals);
             }
 
-            // Pick first CCTV surveillance setup
             const cctv = data.find((p: any) => p.category === "cctv");
             if (cctv) {
               setDealCctv({
@@ -72,6 +93,38 @@ export default function HeroSection() {
     };
     loadHeroDeals();
   }, []);
+
+  // Automatic slideshow
+  useEffect(() => {
+    if (deals.length <= 1) return;
+    const timer = setInterval(() => {
+      handleNext();
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [deals, currentIndex]);
+
+  const handleNext = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % deals.length);
+      setIsTransitioning(false);
+    }, 200);
+  };
+
+  const handlePrev = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + deals.length) % deals.length);
+      setIsTransitioning(false);
+    }, 200);
+  };
+
+  const currentDeal = deals[currentIndex] || deals[0];
+  const specLabels = currentDeal.category === "cctv" 
+    ? ["Cameras", "Channels", "Storage"]
+    : ["Processor", "Memory", "Storage"];
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-950 pt-28 pb-16">
@@ -170,16 +223,35 @@ export default function HeroSection() {
             <div className="absolute w-80 h-80 border border-dashed border-amber-500/10 rounded-full animate-spin-slow z-0" style={{ animationDirection: "reverse" }} />
             
             {/* The Floating Spec Board */}
-            <div className="relative z-10 w-full max-w-md bg-gray-900/60 border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-2xl glow-gold animate-float">
+            <div className={`relative z-10 w-full max-w-md bg-gray-900/60 border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-2xl glow-gold animate-float transition-all duration-200 ${isTransitioning ? "opacity-30 scale-[0.98] blur-[2px]" : "opacity-100 scale-100 blur-0"}`}>
               {/* Card top */}
               <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-red-500 rounded-full" />
-                  <span className="w-3 h-3 bg-yellow-500 rounded-full" />
-                  <span className="w-3 h-3 bg-green-500 rounded-full" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 bg-rose-500 rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-amber-500 rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                 </div>
-                <div className="px-2.5 py-0.5 bg-orange-600/20 text-orange-400 border border-orange-600/30 text-[10px] uppercase font-bold tracking-widest rounded-full">
-                  {dealLaptop.badge}
+                <div className="flex items-center gap-3">
+                  <div className="px-2.5 py-0.5 bg-orange-600/20 text-orange-400 border border-orange-600/30 text-[10px] uppercase font-bold tracking-widest rounded-full">
+                    {currentDeal.badge}
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/5 border border-white/5 px-1.5 py-0.5 rounded-md">
+                    <button 
+                      onClick={handlePrev} 
+                      className="p-0.5 text-gray-400 hover:text-white transition-colors"
+                      title="Previous Offer"
+                    >
+                      <ChevronLeft size={12} />
+                    </button>
+                    <span className="text-[9px] font-mono font-bold text-gray-500">{currentIndex + 1}/{deals.length}</span>
+                    <button 
+                      onClick={handleNext} 
+                      className="p-0.5 text-gray-400 hover:text-white transition-colors"
+                      title="Next Offer"
+                    >
+                      <ChevronRight size={12} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -187,12 +259,14 @@ export default function HeroSection() {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[10px] uppercase font-extrabold tracking-wider text-orange-400">Refurbished Grade A++</span>
-                    <h3 className="text-xl font-black text-white mt-0.5">{dealLaptop.title}</h3>
+                    <span className="text-[10px] uppercase font-extrabold tracking-wider text-orange-400">
+                      {currentDeal.category === "cctv" ? "Full Surveillance Kit" : "Refurbished Grade A++"}
+                    </span>
+                    <h3 className="text-xl font-black text-white mt-0.5">{currentDeal.title}</h3>
                   </div>
                   <div className="text-right">
-                    {dealLaptop.originalPrice && <span className="text-xs text-gray-400 line-through">{dealLaptop.originalPrice}</span>}
-                    <div className="text-lg font-black text-orange-400">{dealLaptop.price}</div>
+                    {currentDeal.originalPrice && <span className="text-xs text-gray-400 line-through">{currentDeal.originalPrice}</span>}
+                    <div className="text-lg font-black text-orange-400">{currentDeal.price}</div>
                   </div>
                 </div>
 
@@ -200,41 +274,50 @@ export default function HeroSection() {
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 text-center">
                     <Cpu className="w-4 h-4 text-orange-400 mx-auto mb-1.5" />
-                    <div className="text-[10px] font-bold text-gray-400 uppercase">Processor</div>
-                    <div className="text-xs font-extrabold text-white mt-0.5">{dealLaptop.specs[0] || "Intel i5"}</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">{specLabels[0]}</div>
+                    <div className="text-xs font-extrabold text-white mt-0.5">{currentDeal.specs[0] || "Intel i5"}</div>
                   </div>
                   <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 text-center">
                     <Cpu className="w-4 h-4 text-orange-400 mx-auto mb-1.5" />
-                    <div className="text-[10px] font-bold text-gray-400 uppercase">Memory</div>
-                    <div className="text-xs font-extrabold text-white mt-0.5">{dealLaptop.specs[1] || "16GB DDR4"}</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">{specLabels[1]}</div>
+                    <div className="text-xs font-extrabold text-white mt-0.5">{currentDeal.specs[1] || "16GB DDR4"}</div>
                   </div>
                   <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 text-center">
                     <HardDrive className="w-4 h-4 text-orange-400 mx-auto mb-1.5" />
-                    <div className="text-[10px] font-bold text-gray-400 uppercase">Storage</div>
-                    <div className="text-xs font-extrabold text-white mt-0.5">{dealLaptop.specs[2] || "512GB SSD"}</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">{specLabels[2]}</div>
+                    <div className="text-xs font-extrabold text-white mt-0.5">{currentDeal.specs[2] || "512GB SSD"}</div>
                   </div>
                 </div>
 
-                {/* CCTV Alert Banner Mini Mockup */}
+                {/* Dynamic secondary banner */}
                 <div className="bg-gray-950/70 border border-white/5 rounded-2xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-orange-600/10 border border-orange-600/30 flex items-center justify-center flex-shrink-0">
                       <Monitor className="w-4 h-4 text-orange-400" />
                     </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-orange-400 uppercase">CCTV Surveillance</div>
-                      <div className="text-xs font-extrabold text-white">{dealCctv.title}</div>
-                    </div>
+                    {currentDeal.category === "laptops" ? (
+                      <div>
+                        <div className="text-[10px] font-bold text-orange-400 uppercase">Surveillance offer</div>
+                        <div className="text-xs font-extrabold text-white">{dealCctv.title}</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-[10px] font-bold text-orange-400 uppercase">Refurbished laptop</div>
+                        <div className="text-xs font-extrabold text-white">HP EliteBook 840 G5</div>
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-[9px] text-gray-400 font-bold">Inclusive Pack</div>
-                    <div className="text-xs font-black text-white">{dealCctv.price}*</div>
+                    <div className="text-xs font-black text-white">
+                      {currentDeal.category === "laptops" ? `${dealCctv.price}*` : "₹14,999*"}
+                    </div>
                   </div>
                 </div>
 
                 {/* Warranty indicator */}
                 <div className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 rounded-xl px-3 py-2 border border-white/5">
-                  <ShieldAlert size={14} className="text-orange-400" />
+                  <Shield size={14} className="text-orange-400" />
                   <span>Includes **365-Day Physical Service Warranty**</span>
                 </div>
               </div>
