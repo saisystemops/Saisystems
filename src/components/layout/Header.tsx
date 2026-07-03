@@ -51,6 +51,14 @@ export default function Header() {
   const isHome = pathname === "/";
   const isSolid = scrolled || !isHome;
 
+  const linkClass = isSolid
+    ? "text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40"
+    : "text-gray-800 dark:text-white/90 hover:text-gray-950 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10";
+
+  const iconClass = isSolid
+    ? "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+    : "text-gray-800 dark:text-white/80 hover:text-gray-950 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10";
+
   const handleMouseEnter = (label: string) => {
     if (leaveTimeout) {
       clearTimeout(leaveTimeout);
@@ -117,7 +125,7 @@ export default function Header() {
         <Link href="/">
           <Logo 
             className="w-10 h-10" 
-            textColorClass={isSolid ? "text-orange-600 dark:text-orange-400" : "text-white"}
+            textColorClass={isSolid ? "text-orange-600 dark:text-orange-400" : "text-gray-900 dark:text-white"}
           />
         </Link>
 
@@ -133,11 +141,7 @@ export default function Header() {
               >
                 <Link 
                   href={link.href}
-                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                    isSolid
-                      ? "text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40"
-                      : "text-white/90 hover:text-white hover:bg-white/10"
-                  }`}
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${linkClass}`}
                 >
                   {link.label}
                   <ChevronDown size={14} className={`transition-transform ${dropdown === link.label ? "rotate-180" : ""}`} />
@@ -171,11 +175,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                  isSolid
-                    ? "text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40"
-                    : "text-white/90 hover:text-white hover:bg-white/10"
-                }`}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${linkClass}`}
               >
                 {link.label}
               </Link>
@@ -188,11 +188,7 @@ export default function Header() {
           <button
             onClick={toggleTheme}
             id="theme-toggle"
-            className={`p-2 rounded-lg transition-all ${
-              isSolid
-                ? "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
+            className={`p-2 rounded-lg transition-all ${iconClass}`}
             aria-label="Toggle dark mode"
           >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
@@ -214,11 +210,7 @@ export default function Header() {
           </Link>
           <button
             id="mobile-menu-btn"
-            className={`lg:hidden p-2 rounded-lg transition-all ${
-              isSolid
-                ? "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
+            className={`lg:hidden p-2 rounded-lg transition-all ${iconClass}`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
           >
