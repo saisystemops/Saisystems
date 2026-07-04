@@ -166,7 +166,7 @@ export default function ProductCatalogSection() {
         const res = await fetch("/api/products");
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setProductsList(data);
           }
         }
@@ -232,84 +232,104 @@ export default function ProductCatalogSection() {
         </div>
 
         {/* Catalog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="group relative bg-white dark:bg-gray-900/40 backdrop-blur-sm rounded-3xl p-6 border border-gray-200/80 dark:border-gray-800/80 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-orange-500/20"
-            >
-              {/* Badge */}
-              {product.badge && (
-                <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] uppercase font-extrabold tracking-wider rounded-xl">
-                  {product.badge}
-                </div>
-              )}
-
-              {/* Product Image */}
-              {product.imageUrl ? (
-                <div className="relative w-full h-40 mb-4 mt-8 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-950/60 border border-gray-200/50 dark:border-white/5 flex items-center justify-center">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    className="max-h-full max-w-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              ) : (
-                <div className="pt-8" />
-              )}
-
-              {/* Title & Price */}
-              <div className="mb-4">
-                <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">
-                  {product.title}
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed min-h-[40px]">
-                  {product.description}
-                </p>
-                <div className="flex items-baseline gap-2 mt-3">
-                  <span className="text-xl font-black text-orange-600 dark:text-orange-500">{product.price}</span>
-                  <span className="text-xs text-gray-400 line-through font-medium">{product.originalPrice}</span>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 ml-auto bg-emerald-500/10 px-2 py-0.5 rounded-md">Genuine</span>
-                </div>
-              </div>
-
-              {/* Specifications list */}
-              <div className="space-y-2 border-t border-gray-150 dark:border-gray-800/80 pt-4 mb-6">
-                {product.specs.map((spec, specIdx) => (
-                  <div key={specIdx} className="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-400 font-semibold">
-                    <CheckCircle2 size={14} className="text-orange-500 flex-shrink-0" />
-                    <span>{spec}</span>
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="group relative bg-white dark:bg-gray-900/40 backdrop-blur-sm rounded-3xl p-6 border border-gray-200/80 dark:border-gray-800/80 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-orange-500/20"
+              >
+                {/* Badge */}
+                {product.badge && (
+                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] uppercase font-extrabold tracking-wider rounded-xl">
+                    {product.badge}
                   </div>
-                ))}
-              </div>
+                )}
 
-              {/* Bottom Buttons */}
-              <div className="flex gap-2">
-                <a
-                  href={`https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25d366] text-white text-xs font-black rounded-xl hover:bg-[#20bd5a] transition-all hover:scale-[1.02]"
-                >
-                  <MessageCircle size={14} /> Get Price List
-                </a>
-                <Link
-                  href="/book-service"
-                  className="px-3.5 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:border-orange-500 hover:text-orange-500 transition-all hover:scale-[1.02]"
-                >
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
+                {/* Product Image */}
+                {product.imageUrl ? (
+                  <div className="relative w-full h-40 mb-4 mt-8 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-950/60 border border-gray-200/50 dark:border-white/5 flex items-center justify-center">
+                    <img
+                      src={product.imageUrl}
+                      alt={product.title}
+                      className="max-h-full max-w-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ) : (
+                  <div className="pt-8" />
+                )}
 
-              {/* Trust Stamp */}
-              <div className="mt-4 flex items-center justify-center gap-1 text-[10px] text-gray-400 border-t border-gray-100 dark:border-gray-900/60 pt-3">
-                <ShieldCheck size={11} className="text-orange-400" />
-                <span>100% Quality Inspected &amp; Warranted</span>
-              </div>
+                {/* Title & Price */}
+                <div className="mb-4">
+                  <h3 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">
+                    {product.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed min-h-[40px]">
+                    {product.description}
+                  </p>
+                  <div className="flex items-baseline gap-2 mt-3">
+                    <span className="text-xl font-black text-orange-600 dark:text-orange-500">{product.price}</span>
+                    <span className="text-xs text-gray-400 line-through font-medium">{product.originalPrice}</span>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 ml-auto bg-emerald-500/10 px-2 py-0.5 rounded-md">Genuine</span>
+                  </div>
+                </div>
 
+                {/* Specifications list */}
+                <div className="space-y-2 border-t border-gray-150 dark:border-gray-800/80 pt-4 mb-6">
+                  {product.specs.map((spec, specIdx) => (
+                    <div key={specIdx} className="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-400 font-semibold">
+                      <CheckCircle2 size={14} className="text-orange-500 flex-shrink-0" />
+                      <span>{spec}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bottom Buttons */}
+                <div className="flex gap-2">
+                  <a
+                    href={`https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25d366] text-white text-xs font-black rounded-xl hover:bg-[#20bd5a] transition-all hover:scale-[1.02]"
+                  >
+                    <MessageCircle size={14} /> Get Price List
+                  </a>
+                  <Link
+                    href="/book-service"
+                    className="px-3.5 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:border-orange-500 hover:text-orange-500 transition-all hover:scale-[1.02]"
+                  >
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+
+                {/* Trust Stamp */}
+                <div className="mt-4 flex items-center justify-center gap-1 text-[10px] text-gray-400 border-t border-gray-100 dark:border-gray-900/60 pt-3">
+                  <ShieldCheck size={11} className="text-orange-400" />
+                  <span>100% Quality Inspected &amp; Warranted</span>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 px-6 bg-white dark:bg-gray-900/40 backdrop-blur-sm border border-gray-250/80 dark:border-gray-855 rounded-3xl max-w-xl mx-auto shadow-sm">
+            <div className="w-14 h-14 mx-auto mb-4 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 rounded-2xl flex items-center justify-center">
+              <ShieldCheck size={24} />
             </div>
-          ))}
-        </div>
+            <h3 className="text-base font-black text-gray-900 dark:text-white mb-2">No active deals in this category</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-450 max-w-sm mx-auto mb-6 leading-relaxed font-bold">
+              We are currently updating our showroom stock for {getTabLabel(activeTab).toLowerCase()}. New systems and genuine accessories are added daily!
+            </p>
+            <a
+              href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(`Hi Sai Systems! I am looking for refurbished deals and models in ${getTabLabel(activeTab)}. Please send me the latest pricing list.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#25d366] hover:bg-[#20bd5a] text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer"
+            >
+              <MessageCircle size={15} /> WhatsApp Support for Price List
+            </a>
+          </div>
+        )}
 
         {/* Bottom helper info */}
         <div className="mt-12 text-center bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 p-4 rounded-2xl max-w-xl mx-auto flex items-center justify-center gap-2">

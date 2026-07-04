@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-import { defaultProducts, Product } from "@/lib/data/default-products";
+import { Product } from "@/lib/data/default-products";
 
 interface Ticket {
   id: string;
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const { data: prodData, error: fetchProdErr } = await supabase
       .from("products")
       .select("*")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (!fetchProdErr && prodData) {
       products = prodData.map((item) => ({
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Create a product or Sync defaults
+// POST: Create a product
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -96,34 +96,11 @@ export async function POST(req: NextRequest) {
     const { action, product } = body;
     const supabase = createServerClient();
 
-    if (action === "sync_defaults") {
-      // 1. Delete existing
-      await supabase.from("products").delete().neq("id", "keep-none");
-
-      // 2. Format and insert default list
-      const formatted = defaultProducts.map((p) => ({
-        id: p.id,
-        category: p.category,
-        title: p.title,
-        description: p.description,
-        price: p.price,
-        original_price: p.originalPrice,
-        badge: p.badge,
-        specs: p.specs,
-        in_stock: true,
-        image_url: p.imageUrl || "",
-      }));
-
-      const { error } = await supabase.from("products").insert(formatted);
-      if (error) {
-        return NextResponse.json({ error: `Sync failed: ${error.message}` }, { status: 500 });
-      }
-
-      return NextResponse.json({ success: true, message: "Default catalog synchronized" });
-    }
-
     if (action === "create" && product) {
       const { id, category, title, description, price, originalPrice, badge, specs, inStock, imageUrl } = product;
+
+      // Clean up any existing product with this ID to prevent duplicate keys
+      await supabase.from("products").delete().eq("id", id);
 
       const { error } = await supabase.from("products").insert({
         id,

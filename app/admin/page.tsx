@@ -284,28 +284,6 @@ export default function AdminPage() {
   };
 
   // CRUD handlers
-  const handleSyncDefaults = async () => {
-    if (!confirm("Overwrite current inventory? This clears all existing products and seeds the default catalog list.")) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync_defaults" }),
-      });
-      if (res.ok) {
-        alert("Showroom stock seeded successfully!");
-        fetchAdminData();
-      } else {
-        const data = await res.json();
-        alert(`Sync failed: ${data.error}`);
-      }
-    } catch {
-      alert("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleStartEdit = (product: Product) => {
     setEditingId(product.id);
@@ -942,13 +920,6 @@ export default function AdminPage() {
 
             {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "admin-users" && (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSyncDefaults}
-                  disabled={loading}
-                  className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-250 dark:border-white/10 text-gray-800 dark:text-white text-xs font-extrabold rounded-xl transition-colors cursor-pointer"
-                >
-                  Sync Defaults
-                </button>
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
                   className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all cursor-pointer"
