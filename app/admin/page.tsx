@@ -26,6 +26,7 @@ import type { Product } from "@/lib/data/default-products";
 type DBStatus = {
   productsTable: "ready" | "missing";
   adminUsersTable: "ready" | "missing";
+  blogsTable: "ready" | "missing";
 };
 
 type Ticket = {
@@ -40,6 +41,8 @@ type Ticket = {
   status: string;
   site_city: string;
   created_at: string;
+  estimate_price?: number | null;
+  notes?: string | null;
 };
 
 type Review = {
@@ -62,7 +65,7 @@ type Estimate = {
   warranty: string;
 };
 
-type SidebarSection = "all" | "laptops" | "desktops" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews" | "admin-users";
+type SidebarSection = "all" | "laptops" | "desktops" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews" | "admin-users" | "blogs";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,7 +94,7 @@ export default function AdminPage() {
   // Raw states loaded from API
   const [products, setProducts] = useState<Product[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [dbStatus, setDbStatus] = useState<DBStatus>({ productsTable: "missing", adminUsersTable: "missing" });
+  const [dbStatus, setDbStatus] = useState<DBStatus>({ productsTable: "missing", adminUsersTable: "missing", blogsTable: "missing" });
   
   // Reviews states
   const [adminReviews, setAdminReviews] = useState<Review[]>([]);
@@ -113,6 +116,232 @@ export default function AdminPage() {
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editProduct, setEditProduct] = useState<Partial<Product>>({});
+
+  // Blogs manager states
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(false);
+  const [blogsError, setBlogsError] = useState("");
+  const [blogsSuccess, setBlogsSuccess] = useState("");
+  const [isSeedingBlogs, setIsSeedingBlogs] = useState(false);
+  const [showBlogForm, setShowBlogForm] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<any | null>(null);
+
+  // Form states for creating/editing blog
+  const [blogTitle, setBlogTitle] = useState("");
+  const [blogSlug, setBlogSlug] = useState("");
+  const [blogExcerpt, setBlogExcerpt] = useState("");
+  const [blogContent, setBlogContent] = useState("");
+  const [blogCategory, setBlogCategory] = useState("Laptop Repair");
+  const [blogReadTime, setBlogReadTime] = useState(5);
+  const [blogPublishedAt, setBlogPublishedAt] = useState("");
+  const [blogAuthor, setBlogAuthor] = useState("Sai Systems Team");
+  const [blogMetaTitle, setBlogMetaTitle] = useState("");
+  const [blogMetaDescription, setBlogMetaDescription] = useState("");
+  const [blogKeywords, setBlogKeywords] = useState("");
+
+  // Ticket progress updating states
+  const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
+  const [updateStatus, setUpdateStatus] = useState("");
+  const [updateEstimatePrice, setUpdateEstimatePrice] = useState("");
+  const [updateNotes, setUpdateNotes] = useState("");
+  const [ticketSaveLoading, setTicketSaveLoading] = useState(false);
+  const [ticketError, setTicketError] = useState("");
+  const [ticketSuccess, setTicketSuccess] = useState("");
+
+  const handleStartUpdateTicket = (ticket: Ticket) => {
+    setUpdatingTicketId(ticket.id);
+    setUpdateStatus(ticket.status);
+    setUpdateEstimatePrice(ticket.estimate_price ? String(ticket.estimate_price) : "");
+    setUpdateNotes(ticket.notes || "");
+    setTicketError("");
+    setTicketSuccess("");
+  };
+
+  const handleSaveTicketUpdate = async (ticket: Ticket) => {
+    setTicketSaveLoading(true);
+    setTicketError("");
+    setTicketSuccess("");
+    try {
+      const res = await fetch("/api/admin/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: ticket.category === "appointment" ? "appointment" : (ticket.category === "lead" ? "lead" : "ticket"),
+          id: ticket.id,
+          status: updateStatus,
+          estimatePrice: updateEstimatePrice !== "" ? Number(updateEstimatePrice) : null,
+          notes: updateNotes,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTicketSuccess("Incident updated successfully!");
+        setUpdatingTicketId(null);
+        await fetchAdminData(); // Reload all dashboard states
+      } else {
+        setTicketError(data.message || "Failed to update incident.");
+      }
+    } catch (err) {
+      console.error(err);
+      setTicketError("Network issue. Failed to update.");
+    } finally {
+      setTicketSaveLoading(false);
+    }
+  };
+
+  const fetchBlogsList = async () => {
+    setBlogsLoading(true);
+    setBlogsError("");
+    try {
+      const res = await fetch("/api/admin/blogs");
+      if (res.ok) {
+        const data = await res.json();
+        setBlogs(data.data || []);
+      } else {
+        const errData = await res.json();
+        setBlogsError(errData.message || "Failed to load blogs.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch blogs:", err);
+      setBlogsError("Network error. Please try again.");
+    } finally {
+      setBlogsLoading(false);
+    }
+  };
+
+  const resetBlogForm = () => {
+    setBlogTitle("");
+    setBlogSlug("");
+    setBlogExcerpt("");
+    setBlogContent("");
+    setBlogCategory("Laptop Repair");
+    setBlogReadTime(5);
+    setBlogPublishedAt(new Date().toISOString().split("T")[0]);
+    setBlogAuthor("Sai Systems Team");
+    setBlogMetaTitle("");
+    setBlogMetaDescription("");
+    setBlogKeywords("");
+    setEditingBlog(null);
+  };
+
+  const handleEditBlogClick = (blog: any) => {
+    setEditingBlog(blog);
+    setBlogTitle(blog.title);
+    setBlogSlug(blog.slug);
+    setBlogExcerpt(blog.excerpt);
+    setBlogContent(blog.content);
+    setBlogCategory(blog.category);
+    setBlogReadTime(blog.read_time);
+    setBlogPublishedAt(blog.published_at ? blog.published_at.split("T")[0] : "");
+    setBlogAuthor(blog.author);
+    setBlogMetaTitle(blog.meta_title);
+    setBlogMetaDescription(blog.meta_description);
+    setBlogKeywords(Array.isArray(blog.keywords) ? blog.keywords.join(", ") : "");
+    setShowBlogForm(true);
+  };
+
+  const handleSaveBlog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBlogsLoading(true);
+    setBlogsError("");
+    setBlogsSuccess("");
+
+    const keywordsArray = blogKeywords
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+
+    const payload = {
+      id: editingBlog?.id,
+      title: blogTitle,
+      slug: blogSlug || blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+      excerpt: blogExcerpt,
+      content: blogContent,
+      category: blogCategory,
+      read_time: Number(blogReadTime),
+      published_at: blogPublishedAt || new Date().toISOString(),
+      author: blogAuthor,
+      meta_title: blogMetaTitle || blogTitle,
+      meta_description: blogMetaDescription || blogExcerpt,
+      keywords: keywordsArray,
+    };
+
+    try {
+      const res = await fetch("/api/admin/blogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        setBlogsSuccess(editingBlog ? "Blog post updated successfully!" : "Blog post created successfully!");
+        setShowBlogForm(false);
+        resetBlogForm();
+        await fetchBlogsList();
+      } else {
+        setBlogsError(result.message || "Failed to save blog post.");
+      }
+    } catch (err) {
+      console.error("Save blog error:", err);
+      setBlogsError("Failed to save blog post. Network error.");
+    } finally {
+      setBlogsLoading(false);
+    }
+  };
+
+  const handleDeleteBlog = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this blog post permanently? This action cannot be undone.")) return;
+
+    setBlogsLoading(true);
+    setBlogsError("");
+    setBlogsSuccess("");
+    try {
+      const res = await fetch(`/api/admin/blogs?id=${id}`, {
+        method: "DELETE",
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        setBlogsSuccess("Blog post deleted successfully.");
+        await fetchBlogsList();
+      } else {
+        setBlogsError(result.message || "Failed to delete blog post.");
+      }
+    } catch (err) {
+      console.error("Delete blog error:", err);
+      setBlogsError("Failed to delete blog post.");
+    } finally {
+      setBlogsLoading(false);
+    }
+  };
+
+  const handleSeedBlogs = async () => {
+    setIsSeedingBlogs(true);
+    setBlogsError("");
+    setBlogsSuccess("");
+    try {
+      const res = await fetch("/api/admin/blogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "seed" }),
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        setBlogsSuccess(result.message || "Existing blog posts seeded successfully!");
+        await fetchBlogsList();
+      } else {
+        setBlogsError(result.message || "Failed to seed blog posts.");
+      }
+    } catch (err) {
+      console.error("Seed blogs error:", err);
+      setBlogsError("Failed to seed blog posts.");
+    } finally {
+      setIsSeedingBlogs(false);
+    }
+  };
 
   const fetchUsersList = async () => {
     try {
@@ -167,6 +396,9 @@ export default function AdminPage() {
 
       // Fetch users list
       await fetchUsersList();
+
+      // Fetch blogs list
+      await fetchBlogsList();
     } catch (err) {
       console.error("Failed to load admin logs:", err);
     } finally {
@@ -843,6 +1075,19 @@ export default function AdminPage() {
                 <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{adminReviews.length}</span>
               </button>
 
+              {/* IT Blogs Section Tab */}
+              <button
+                onClick={() => setActiveSection("blogs")}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
+                  activeSection === "blogs"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-955 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
+                }`}
+              >
+                <span className="flex items-center gap-2"><FileText size={13} /> IT Blogs</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{blogs.length}</span>
+              </button>
+
               {/* Admin Accounts Section Tab */}
               {userRole === "super_admin" && (
                 <>
@@ -904,6 +1149,8 @@ export default function AdminPage() {
                   ? "Customer Reviews Moderation"
                   : activeSection === "admin-users"
                   ? "Admin User Accounts"
+                  : activeSection === "blogs"
+                  ? "IT Tips & Blog Manager"
                   : `${activeSection} category`}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -913,11 +1160,35 @@ export default function AdminPage() {
                   ? "Approve, hide, or delete customer reviews submitted via the homepage testimonials wall."
                   : activeSection === "admin-users"
                   ? "Create and delete admin manager accounts authorized to edit the database."
+                  : activeSection === "blogs"
+                  ? "Add, edit, or delete dynamic articles and guides shown on your public IT blog page."
                   : "Manage product cards, prices, and stock statuses displayed in the showroom."}
               </p>
             </div>
 
-            {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "admin-users" && (
+            {activeSection === "blogs" && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSeedBlogs}
+                  disabled={isSeedingBlogs}
+                  className="px-4 py-2 bg-gray-105 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-xs font-black rounded-xl transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  title="Imports standard blog articles from the code into your database"
+                >
+                  {isSeedingBlogs ? "Importing..." : "🔄 Import Default Blogs"}
+                </button>
+                <button
+                  onClick={() => {
+                    resetBlogForm();
+                    setShowBlogForm(!showBlogForm);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  + Add Blog Post
+                </button>
+              </div>
+            )}
+
+            {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "admin-users" && activeSection !== "blogs" && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
@@ -930,7 +1201,7 @@ export default function AdminPage() {
           </div>
 
           {/* Render Add Form */}
-          {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && (
+          {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "blogs" && (
             <div className="mb-8 bg-gray-100 dark:bg-gray-900 border border-gray-250 dark:border-gray-850 p-6 rounded-3xl transition-colors">
               <form onSubmit={handleCreateProduct} className="space-y-4">
                 <h3 className="text-base font-black text-gray-950 dark:text-white">Create New Showroom Item</h3>
@@ -1529,52 +1800,141 @@ export default function AdminPage() {
                   tickets.map((ticket) => (
                     <div
                       key={ticket.id}
-                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 hover:border-orange-500/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 hover:border-orange-500/10 transition-all flex flex-col gap-4"
                     >
-                      <div className="space-y-2.5 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono text-xs text-gray-500 font-bold">{ticket.ticket_ref}</span>
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-[10px] font-black uppercase rounded">
-                            {ticket.status}
-                          </span>
-                          <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-wider ${
-                            ticket.priority === "emergency" || ticket.priority === "high"
-                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                              : "bg-gray-100 dark:bg-gray-850 text-gray-600 dark:text-gray-400"
-                          }`}>
-                            {ticket.priority}
-                          </span>
-                          <span className="text-[10px] text-gray-500 ml-auto md:ml-0 font-semibold">
-                            {new Date(ticket.created_at).toLocaleString("en-IN")}
-                          </span>
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-xs text-gray-500 font-bold">{ticket.ticket_ref}</span>
+                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-[10px] font-black uppercase rounded">
+                              {ticket.status}
+                            </span>
+                            <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-wider ${
+                              ticket.category === "appointment"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : ticket.category === "lead"
+                                ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
+                                : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
+                            }`}>
+                              {ticket.category === "appointment" ? "📅 Appointment" : ticket.category === "lead" ? "✉️ Web Lead" : "🤖 Chat Ticket"}
+                            </span>
+                            <span className="text-[10px] text-gray-500 ml-auto md:ml-0 font-semibold">
+                              {new Date(ticket.created_at).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+
+                          <h4 className="text-base font-black text-gray-955 dark:text-white tracking-tight leading-tight">{ticket.title}</h4>
+                          <p className="text-xs text-gray-655 dark:text-gray-400 leading-relaxed max-w-3xl whitespace-pre-line">{ticket.description}</p>
+                          
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                            {ticket.customer_name && <span>👤 Customer: <strong className="text-gray-950 dark:text-white">{ticket.customer_name}</strong></span>}
+                            {ticket.customer_contact_phone && (
+                              <a href={`tel:${ticket.customer_contact_phone}`} className="flex items-center gap-1 hover:text-orange-500">
+                                <Phone size={12} className="text-orange-500 animate-pulse" /> Phone: <strong className="text-gray-955 dark:text-white">{ticket.customer_contact_phone}</strong>
+                              </a>
+                            )}
+                            <span>📍 Location: <strong className="text-gray-955 dark:text-white">{ticket.site_city}</strong></span>
+                          </div>
                         </div>
 
-                        <h4 className="text-base font-black text-gray-955 dark:text-white tracking-tight leading-tight">{ticket.title}</h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl">{ticket.description}</p>
-                        
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                          {ticket.customer_name && <span>👤 Customer: <strong className="text-gray-950 dark:text-white">{ticket.customer_name}</strong></span>}
+                        <div className="flex gap-2 self-start md:self-center">
                           {ticket.customer_contact_phone && (
-                            <a href={`tel:${ticket.customer_contact_phone}`} className="flex items-center gap-1 hover:text-orange-500">
-                              <Phone size={12} className="text-orange-500 animate-pulse" /> Phone: <strong className="text-gray-955 dark:text-white">{ticket.customer_contact_phone}</strong>
+                            <a
+                              href={`https://wa.me/${ticket.customer_contact_phone.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center gap-1.5 px-5 py-3 bg-[#25d366] hover:bg-[#22c35e] text-white text-xs font-black rounded-2xl shadow-lg transition-all"
+                            >
+                              <MessageCircle size={14} /> Open WhatsApp
                             </a>
                           )}
-                          <span>📍 Location: <strong className="text-gray-955 dark:text-white">{ticket.site_city}</strong></span>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 border-t md:border-t-0 border-gray-200 dark:border-gray-800 pt-4 md:pt-0">
-                        {ticket.customer_contact_phone && (
-                          <a
-                            href={`https://wa.me/${ticket.customer_contact_phone.replace(/\D/g, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-1.5 px-5 py-3 bg-[#25d366] hover:bg-[#22c35e] text-white text-xs font-black rounded-2xl shadow-lg transition-all"
+                      {/* Unified Status and Estimate Inline Update Form */}
+                      {updatingTicketId === ticket.id ? (
+                        <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800/80 rounded-2xl space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase mb-1">Status</label>
+                              <select
+                                value={updateStatus}
+                                onChange={(e) => setUpdateStatus(e.target.value)}
+                                className="w-full text-xs font-bold px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                              >
+                                <option value="pending">Pending (Booked)</option>
+                                <option value="new">New (Booked)</option>
+                                <option value="diagnosing">Under Diagnosis</option>
+                                <option value="estimate">Estimate Prepared</option>
+                                <option value="progress">Repair In Progress</option>
+                                <option value="repaired">Ready for Delivery</option>
+                                <option value="delivered">Delivered &amp; Complete</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase mb-1">Cost Estimate (EST in ₹)</label>
+                              <input
+                                type="number"
+                                placeholder="e.g. 1500"
+                                value={updateEstimatePrice}
+                                onChange={(e) => setUpdateEstimatePrice(e.target.value)}
+                                className="w-full text-xs font-semibold px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 md:col-span-3">
+                              <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase mb-1">Technician Progress Notes</label>
+                              <textarea
+                                placeholder="Describe diagnostic details, part delays, or repair notes..."
+                                value={updateNotes}
+                                onChange={(e) => setUpdateNotes(e.target.value)}
+                                rows={2}
+                                className="w-full text-xs font-medium px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none resize-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 justify-end pt-2 border-t border-gray-200 dark:border-gray-800/80">
+                            <button
+                              type="button"
+                              onClick={() => setUpdatingTicketId(null)}
+                              className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[10px] font-black rounded-xl hover:opacity-90 cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              disabled={ticketSaveLoading}
+                              onClick={() => handleSaveTicketUpdate(ticket)}
+                              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-[10px] font-black rounded-xl cursor-pointer disabled:opacity-60"
+                            >
+                              {ticketSaveLoading ? "Saving..." : "Save Changes"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                            {ticket.estimate_price !== undefined && ticket.estimate_price !== null ? (
+                              <span className="font-extrabold text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">
+                                EST: ₹{ticket.estimate_price.toLocaleString("en-IN")}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 italic">No Estimate Prepared Yet</span>
+                            )}
+                            {ticket.notes && (
+                              <span className="text-gray-500 dark:text-gray-400 italic max-w-md truncate">
+                                📝 {ticket.notes}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleStartUpdateTicket(ticket)}
+                            className="text-[10px] font-black text-orange-655 hover:text-orange-500 uppercase tracking-wider flex items-center gap-1 cursor-pointer"
                           >
-                            <MessageCircle size={14} /> Open WhatsApp
-                          </a>
-                        )}
-                      </div>
+                            Update Progress &amp; Estimate →
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -1813,6 +2173,306 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === "blogs" && (
+            /* ── SECTION: IT Blogs Management panel ──────────────────────────── */
+            <div className="space-y-6">
+              
+              {/* Database checks and warnings */}
+              {dbStatus.blogsTable === "missing" && (
+                <div className="p-5 bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 rounded-3xl flex gap-3 text-xs leading-relaxed font-semibold">
+                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-extrabold block mb-1">Database Table Missing!</strong>
+                    The `blogs` table does not exist in your Supabase database. Please copy the SQL script from `implementation_plan.md` and run it in the SQL Editor of your Supabase dashboard to start using dynamic blogs.
+                  </div>
+                </div>
+              )}
+
+              {/* Status and Error messages */}
+              {blogsError && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-455 text-xs font-extrabold rounded-2xl text-center">
+                  ⚠️ {blogsError}
+                </div>
+              )}
+              {blogsSuccess && (
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-650 dark:text-emerald-400 text-xs font-extrabold rounded-2xl text-center">
+                  ✅ {blogsSuccess}
+                </div>
+              )}
+
+              {/* Blog Edit/Create Form */}
+              {showBlogForm && (
+                <div className="bg-gray-150 dark:bg-gray-900 border border-gray-250 dark:border-gray-805 rounded-3xl p-6 transition-colors">
+                  <h3 className="text-base font-black text-gray-955 dark:text-white mb-4">
+                    {editingBlog ? "Edit Blog Post" : "Create New Blog Post"}
+                  </h3>
+                  
+                  <form onSubmit={handleSaveBlog} className="space-y-4">
+                    
+                    {/* Title & Slug */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Blog Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={blogTitle}
+                          onChange={(e) => {
+                            setBlogTitle(e.target.value);
+                            // Auto-generate slug if not editing
+                            if (!editingBlog) {
+                              setBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+                            }
+                          }}
+                          placeholder="e.g. Tips for Repairing Laptop Screens"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">URL Slug</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            required
+                            value={blogSlug}
+                            onChange={(e) => setBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ""))}
+                            placeholder="e.g. laptop-screen-repair-tips"
+                            className="flex-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBlogSlug(blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""))}
+                            className="px-2.5 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-355 text-[10px] rounded-lg font-bold hover:opacity-90"
+                          >
+                            Generate
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Excerpt */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Short Excerpt (Summary)</label>
+                      <input
+                        type="text"
+                        required
+                        value={blogExcerpt}
+                        onChange={(e) => setBlogExcerpt(e.target.value)}
+                        placeholder="Provide a short 1-2 sentence preview summary of the post..."
+                        className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Category, Read Time, Author, Published At */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Category</label>
+                        <select
+                          value={blogCategory}
+                          onChange={(e) => setBlogCategory(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        >
+                          <option value="Laptop Repair">Laptop Repair</option>
+                          <option value="Computer Maintenance">Computer Maintenance</option>
+                          <option value="CCTV Security">CCTV Security</option>
+                          <option value="Tech Insights">Tech Insights</option>
+                          <option value="Guides">Guides</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Read Time (minutes)</label>
+                        <input
+                          type="number"
+                          required
+                          min={1}
+                          value={blogReadTime}
+                          onChange={(e) => setBlogReadTime(Number(e.target.value))}
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Author</label>
+                        <input
+                          type="text"
+                          required
+                          value={blogAuthor}
+                          onChange={(e) => setBlogAuthor(e.target.value)}
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Published Date</label>
+                        <input
+                          type="date"
+                          value={blogPublishedAt}
+                          onChange={(e) => setBlogPublishedAt(e.target.value)}
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Markdown Content editor */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Article Body Content (Markdown Supported)</label>
+                      <textarea
+                        required
+                        rows={10}
+                        value={blogContent}
+                        onChange={(e) => setBlogContent(e.target.value)}
+                        placeholder="Write your article body here in Markdown format. Support headings, lists, links, etc."
+                        className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none font-mono leading-relaxed"
+                      />
+                    </div>
+
+                    {/* SEO Settings */}
+                    <div className="border-t border-gray-250 dark:border-gray-800 pt-4 mt-2 space-y-4">
+                      <h4 className="text-xs font-black text-gray-955 dark:text-white uppercase tracking-wider">SEO &amp; Metadata Optimizations</h4>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Meta Title</label>
+                          <input
+                            type="text"
+                            value={blogMetaTitle}
+                            onChange={(e) => setBlogMetaTitle(e.target.value)}
+                            placeholder="Defaults to title if left blank..."
+                            className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Meta Keywords (Comma separated)</label>
+                          <input
+                            type="text"
+                            value={blogKeywords}
+                            onChange={(e) => setBlogKeywords(e.target.value)}
+                            placeholder="e.g. laptop repair, computer tips, screen guide"
+                            className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Meta Description</label>
+                        <textarea
+                          rows={2}
+                          value={blogMetaDescription}
+                          onChange={(e) => setBlogMetaDescription(e.target.value)}
+                          placeholder="Defaults to excerpt summary if left blank..."
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none leading-relaxed"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBlogForm(false);
+                          resetBlogForm();
+                        }}
+                        className="px-4 py-2 bg-gray-205 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-extrabold rounded-xl transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={blogsLoading}
+                        className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:opacity-95 text-white text-xs font-black rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                      >
+                        {blogsLoading ? "Saving..." : editingBlog ? "Update Post" : "Publish Post"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Blog posts list table */}
+              <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-black text-gray-955 dark:text-white">Active Blog Posts</h3>
+                  <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-655 dark:text-gray-450 text-[10px] font-black rounded-md">
+                    {blogs.length} posts
+                  </span>
+                </div>
+
+                {blogsLoading && blogs.length === 0 ? (
+                  <div className="text-center py-10 bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl text-xs text-gray-550">
+                    Loading blogs list...
+                  </div>
+                ) : blogs.length === 0 ? (
+                  <div className="text-center py-12 bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl text-xs text-gray-550 dark:text-gray-400 space-y-3">
+                    <p>No blog posts found in the database.</p>
+                    {dbStatus.blogsTable === "ready" && (
+                      <button
+                        onClick={handleSeedBlogs}
+                        disabled={isSeedingBlogs}
+                        className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-[11px] uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        {isSeedingBlogs ? "Importing..." : "🔄 Import 10 Default Blogs"}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-850 text-gray-650 dark:text-gray-400 uppercase tracking-wider font-extrabold text-[10px]">
+                          <th className="py-2.5 px-3">Title</th>
+                          <th className="py-2.5 px-3">Category</th>
+                          <th className="py-2.5 px-3">Published Date</th>
+                          <th className="py-2.5 px-3">Read Time</th>
+                          <th className="py-2.5 px-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {blogs.map((post) => (
+                          <tr key={post.id} className="border-b border-gray-200 dark:border-gray-850/50 hover:bg-white/5 transition-colors">
+                            <td className="py-3 px-3 font-extrabold text-gray-950 dark:text-white max-w-xs truncate">
+                              <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-colors">
+                                {post.title}
+                              </a>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-750 dark:text-gray-300 text-[9px] font-black rounded uppercase">
+                                {post.category}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-gray-500">
+                              {post.published_at ? new Date(post.published_at).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric"
+                              }) : "Draft"}
+                            </td>
+                            <td className="py-3 px-3 text-gray-500 font-bold font-mono">
+                              ⏱️ {post.read_time} min
+                            </td>
+                            <td className="py-3 px-3 text-right space-x-1.5 whitespace-nowrap">
+                              <button
+                                onClick={() => handleEditBlogClick(post)}
+                                className="px-2.5 py-1.5 bg-gray-200 dark:bg-gray-850 hover:bg-gray-250 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-300 font-bold rounded-lg transition-colors cursor-pointer text-[10px]"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBlog(post.id)}
+                                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center align-middle"
+                                title="Delete Post"
+                              >
+                                <Trash size={12} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}

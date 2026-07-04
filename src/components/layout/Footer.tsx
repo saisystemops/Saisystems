@@ -22,6 +22,7 @@ const footerLinks = {
     { label: "Brands", href: "/brands" },
     { label: "Cost Estimator", href: "/estimator" },
     { label: "Diagnostic Wizard", href: "/diagnose" },
+    { label: "Track Repair Progress", href: "/track" },
     { label: "Service Coverage", href: "/coverage" },
     { label: "Blog", href: "/blog" },
     { label: "FAQ", href: "/faq" },

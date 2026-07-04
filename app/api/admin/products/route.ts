@@ -16,6 +16,8 @@ interface Ticket {
   status: string;
   site_city: string;
   created_at: string;
+  estimate_price?: number | null;
+  notes?: string | null;
 }
 
 function checkAuth(req: NextRequest): boolean {
@@ -35,9 +37,11 @@ export async function GET(req: NextRequest) {
     // Check if tables exist
     const { error: prodErr } = await supabase.from("products").select("id").limit(1);
     const { error: userErr } = await supabase.from("admin_users").select("id").limit(1);
+    const { error: blogErr } = await supabase.from("blogs").select("id").limit(1);
 
     const productsTableReady = !prodErr || (prodErr.code !== "PGRST116" && !prodErr.message?.includes("does not exist"));
     const adminUsersTableReady = !userErr || (userErr.code !== "PGRST116" && !userErr.message?.includes("does not exist"));
+    const blogsTableReady = !blogErr || (blogErr.code !== "PGRST116" && !blogErr.message?.includes("does not exist"));
 
     // Fetch tickets & leads
     let tickets: Ticket[] = [];
@@ -48,7 +52,21 @@ export async function GET(req: NextRequest) {
       .limit(50);
 
     if (!ticketErr && ticketData) {
-      tickets = ticketData as unknown as Ticket[];
+      tickets = ticketData.map((item: any) => ({
+        id: item.id,
+        ticket_ref: item.ticket_ref,
+        title: item.title,
+        description: item.description,
+        customer_name: item.customer_name,
+        customer_contact_phone: item.customer_contact_phone,
+        category: "ticket",
+        priority: item.priority || "normal",
+        status: item.status || "new",
+        site_city: item.site_city || "Online Chat",
+        created_at: item.created_at,
+        estimate_price: item.estimate_price,
+        notes: item.notes,
+      }));
     }
 
     // Fetch form quote leads
@@ -67,16 +85,44 @@ export async function GET(req: NextRequest) {
         description: lead.problem_description || "",
         customer_name: lead.name,
         customer_contact_phone: lead.mobile,
-        category: "leads",
+        category: "lead",
         priority: "medium",
         status: lead.status || "new",
         site_city: lead.email || "Website Form",
         created_at: lead.created_at,
+        estimate_price: lead.estimate_price,
+        notes: lead.notes,
+      }));
+    }
+
+    // Fetch appointments bookings
+    let appointments: Ticket[] = [];
+    const { data: apptData, error: apptErr } = await supabase
+      .from("appointments")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!apptErr && apptData) {
+      appointments = apptData.map((item) => ({
+        id: item.id,
+        ticket_ref: item.booking_ref,
+        title: `Appointment: ${item.service_type} (${item.brand} ${item.model || ""})`,
+        description: `${item.problem_description || "Doorstep service booking"}\nTime: ${item.appointment_date} at ${item.time_slot}`,
+        customer_name: item.customer_name,
+        customer_contact_phone: item.customer_mobile,
+        category: "appointment",
+        priority: "high",
+        status: item.status || "pending",
+        site_city: `${item.service_mode} service`,
+        created_at: item.created_at,
+        estimate_price: item.estimate_price,
+        notes: item.notes,
       }));
     }
 
     // Combine and sort by created_at descending (newest first)
-    const combinedTickets = [...tickets, ...leads].sort(
+    const combinedTickets = [...tickets, ...leads, ...appointments].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
@@ -106,6 +152,7 @@ export async function GET(req: NextRequest) {
       dbStatus: {
         productsTable: productsTableReady ? "ready" : "missing",
         adminUsersTable: adminUsersTableReady ? "ready" : "missing",
+        blogsTable: blogsTableReady ? "ready" : "missing",
       },
       tickets: combinedTickets,
       products,

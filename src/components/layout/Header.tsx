@@ -30,6 +30,7 @@ const navLinks = [
     children: [
       { label: "Cost Estimator", href: "/estimator" },
       { label: "Diagnostic Wizard", href: "/diagnose" },
+      { label: "Track Repair Progress", href: "/track" },
       { label: "Service Coverage", href: "/coverage" },
     ],
   },
