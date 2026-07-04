@@ -95,7 +95,7 @@ const jsonLd = {
       priceRange: "₹₹",
       currenciesAccepted: "INR",
       paymentAccepted: "Cash, UPI, Card",
-      openingHours: ["Mo-Sa 09:00-19:00", "Su 10:00-17:00"],
+      openingHours: ["Mo-Sa 09:00-20:00"],
       address: {
         "@type": "PostalAddress",
         streetAddress: siteConfig.address.street,
