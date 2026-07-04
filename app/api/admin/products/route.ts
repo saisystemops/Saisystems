@@ -49,6 +49,35 @@ export async function GET(req: NextRequest) {
       tickets = ticketData as unknown as Ticket[];
     }
 
+    // Fetch form quote leads
+    let leads: Ticket[] = [];
+    const { data: leadData, error: leadErr } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!leadErr && leadData) {
+      leads = leadData.map((lead) => ({
+        id: lead.id,
+        ticket_ref: `LEAD-${String(lead.id).substring(0, 4).toUpperCase()}`,
+        title: `Free Quote: ${lead.service_type} (${lead.brand})`,
+        description: lead.problem_description || "",
+        customer_name: lead.name,
+        customer_contact_phone: lead.mobile,
+        category: "leads",
+        priority: "medium",
+        status: lead.status || "new",
+        site_city: lead.email || "Website Form",
+        created_at: lead.created_at,
+      }));
+    }
+
+    // Combine and sort by created_at descending (newest first)
+    const combinedTickets = [...tickets, ...leads].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
     // Fetch full products list
     let products: Product[] = [];
     const { data: prodData, error: fetchProdErr } = await supabase
@@ -76,7 +105,7 @@ export async function GET(req: NextRequest) {
         productsTable: productsTableReady ? "ready" : "missing",
         adminUsersTable: adminUsersTableReady ? "ready" : "missing",
       },
-      tickets,
+      tickets: combinedTickets,
       products,
     });
   } catch (err) {

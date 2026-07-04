@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       try {
         const { createServerClient } = await import("@/lib/supabase");
         const supabase = createServerClient();
-        await supabase.from("leads").insert({
+        const { error } = await supabase.from("leads").insert({
           name: data.name,
           mobile: data.mobile,
           email: data.email || null,
@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
           problem_description: data.problemDescription,
           status: "new",
         });
+        if (error) {
+          throw error;
+        }
       } catch (dbError) {
         console.error("DB save error (leads):", dbError);
       }
