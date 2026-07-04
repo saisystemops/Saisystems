@@ -710,16 +710,24 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h2 className="text-2xl font-black text-white capitalize tracking-tight">
-                {activeSection === "all" ? "Full Catalog Deals" : activeSection === "tickets" ? "Service Leads Inbox" : `${activeSection} category`}
+                {activeSection === "all" 
+                  ? "Full Catalog Deals" 
+                  : activeSection === "tickets" 
+                  ? "Service Leads Inbox" 
+                  : activeSection === "reviews"
+                  ? "Customer Reviews Moderation"
+                  : `${activeSection} category`}
               </h2>
               <p className="text-xs text-gray-400 mt-1">
                 {activeSection === "tickets"
-                  ? `Viewing chatbot leads and WhatsApp callback requests.`
-                  : `Manage product cards, prices, and stock statuses displayed in the showroom.`}
+                  ? "Viewing chatbot leads and WhatsApp callback requests."
+                  : activeSection === "reviews"
+                  ? "Approve, hide, or delete customer reviews submitted via the homepage testimonials wall."
+                  : "Manage product cards, prices, and stock statuses displayed in the showroom."}
               </p>
             </div>
 
-            {activeSection !== "tickets" && activeSection !== "estimator" && (
+            {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSyncDefaults}
@@ -739,7 +747,7 @@ export default function AdminPage() {
           </div>
 
           {/* Render Add Form */}
-          {showAddForm && activeSection !== "tickets" && (
+          {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && (
             <div className="mb-8 bg-gray-900 border border-gray-850 p-6 rounded-3xl">
               <form onSubmit={handleCreateProduct} className="space-y-4">
                 <h3 className="text-base font-black text-white">Create New Showroom Item</h3>
@@ -888,7 +896,7 @@ export default function AdminPage() {
           )}
 
           {/* ── SECTION: Showroom Products List or Estimator ─────────────────── */}
-          {activeSection === "tickets" ? null : activeSection === "estimator" ? (
+          {activeSection === "tickets" || activeSection === "reviews" ? null : activeSection === "estimator" ? (
             /* ── SECTION: Cost Estimator Pricing Grid ── */
             <div className="space-y-6">
               {/* Header and Add Form */}
