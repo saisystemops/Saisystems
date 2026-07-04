@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { createSessionCookie } from "@/lib/auth-secure";
 import crypto from "crypto";
 
 const FALLBACK_USER = process.env.ADMIN_USERNAME;
@@ -20,7 +21,8 @@ export async function POST(req: NextRequest) {
     // 1. Verify against config fallbacks (only if defined in environment)
     if (FALLBACK_USER && FALLBACK_PASS && username === FALLBACK_USER && password === FALLBACK_PASS) {
       const response = NextResponse.json({ success: true, role: "super_admin" });
-      response.cookies.set("admin_session", "authenticated-fallback", {
+      const sessionVal = createSessionCookie(username, "super_admin");
+      response.cookies.set("admin_session", sessionVal, {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -49,7 +51,8 @@ export async function POST(req: NextRequest) {
     }
 
     const response = NextResponse.json({ success: true, role: user.role });
-    response.cookies.set("admin_session", `auth-user-${user.username}`, {
+    const sessionVal = createSessionCookie(user.username, user.role);
+    response.cookies.set("admin_session", sessionVal, {
       path: "/",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

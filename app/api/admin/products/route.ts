@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { Product } from "@/lib/data/default-products";
 
+import { verifySession } from "@/lib/auth-secure";
+
 interface Ticket {
   id: string;
   ticket_ref: string;
@@ -17,8 +19,8 @@ interface Ticket {
 }
 
 function checkAuth(req: NextRequest): boolean {
-  const session = req.cookies.get("admin_session")?.value;
-  return !!session;
+  const sessionInfo = verifySession(req);
+  return sessionInfo.valid;
 }
 
 // GET: Check Supabase status, load tickets, and fetch full products list

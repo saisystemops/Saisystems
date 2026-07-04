@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { verifySession } from "@/lib/auth-secure";
 
 const SEED_ESTIMATES = [
   { service: "Laptop Repair", brand: "HP", price: "₹2,500 – ₹5,500", time: "Same Day", warranty: "365-day warranty" },
@@ -60,8 +61,8 @@ function writeLocalCache(data: typeof SEED_ESTIMATES) {
 }
 
 function checkAuth(req: NextRequest): boolean {
-  const session = req.cookies.get("admin_session")?.value;
-  return !!session;
+  const sessionInfo = verifySession(req);
+  return sessionInfo.valid;
 }
 
 // GET: Fetch estimator price rules

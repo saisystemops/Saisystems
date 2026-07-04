@@ -123,15 +123,13 @@ export default function AdminPage() {
         
         // Find current user in list to check role
         const sessionCookie = document.cookie.split(";").find((item) => item.trim().startsWith("admin_session="))?.split("=")[1];
-        if (sessionCookie === "authenticated-fallback") {
-          setUserRole("super_admin");
-          setSessionUsername("fallback-admin");
-        } else if (sessionCookie && sessionCookie.startsWith("auth-user-")) {
-          const u = sessionCookie.substring(10);
-          setSessionUsername(u);
-          const activeUser = (data.users || []).find((usr: any) => usr.username === u);
-          if (activeUser) {
-            setUserRole(activeUser.role);
+        if (sessionCookie) {
+          const rawVal = sessionCookie.split(".")[0];
+          const parts = rawVal.split(":");
+          if (parts.length >= 2) {
+            const [u, r] = parts;
+            setSessionUsername(u);
+            setUserRole(r);
           }
         }
       }
@@ -196,11 +194,12 @@ export default function AdminPage() {
     const sessionCookie = document.cookie.split(";").find((item) => item.trim().startsWith("admin_session="))?.split("=")[1];
     if (sessionCookie) {
       setIsAuthenticated(true);
-      if (sessionCookie === "authenticated-fallback") {
-        setSessionUsername("fallback-admin");
-        setUserRole("super_admin");
-      } else if (sessionCookie.startsWith("auth-user-")) {
-        setSessionUsername(sessionCookie.substring(10));
+      const rawVal = sessionCookie.split(".")[0];
+      const parts = rawVal.split(":");
+      if (parts.length >= 2) {
+        const [u, r] = parts;
+        setSessionUsername(u);
+        setUserRole(r);
       }
     }
 

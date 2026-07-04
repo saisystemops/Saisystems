@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { verifySession } from "@/lib/auth-secure";
+
+function checkAuth(req: NextRequest): boolean {
+  return verifySession(req).valid;
+}
 
 export async function GET(req: NextRequest) {
-  const session = req.cookies.get("admin_session")?.value;
-  if (!session) {
+  if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -26,8 +30,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = req.cookies.get("admin_session")?.value;
-  if (!session) {
+  if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -58,8 +61,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = req.cookies.get("admin_session")?.value;
-  if (!session) {
+  if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

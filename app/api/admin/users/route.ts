@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { verifySession } from "@/lib/auth-secure";
 import crypto from "crypto";
 
 function sha256(secret: string): string {
@@ -7,20 +8,22 @@ function sha256(secret: string): string {
 }
 
 async function checkSuperAdmin(req: NextRequest): Promise<boolean> {
-  const session = req.cookies.get("admin_session")?.value;
-  if (!session) return false;
-  if (session === "authenticated-fallback") return true;
-  if (session.startsWith("auth-user-")) {
-    const username = session.substring(10);
-    const supabase = createServerClient();
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select("role")
-      .eq("username", username)
-      .single();
-    if (!error && data && data.role === "super_admin") {
-      return true;
-    }
+  const sessionInfo = verifySession(req);
+  if (!sessionInfo.valid) return false;
+
+  if (process.env.ADMIN_USERNAME && sessionInfo.username === process.env.ADMIN_USERNAME) {
+    return true;
+  }
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("role")
+    .eq("username", sessionInfo.username)
+    .single();
+
+  if (!error && data && data.role === "super_admin") {
+    return true;
   }
   return false;
 }
@@ -111,8 +114,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Username query parameter is required" }, { status: 400 });
     }
 
-    const session = req.cookies.get("admin_session")?.value;
-    if (session === `auth-user-${usernameToDelete}`) {
+    const sessionInfo = verifySession(req);
+    if (sessionInfo.username === usernameToDelete) {
       return NextResponse.json({ error: "You cannot delete your own account while logged in" }, { status: 400 });
     }
 
