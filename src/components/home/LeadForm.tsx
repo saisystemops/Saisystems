@@ -14,6 +14,7 @@ const schema = z.object({
   serviceType: z.string().min(1, "Please select a service type"),
   brand: z.string().min(1, "Please select a brand"),
   problemDescription: z.string().min(10, "Please describe your problem in at least 10 characters"),
+  website: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -199,6 +200,16 @@ export default function LeadForm() {
                     <p className="text-red-500 text-xs mt-1">{errors.problemDescription.message}</p>
                   )}
                 </div>
+
+                {/* Honeypot field to block bot spam */}
+                <input
+                  {...register("website")}
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{ display: "none" }}
+                  className="hidden"
+                />
 
                 <button
                   type="submit"

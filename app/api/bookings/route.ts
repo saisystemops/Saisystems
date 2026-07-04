@@ -49,6 +49,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Honeypot spam protection
+    if (body.website) {
+      return NextResponse.json({ success: true, bookingRef: "SAI-MOCK-SPAM", message: "Booking created successfully" });
+    }
+
     const data = schema.parse(body);
     const bookingRef = generateRef();
 

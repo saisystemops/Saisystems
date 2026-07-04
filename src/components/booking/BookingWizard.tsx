@@ -28,6 +28,7 @@ const schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   address: z.string().optional(),
   serviceMode: z.enum(["doorstep", "drop-in"]),
+  website: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -179,6 +180,15 @@ export default function BookingWizard() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Honeypot field to block bot spam */}
+      <input
+        {...register("website")}
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        style={{ display: "none" }}
+        className="hidden"
+      />
       {/* Progress steps */}
       <div className="flex items-center justify-between mb-8">
         {steps.map((s, i) => (

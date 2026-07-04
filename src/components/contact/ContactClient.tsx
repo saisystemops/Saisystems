@@ -26,6 +26,7 @@ export default function ContactClient() {
     serviceType: "Laptop Repair",
     brand: "Dell",
     problemDescription: "",
+    website: "", // honeypot
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -120,6 +121,7 @@ export default function ContactClient() {
           serviceType: "Laptop Repair",
           brand: "Dell",
           problemDescription: "",
+          website: "",
         });
       } else {
         setSubmitStatus("error");
@@ -589,6 +591,18 @@ export default function ContactClient() {
                 />
                 {errors.problemDescription && <p className="text-[10px] text-rose-550 font-bold mt-1">{errors.problemDescription}</p>}
               </div>
+
+              {/* Honeypot field to block bot spam */}
+              <input
+                type="text"
+                name="website"
+                value={formData.website}
+                onChange={handleChange}
+                tabIndex={-1}
+                autoComplete="off"
+                style={{ display: "none" }}
+                className="hidden"
+              />
 
               {/* Submit Button */}
               <button

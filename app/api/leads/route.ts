@@ -13,6 +13,12 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Honeypot spam protection
+    if (body.website) {
+      return NextResponse.json({ success: true, message: "Lead submitted successfully" });
+    }
+
     const data = schema.parse(body);
 
     // Save to Supabase (only when env vars are configured)
