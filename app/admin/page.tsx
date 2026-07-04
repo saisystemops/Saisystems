@@ -3,24 +3,23 @@ import React, { useState, useEffect } from "react";
 import {
   Laptop,
   Monitor,
-  Cctv,
   Wrench,
   Headphones,
   Inbox,
   Lock,
-  Plus,
   Trash,
   Save,
   LogOut,
   RefreshCw,
   Search,
-  CheckCircle,
   Phone,
   MessageCircle,
   FileText,
   AlertCircle,
   Calculator,
-  Star
+  Star,
+  Sun,
+  Moon
 } from "lucide-react";
 import type { Product } from "@/lib/data/default-products";
 
@@ -43,7 +42,27 @@ type Ticket = {
   created_at: string;
 };
 
-type SidebarSection = "all" | "laptops" | "desktops" | "cctv" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews";
+type Review = {
+  id: string;
+  name: string;
+  review: string;
+  service: string;
+  rating: number;
+  location: string;
+  role: string;
+  date: string;
+  approved: boolean;
+};
+
+type Estimate = {
+  service: string;
+  brand: string;
+  price: string;
+  time: string;
+  warranty: string;
+};
+
+type SidebarSection = "all" | "laptops" | "desktops" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews" | "admin-users";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -51,6 +70,19 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Theme support
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Admin users manager states
+  const [adminUsers, setAdminUsers] = useState<{ id: string; username: string; role: string; created_at: string }[]>([]);
+  const [newAdminUsername, setNewAdminUsername] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [newAdminRole, setNewAdminRole] = useState("admin");
+  const [adminManagerError, setAdminManagerError] = useState("");
+  const [adminManagerSuccess, setAdminManagerSuccess] = useState("");
+  const [userRole, setUserRole] = useState("admin");
+  const [sessionUsername, setSessionUsername] = useState("");
 
   // Layout navigation & search
   const [activeSection, setActiveSection] = useState<SidebarSection>("all");
@@ -62,10 +94,10 @@ export default function AdminPage() {
   const [dbStatus, setDbStatus] = useState<DBStatus>({ productsTable: "missing", adminUsersTable: "missing" });
   
   // Reviews states
-  const [adminReviews, setAdminReviews] = useState<any[]>([]);
+  const [adminReviews, setAdminReviews] = useState<Review[]>([]);
   
   // Cost Estimator pricing states
-  const [estimates, setEstimates] = useState<any[]>([]);
+  const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [showAddEstimate, setShowAddEstimate] = useState(false);
   const [newEstimate, setNewEstimate] = useState({
     service: "Laptop Repair",
@@ -75,57 +107,36 @@ export default function AdminPage() {
     warranty: "365-day warranty",
   });
   const [editingEstimateKey, setEditingEstimateKey] = useState<string | null>(null);
-  const [editEstimate, setEditEstimate] = useState<any | null>(null);
+  const [editEstimate, setEditEstimate] = useState<Estimate | null>(null);
   const [fetchingData, setFetchingData] = useState(false);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editProduct, setEditProduct] = useState<Partial<Product>>({});
-  
-  // Add item state
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    id: "",
-    category: "laptops",
-    title: "",
-    description: "",
-    price: "",
-    originalPrice: "",
-    badge: "",
-    specs: [],
-    inStock: true
-  });
-  const [newSpecText, setNewSpecText] = useState("");
 
-  // Check auth cookie on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchAdminData();
-    }
-  }, [isAuthenticated]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError("");
-    setLoading(true);
-
+  const fetchUsersList = async () => {
     try {
-      const res = await fetch("/api/admin/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setIsAuthenticated(true);
-      } else {
-        setLoginError(data.error || "Authentication failed");
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        setAdminUsers(data.users || []);
+        
+        // Find current user in list to check role
+        const sessionCookie = document.cookie.split(";").find((item) => item.trim().startsWith("admin_session="))?.split("=")[1];
+        if (sessionCookie === "authenticated-fallback") {
+          setUserRole("super_admin");
+          setSessionUsername("fallback-admin");
+        } else if (sessionCookie && sessionCookie.startsWith("auth-user-")) {
+          const u = sessionCookie.substring(10);
+          setSessionUsername(u);
+          const activeUser = (data.users || []).find((usr: any) => usr.username === u);
+          if (activeUser) {
+            setUserRole(activeUser.role);
+          }
+        }
       }
-    } catch {
-      setLoginError("Failed to connect to authentication server");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Failed to load admin users list:", err);
     }
   };
 
@@ -155,10 +166,83 @@ export default function AdminPage() {
         const reviewsData = await reviewsRes.json();
         setAdminReviews(reviewsData || []);
       }
+
+      // Fetch users list
+      await fetchUsersList();
     } catch (err) {
       console.error("Failed to load admin logs:", err);
     } finally {
       setFetchingData(false);
+    }
+  };
+  
+  // Add item state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+    id: "",
+    category: "laptops",
+    title: "",
+    description: "",
+    price: "",
+    originalPrice: "",
+    badge: "",
+    specs: [],
+    inStock: true
+  });
+  const [newSpecText, setNewSpecText] = useState("");
+
+  // Check auth cookie and theme on mount
+  useEffect(() => {
+    const sessionCookie = document.cookie.split(";").find((item) => item.trim().startsWith("admin_session="))?.split("=")[1];
+    if (sessionCookie) {
+      setIsAuthenticated(true);
+      if (sessionCookie === "authenticated-fallback") {
+        setSessionUsername("fallback-admin");
+        setUserRole("super_admin");
+      } else if (sessionCookie.startsWith("auth-user-")) {
+        setSessionUsername(sessionCookie.substring(10));
+      }
+    }
+
+    // Theme sync
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+    setIsDarkMode(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      Promise.resolve().then(() => {
+        fetchAdminData();
+      });
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSessionUsername(username);
+        setIsAuthenticated(true);
+      } else {
+        setLoginError(data.error || "Authentication failed");
+      }
+    } catch {
+      setLoginError("Failed to connect to authentication server");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -167,6 +251,8 @@ export default function AdminPage() {
     setIsAuthenticated(false);
     setUsername("");
     setPassword("");
+    setSessionUsername("");
+    setUserRole("admin");
     setProducts([]);
     setTickets([]);
   };
@@ -420,6 +506,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleSyncReviews = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_defaults" }),
+      });
+      if (res.ok) {
+        alert("Default reviews synced to Supabase successfully!");
+        fetchAdminData();
+      } else {
+        alert("Failed to sync default reviews");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Reviews handlers
   const handleToggleReviewApproval = async (id: string, currentlyApproved: boolean) => {
     setLoading(true);
@@ -460,6 +567,61 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateAdminUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminManagerError("");
+    setAdminManagerSuccess("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: newAdminUsername,
+          password: newAdminPassword,
+          role: newAdminRole,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAdminManagerSuccess("Administrative account created successfully!");
+        setNewAdminUsername("");
+        setNewAdminPassword("");
+        setNewAdminRole("admin");
+        fetchAdminData();
+      } else {
+        setAdminManagerError(data.error || "Failed to create administrator");
+      }
+    } catch {
+      setAdminManagerError("Connection failure while creating account");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAdminUser = async (usernameToDelete: string) => {
+    if (!confirm(`Are you sure you want to permanently delete the admin account "${usernameToDelete}"?`)) return;
+    setAdminManagerError("");
+    setAdminManagerSuccess("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users?username=${usernameToDelete}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAdminManagerSuccess(`Account "${usernameToDelete}" removed successfully.`);
+        fetchAdminData();
+      } else {
+        setAdminManagerError(data.error || "Failed to delete account");
+      }
+    } catch {
+      setAdminManagerError("Connection failure while removing account");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Counters for sidebar items
   const countByCategory = (cat: Product["category"]) => products.filter((p) => p.category === cat).length;
   
@@ -483,46 +645,72 @@ export default function AdminPage() {
   // Login Screen render
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-950" : "bg-gray-50"} flex items-center justify-center px-4 py-12 relative overflow-hidden transition-colors duration-300`}>
+        {/* Floating Top-Right Theme Toggle */}
+        <button
+          onClick={() => {
+            const next = !isDarkMode;
+            setIsDarkMode(next);
+            localStorage.setItem("theme", next ? "dark" : "light");
+            document.documentElement.classList.toggle("dark", next);
+          }}
+          className="absolute top-6 right-6 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full shadow-lg transition-colors cursor-pointer"
+          title="Toggle Theme Mode"
+        >
+          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         {/* Glow */}
         <div className="absolute top-[20%] left-[-10%] w-[35%] h-[35%] rounded-full bg-orange-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[20%] right-[-10%] w-[35%] h-[35%] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
 
-        <div className="max-w-md w-full relative z-10 bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+        <div className="max-w-md w-full relative z-10 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 p-8 rounded-3xl backdrop-blur-md shadow-2xl transition-colors">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-950/20">
               <Lock size={28} />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Sai Systems</h1>
-            <p className="text-xs text-gray-400 mt-1 font-semibold uppercase tracking-wider">Service Desk Control Panel</p>
+            <h1 className="text-2xl font-black text-gray-950 dark:text-white tracking-tight">Sai Systems</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-semibold uppercase tracking-wider">Service Desk Control Panel</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-gray-300 uppercase tracking-wide mb-1.5">Username</label>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-1.5">Username</label>
               <input
                 type="text"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter admin username"
-                className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500/50 transition-colors placeholder-gray-500"
+                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-4 py-3 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-orange-500/50 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-300 uppercase tracking-wide mb-1.5">Password</label>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-1.5">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:border-orange-500/50 transition-colors placeholder-gray-500"
+                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-4 py-3 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-orange-500/50 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
 
+            {/* Forgot Password Recovery (WhatsApp Direct Client-Side Route) */}
+            <div className="flex justify-end text-xs">
+              <a
+                href="https://wa.me/917904108020?text=Hi%20Super%20Admin!%20I%20need%20to%20reset%20my%20Sai%20Systems%20admin%20password.%20My%20username%20is%3A%20"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-350 transition-colors font-extrabold cursor-pointer"
+              >
+                Forgot Password? Reset via WhatsApp
+              </a>
+            </div>
+
             {loginError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl text-center">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl text-center">
                 {loginError}
               </div>
             )}
@@ -530,7 +718,7 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-sm font-black rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-sm font-black rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Authenticating..." : "Sign In to Dashboard"}
             </button>
@@ -541,24 +729,38 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200 flex flex-col">
+    <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-950 text-gray-200" : "bg-gray-50 text-gray-800"} flex flex-col transition-colors duration-300`}>
       
       {/* ── Main Layout Wrapper ────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col md:flex-row">
         
         {/* ── Sidebar (Left Column) ────────────────────────────────────────── */}
-        <aside className="w-full md:w-64 bg-gray-900 border-r border-gray-800/80 p-6 flex flex-col justify-between gap-6 md:sticky md:top-0 md:h-screen">
+        <aside className="w-full md:w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800/80 p-6 flex flex-col justify-between gap-6 md:sticky md:top-0 md:h-screen transition-colors">
           <div className="space-y-6">
             
             {/* Header */}
-            <div className="flex items-center gap-2.5 pb-4 border-b border-gray-800">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-gray-200 dark:border-gray-800">
               <div className="w-9 h-9 bg-orange-600/15 border border-orange-500/30 text-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Laptop size={18} />
               </div>
-              <div>
-                <h2 className="text-sm font-black text-white leading-tight">Sai Systems</h2>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Showroom Admin</p>
+              <div className="flex-1">
+                <h2 className="text-sm font-black text-gray-950 dark:text-white leading-tight">Sai Systems</h2>
+                <p className="text-[10px] text-gray-550 dark:text-gray-400 font-bold uppercase tracking-wider">Showroom Admin</p>
               </div>
+
+              {/* Theme toggle next to title */}
+              <button
+                onClick={() => {
+                  const next = !isDarkMode;
+                  setIsDarkMode(next);
+                  localStorage.setItem("theme", next ? "dark" : "light");
+                  document.documentElement.classList.toggle("dark", next);
+                }}
+                className="p-1.5 bg-gray-200 dark:bg-gray-850 text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white rounded-lg transition-colors border border-gray-300 dark:border-gray-800 cursor-pointer"
+                title="Toggle Theme Mode"
+              >
+                {isDarkMode ? <Sun size={12} /> : <Moon size={12} />}
+              </button>
             </div>
 
             {/* Navigation List */}
@@ -567,136 +769,143 @@ export default function AdminPage() {
               
               <button
                 onClick={() => setActiveSection("all")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "all"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span>📦 All Products</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{products.length}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{products.length}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("laptops")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "laptops"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Laptop size={13} /> Laptops</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("laptops")}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("laptops")}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("desktops")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "desktops"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Monitor size={13} /> Desktops</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("desktops")}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveSection("cctv")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
-                  activeSection === "cctv"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2"><Cctv size={13} /> CCTV Surveillance</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("cctv")}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("desktops")}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("spare-parts")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "spare-parts"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Wrench size={13} /> Spare Parts</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("spare-parts")}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("spare-parts")}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("accessories")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "accessories"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Headphones size={13} /> Accessories</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("accessories")}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{countByCategory("accessories")}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("estimator")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "estimator"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Calculator size={13} /> Cost Estimator</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{estimates.length}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{estimates.length}</span>
               </button>
 
-              <div className="h-px bg-gray-800 my-4" />
+              <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2">Service Communications</p>
 
               <button
                 onClick={() => setActiveSection("tickets")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "tickets"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Inbox size={13} /> Leads &amp; Tickets</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{tickets.length}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{tickets.length}</span>
               </button>
 
               <button
                 onClick={() => setActiveSection("reviews")}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
                   activeSection === "reviews"
-                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
                 }`}
               >
                 <span className="flex items-center gap-2"><Star size={13} /> Customer Reviews</span>
-                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{adminReviews.length}</span>
+                <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{adminReviews.length}</span>
               </button>
+
+              {/* Admin Accounts Section Tab */}
+              {userRole === "super_admin" && (
+                <>
+                  <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
+                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2">System Access</p>
+                  <button
+                    onClick={() => setActiveSection("admin-users")}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
+                      activeSection === "admin-users"
+                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-955 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2"><Lock size={13} /> Admin Accounts</span>
+                    <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{adminUsers.length}</span>
+                  </button>
+                </>
+              )}
             </nav>
           </div>
 
           {/* Bottom Footer Section */}
-          <div className="space-y-4 pt-4 border-t border-gray-850">
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-800">
             {/* Database indicator */}
             <div className="flex flex-col gap-1.5 px-2">
               <div className="flex items-center justify-between text-[9px] font-bold text-gray-500 uppercase tracking-wider">
                 <span>Supabase Status</span>
-                <button onClick={fetchAdminData} className="text-orange-500 hover:text-orange-400 transition-colors">
+                <button onClick={fetchAdminData} className="text-orange-500 hover:text-orange-400 transition-colors cursor-pointer">
                   <RefreshCw size={10} className={fetchingData ? "animate-spin" : ""} />
                 </button>
               </div>
               <div className="flex items-center gap-1.5 text-[9px] font-black">
                 <span className={`w-2 h-2 rounded-full ${dbStatus.productsTable === "ready" ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
-                <span className="text-gray-300">Catalog Database</span>
+                <span className="text-gray-600 dark:text-gray-300">Catalog Database</span>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-400 text-xs font-bold rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer"
             >
               <LogOut size={13} /> Sign Out
             </button>
@@ -704,41 +913,45 @@ export default function AdminPage() {
         </aside>
 
         {/* ── Main Content Area (Right Column) ────────────────────────────── */}
-        <main className="flex-1 bg-gray-950 p-6 md:p-10 overflow-y-auto">
+        <main className="flex-1 bg-white dark:bg-gray-950 p-6 md:p-10 overflow-y-auto transition-colors">
           
           {/* Active section header block */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl font-black text-white capitalize tracking-tight">
+              <h2 className="text-2xl font-black text-gray-950 dark:text-white capitalize tracking-tight">
                 {activeSection === "all" 
                   ? "Full Catalog Deals" 
                   : activeSection === "tickets" 
                   ? "Service Leads Inbox" 
                   : activeSection === "reviews"
                   ? "Customer Reviews Moderation"
+                  : activeSection === "admin-users"
+                  ? "Admin User Accounts"
                   : `${activeSection} category`}
               </h2>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {activeSection === "tickets"
                   ? "Viewing chatbot leads and WhatsApp callback requests."
                   : activeSection === "reviews"
                   ? "Approve, hide, or delete customer reviews submitted via the homepage testimonials wall."
+                  : activeSection === "admin-users"
+                  ? "Create and delete admin manager accounts authorized to edit the database."
                   : "Manage product cards, prices, and stock statuses displayed in the showroom."}
               </p>
             </div>
 
-            {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && (
+            {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "admin-users" && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSyncDefaults}
                   disabled={loading}
-                  className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-extrabold rounded-xl transition-colors"
+                  className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-250 dark:border-white/10 text-gray-800 dark:text-white text-xs font-extrabold rounded-xl transition-colors cursor-pointer"
                 >
                   Sync Defaults
                 </button>
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
-                  className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   + Add Deal
                 </button>
@@ -748,125 +961,124 @@ export default function AdminPage() {
 
           {/* Render Add Form */}
           {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && (
-            <div className="mb-8 bg-gray-900 border border-gray-850 p-6 rounded-3xl">
+            <div className="mb-8 bg-gray-100 dark:bg-gray-900 border border-gray-250 dark:border-gray-850 p-6 rounded-3xl transition-colors">
               <form onSubmit={handleCreateProduct} className="space-y-4">
-                <h3 className="text-base font-black text-white">Create New Showroom Item</h3>
+                <h3 className="text-base font-black text-gray-950 dark:text-white">Create New Showroom Item</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Unique Product ID</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Unique Product ID</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. prod-t480-deals"
                       value={newProduct.id}
                       onChange={(e) => setNewProduct({ ...newProduct, id: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none focus:border-orange-500/50"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Category</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
                     <select
                       value={newProduct.category}
-                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as any })}
-                      className="w-full bg-gray-900 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none focus:border-orange-500/50"
+                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as Product["category"] })}
+                      className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
                     >
                       <option value="laptops">Refurbished Laptops</option>
-                      <option value="desktops">Refurbished Desktops</option>
-                      <option value="cctv">CCTV Surveillance</option>
+                      <option value="desktops">New Desktops</option>
                       <option value="spare-parts">Spare Parts</option>
                       <option value="accessories">Mobile Accessories</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Offer Badge</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Badge</label>
                     <input
                       type="text"
                       placeholder="e.g. 30% OFF / New"
                       value={newProduct.badge}
                       onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Product Title</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Title</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. HP EliteBook 840 G6"
                       value={newProduct.title}
                       onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Offer Price</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Price</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. ₹15,999"
                       value={newProduct.price}
                       onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
                     <input
                       type="text"
                       placeholder="e.g. ₹48,000"
                       value={newProduct.originalPrice}
                       onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Product Image URL</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Image URL</label>
                     <input
                       type="text"
                       placeholder="e.g. /products/latitude-7490.png"
                       value={newProduct.imageUrl || ""}
                       onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Short Description</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
                     <input
                       type="text"
                       placeholder="e.g. Corporate business laptops, A++ showroom condition."
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
 
                   {/* Specs adding list */}
-                  <div className="sm:col-span-2 md:col-span-3 border-t border-gray-800 pt-4">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Add Hardware Specifications</label>
+                  <div className="sm:col-span-2 md:col-span-3 border-t border-gray-200 dark:border-gray-800 pt-4">
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Add Hardware Specifications</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         placeholder="e.g. Intel Core i5 8th Gen"
                         value={newSpecText}
                         onChange={(e) => setNewSpecText(e.target.value)}
-                        className="flex-1 bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                        className="flex-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                       />
                       <button
                         type="button"
                         onClick={handleAddSpecToNew}
-                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold rounded-lg"
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-xs font-bold rounded-lg cursor-pointer"
                       >
                         Add Spec
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-3">
                       {(newProduct.specs || []).map((spec, sidx) => (
-                        <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs rounded-md font-medium">
+                        <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
                           {spec}
                           <button
                             type="button"
                             onClick={() => handleRemoveSpecFromNew(sidx)}
-                            className="text-orange-400 hover:text-white font-bold text-[10px]"
+                            className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px]"
                           >
                             ×
                           </button>
@@ -876,11 +1088,11 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 border-t border-gray-800 pt-4">
+                <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-white"
+                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -896,26 +1108,26 @@ export default function AdminPage() {
           )}
 
           {/* ── SECTION: Showroom Products List or Estimator ─────────────────── */}
-          {activeSection === "tickets" || activeSection === "reviews" ? null : activeSection === "estimator" ? (
+          {activeSection === "tickets" || activeSection === "reviews" || activeSection === "admin-users" ? null : activeSection === "estimator" ? (
             /* ── SECTION: Cost Estimator Pricing Grid ── */
             <div className="space-y-6">
               {/* Header and Add Form */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
                 <div>
-                  <h3 className="text-lg font-black text-white">Service Estimator Matrix</h3>
-                  <p className="text-xs text-gray-400 mt-1">Manage interactive pricing calculator rules displayed in client diagnose flows.</p>
+                  <h3 className="text-lg font-black text-gray-955 dark:text-white">Service Estimator Matrix</h3>
+                  <p className="text-xs text-gray-550 dark:text-gray-400 mt-1">Manage interactive pricing calculator rules displayed in client diagnose flows.</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleSyncEstimates}
                     disabled={loading}
-                    className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-extrabold rounded-xl transition-colors"
+                    className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-250 dark:border-white/10 text-gray-800 dark:text-white text-xs font-extrabold rounded-xl transition-colors cursor-pointer"
                   >
                     Sync Default Estimates
                   </button>
                   <button
                     onClick={() => setShowAddEstimate(!showAddEstimate)}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all"
+                    className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     + Add Estimate Rule
                   </button>
@@ -924,78 +1136,78 @@ export default function AdminPage() {
 
               {/* Add Estimate Form */}
               {showAddEstimate && (
-                <div className="bg-gray-900 border border-gray-850 p-6 rounded-3xl">
+                <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-850 p-6 rounded-3xl transition-colors">
                   <form onSubmit={handleCreateEstimate} className="space-y-4">
-                    <h3 className="text-base font-black text-white">Create New Pricing Estimate</h3>
+                    <h3 className="text-base font-black text-gray-950 dark:text-white">Create New Pricing Estimate</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Service Type</label>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Service Type</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. Screen Repair / Laptop Repair"
                           value={newEstimate.service}
                           onChange={(e) => setNewEstimate({ ...newEstimate, service: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Device Brand</label>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Device Brand</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. Dell / HP / Apple / Other"
                           value={newEstimate.brand}
                           onChange={(e) => setNewEstimate({ ...newEstimate, brand: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Price Range</label>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Price Range</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. ₹2,500 – ₹5,500"
                           value={newEstimate.price}
                           onChange={(e) => setNewEstimate({ ...newEstimate, price: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Completion Time</label>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Completion Time</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. Same Day / 1 Hour / 1-2 Days"
                           value={newEstimate.time}
                           onChange={(e) => setNewEstimate({ ...newEstimate, time: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Warranty Term</label>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Warranty Term</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. 365-day warranty / 90-day warranty"
                           value={newEstimate.warranty}
                           onChange={(e) => setNewEstimate({ ...newEstimate, warranty: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 px-3 py-2.5 rounded-lg text-xs text-white focus:outline-none"
+                          className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 border-t border-gray-800 pt-4">
+                    <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
                       <button
                         type="button"
                         onClick={() => setShowAddEstimate(false)}
-                        className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-white"
+                        className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl"
+                        className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl cursor-pointer"
                       >
                         Add Rule
                       </button>
@@ -1011,40 +1223,40 @@ export default function AdminPage() {
                   const isEditing = editingEstimateKey === key;
 
                   return (
-                    <div key={index} className="bg-gray-900 border border-gray-850 p-5 rounded-3xl space-y-4">
+                    <div key={index} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-850 p-5 rounded-3xl space-y-4 transition-colors">
                       {isEditing && editEstimate ? (
                         <div className="space-y-3">
                           <div className="text-xs font-black text-orange-500 uppercase">Editing Rule: {est.service} ({est.brand})</div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Price Range</label>
+                              <label className="block text-[9px] font-bold text-gray-650 dark:text-gray-400 mb-1">Price Range</label>
                               <input
                                 type="text"
                                 value={editEstimate.price}
                                 onChange={(e) => setEditEstimate({ ...editEstimate, price: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Repair Time</label>
+                              <label className="block text-[9px] font-bold text-gray-650 dark:text-gray-400 mb-1">Repair Time</label>
                               <input
                                 type="text"
                                 value={editEstimate.time}
                                 onChange={(e) => setEditEstimate({ ...editEstimate, time: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="block text-[9px] font-bold text-gray-400 mb-1">Warranty Term</label>
+                              <label className="block text-[9px] font-bold text-gray-650 dark:text-gray-400 mb-1">Warranty Term</label>
                               <input
                                 type="text"
                                 value={editEstimate.warranty}
                                 onChange={(e) => setEditEstimate({ ...editEstimate, warranty: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                           </div>
-                          <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
+                          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-800">
                             <button
                               onClick={() => {
                                 setEditingEstimateKey(null);
@@ -1056,7 +1268,7 @@ export default function AdminPage() {
                             </button>
                             <button
                               onClick={handleSaveEditEstimate}
-                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-lg transition-colors"
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-lg transition-colors cursor-pointer"
                             >
                               Save
                             </button>
@@ -1066,18 +1278,18 @@ export default function AdminPage() {
                         <div className="flex justify-between items-start gap-4">
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[9px] font-black uppercase rounded">
+                              <span className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-[9px] font-black uppercase rounded">
                                 {est.service}
                               </span>
-                              <span className="px-2 py-0.5 bg-white/5 text-gray-300 text-[9px] font-black uppercase rounded">
+                              <span className="px-2 py-0.5 bg-gray-200 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-[9px] font-black uppercase rounded">
                                 {est.brand}
                               </span>
                             </div>
-                            <h4 className="text-sm font-extrabold text-white">{est.service} Estimate for {est.brand}</h4>
-                            <div className="text-xs text-gray-400 space-y-1">
-                              <div>💰 Price Range: <span className="text-orange-400 font-extrabold">{est.price}</span></div>
-                              <div>⏱️ Completion: <span className="text-white font-bold">{est.time}</span></div>
-                              <div>🛡️ Warranty: <span className="text-white font-bold">{est.warranty}</span></div>
+                            <h4 className="text-sm font-extrabold text-gray-955 dark:text-white">{est.service} Estimate for {est.brand}</h4>
+                            <div className="text-xs text-gray-650 dark:text-gray-400 space-y-1">
+                              <div>💰 Price Range: <span className="text-orange-655 dark:text-orange-500 font-extrabold">{est.price}</span></div>
+                              <div>⏱️ Completion: <span className="text-gray-900 dark:text-white font-bold">{est.time}</span></div>
+                              <div>🛡️ Warranty: <span className="text-gray-950 dark:text-white font-bold">{est.warranty}</span></div>
                             </div>
                           </div>
                           <div className="flex flex-col gap-2">
@@ -1086,14 +1298,14 @@ export default function AdminPage() {
                                 setEditingEstimateKey(key);
                                 setEditEstimate({ ...est });
                               }}
-                              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all"
+                              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-250 dark:border-white/10 text-gray-700 dark:text-gray-300 rounded-xl transition-all cursor-pointer"
                               title="Edit Estimate"
                             >
                               <Save size={12} />
                             </button>
                             <button
                               onClick={() => handleDeleteEstimate(est.service, est.brand)}
-                              className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-xl transition-all"
+                              className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all cursor-pointer"
                               title="Delete Estimate"
                             >
                               <Trash size={12} />
@@ -1119,23 +1331,23 @@ export default function AdminPage() {
                   placeholder="Search products by title, details, or ID..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-800/80 pl-10 pr-4 py-3 rounded-2xl text-xs text-white focus:outline-none focus:border-orange-500/40 transition-colors placeholder-gray-500"
+                  className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-250 dark:border-gray-800/80 pl-10 pr-4 py-3 rounded-2xl text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/40 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-20 bg-gray-900/10 border border-gray-900 rounded-3xl">
-                  <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <h4 className="font-bold text-white">No products found</h4>
-                  <p className="text-xs text-gray-500 mt-1">Try refining your search terms or select another category from the sidebar.</p>
+                <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-900/10 border border-gray-200 dark:border-gray-900 rounded-3xl">
+                  <AlertCircle className="w-12 h-12 text-gray-550 dark:text-gray-650 mx-auto mb-3" />
+                  <h4 className="font-bold text-gray-950 dark:text-white">No products found</h4>
+                  <p className="text-xs text-gray-550 dark:text-gray-500 mt-1">Try refining your search terms or select another category from the sidebar.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                   {filteredProducts.map((product) => (
                     <div
                       key={product.id}
-                      className={`bg-gray-900 border rounded-3xl p-5 sm:p-6 transition-all ${
-                        editingId === product.id ? "border-orange-500 bg-orange-950/5" : "border-gray-800/60"
+                      className={`bg-white dark:bg-gray-900 border rounded-3xl p-5 sm:p-6 transition-all ${
+                        editingId === product.id ? "border-orange-500 bg-orange-950/5 dark:bg-orange-950/5" : "border-gray-200 dark:border-gray-800/60"
                       }`}
                     >
                       {editingId === product.id ? (
@@ -1162,76 +1374,75 @@ export default function AdminPage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Offer Title</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Title</label>
                               <input
                                 type="text"
                                 value={editProduct.title || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, title: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Offer Price</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price</label>
                               <input
                                 type="text"
                                 value={editProduct.price || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Original Price</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price</label>
                               <input
                                 type="text"
                                 value={editProduct.originalPrice || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, originalPrice: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Badge text</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge text</label>
                               <input
                                 type="text"
                                 value={editProduct.badge || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, badge: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Product Image URL</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Image URL</label>
                               <input
                                 type="text"
                                 value={editProduct.imageUrl || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                                 placeholder="e.g. /products/latitude.png"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Category</label>
                               <select
                                 value={editProduct.category}
-                                onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as any })}
-                                className="w-full bg-gray-900 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as Product["category"] })}
+                                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               >
                                 <option value="laptops">Refurbished Laptops</option>
-                                <option value="desktops">Refurbished Desktops</option>
-                                <option value="cctv">CCTV Surveillance</option>
+                                <option value="desktops">New Desktops</option>
                                 <option value="spare-parts">Spare Parts</option>
                                 <option value="accessories">Mobile Accessories</option>
                               </select>
                             </div>
                             <div className="sm:col-span-2 md:col-span-3">
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Description</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
                               <input
                                 type="text"
                                 value={editProduct.description || ""}
                                 onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                             <div className="sm:col-span-2 md:col-span-3">
-                              <label className="block text-[10px] font-bold text-gray-400 mb-1">Specifications (comma separated)</label>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Specifications (comma separated)</label>
                               <input
                                 type="text"
                                 value={(editProduct.specs || []).join(", ")}
@@ -1241,7 +1452,7 @@ export default function AdminPage() {
                                     specs: e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
                                   })
                                 }
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
                           </div>
@@ -1250,30 +1461,30 @@ export default function AdminPage() {
                         /* VIEW MODE */
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                           {product.imageUrl && (
-                            <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                            <div className="w-14 h-14 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0">
                               <img src={product.imageUrl} alt={product.title} className="max-w-full max-h-full object-contain p-1" />
                             </div>
                           )}
                           <div className="flex-1 space-y-2.5">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[9px] font-black uppercase rounded">
+                              <span className="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-[9px] font-black uppercase rounded">
                                 {product.category}
                               </span>
                               {product.badge && (
-                                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-black uppercase rounded">
+                                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase rounded">
                                   {product.badge}
                                 </span>
                               )}
                               <span className="text-[9px] text-gray-500 font-mono font-bold">ID: {product.id}</span>
                             </div>
 
-                            <h4 className="text-base font-black text-white tracking-tight leading-tight">{product.title}</h4>
-                            <p className="text-xs text-gray-400 leading-relaxed max-w-3xl">{product.description}</p>
+                            <h4 className="text-base font-black text-gray-955 dark:text-white tracking-tight leading-tight">{product.title}</h4>
+                            <p className="text-xs text-gray-550 dark:text-gray-400 leading-relaxed max-w-3xl">{product.description}</p>
                             
                             {/* Specs list */}
                             <div className="flex flex-wrap gap-1.5 pt-1.5">
                               {product.specs.map((spec, sidx) => (
-                                <span key={sidx} className="px-2 py-0.5 bg-white/5 rounded text-[10px] font-medium text-gray-300">
+                                <span key={sidx} className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-transparent rounded text-[10px] font-medium text-gray-700 dark:text-gray-300">
                                   ✓ {spec}
                                 </span>
                               ))}
@@ -1281,10 +1492,10 @@ export default function AdminPage() {
                           </div>
 
                           {/* Pricing, Action control Panel */}
-                          <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4 border-t md:border-t-0 border-gray-800/80 pt-4 md:pt-0">
+                          <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4 border-t md:border-t-0 border-gray-200 dark:border-gray-800/80 pt-4 md:pt-0">
                             
                             <div className="text-left md:text-right">
-                              <div className="text-lg font-black text-orange-500">{product.price}</div>
+                              <div className="text-lg font-black text-orange-655 dark:text-orange-500">{product.price}</div>
                               {product.originalPrice && <div className="text-[10px] text-gray-500 line-through mt-0.5">{product.originalPrice}</div>}
                             </div>
 
@@ -1298,9 +1509,9 @@ export default function AdminPage() {
                                     onChange={(e) => handleToggleStock(product, e.target.checked)}
                                     className="sr-only peer"
                                   />
-                                  <div className="w-8 h-4 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
+                                  <div className="w-8 h-4 bg-gray-300 dark:bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
                                 </div>
-                                <span className={`text-[10px] font-black uppercase tracking-wider ${product.inStock ? "text-emerald-400" : "text-gray-500"}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-wider ${product.inStock ? "text-emerald-500 dark:text-emerald-400" : "text-gray-500"}`}>
                                   {product.inStock ? "In Stock" : "Out of Stock"}
                                 </span>
                               </label>
@@ -1308,14 +1519,14 @@ export default function AdminPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleStartEdit(product)}
-                                  className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all"
+                                  className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-250 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white rounded-xl transition-all cursor-pointer"
                                   title="Edit Product Details"
                                 >
                                   <Save size={13} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProduct(product.id)}
-                                  className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-xl transition-all"
+                                  className="p-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all cursor-pointer"
                                   title="Delete Product"
                                 >
                                   <Trash size={13} />
@@ -1339,27 +1550,27 @@ export default function AdminPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
                 {tickets.length === 0 ? (
-                  <div className="text-center py-20 bg-gray-900/10 border border-gray-900 rounded-3xl">
-                    <FileText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                    <h4 className="font-bold text-white">No tickets collected yet</h4>
-                    <p className="text-xs text-gray-500 mt-1">Leads compiled by the AI chatbot will populate here automatically.</p>
+                  <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-900/10 border border-gray-200 dark:border-gray-800 rounded-3xl">
+                    <FileText className="w-12 h-12 text-gray-550 dark:text-gray-600 mx-auto mb-3" />
+                    <h4 className="font-bold text-gray-950 dark:text-white">No tickets collected yet</h4>
+                    <p className="text-xs text-gray-550 dark:text-gray-500 mt-1">Leads compiled by the AI chatbot will populate here automatically.</p>
                   </div>
                 ) : (
                   tickets.map((ticket) => (
                     <div
                       key={ticket.id}
-                      className="bg-gray-900 border border-gray-800/80 rounded-3xl p-6 hover:border-orange-500/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-6 hover:border-orange-500/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
                     >
                       <div className="space-y-2.5 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-mono text-xs text-gray-500 font-bold">{ticket.ticket_ref}</span>
-                          <span className="px-2 py-0.5 bg-white/5 text-gray-300 text-[10px] font-black uppercase rounded">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-[10px] font-black uppercase rounded">
                             {ticket.status}
                           </span>
                           <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-wider ${
                             ticket.priority === "emergency" || ticket.priority === "high"
-                              ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                              : "bg-gray-850 text-gray-400"
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              : "bg-gray-100 dark:bg-gray-850 text-gray-600 dark:text-gray-400"
                           }`}>
                             {ticket.priority}
                           </span>
@@ -1368,21 +1579,21 @@ export default function AdminPage() {
                           </span>
                         </div>
 
-                        <h4 className="text-base font-black text-white tracking-tight leading-tight">{ticket.title}</h4>
-                        <p className="text-xs text-gray-400 leading-relaxed max-w-3xl">{ticket.description}</p>
+                        <h4 className="text-base font-black text-gray-955 dark:text-white tracking-tight leading-tight">{ticket.title}</h4>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl">{ticket.description}</p>
                         
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs font-semibold text-gray-400">
-                          {ticket.customer_name && <span>👤 Customer: <strong className="text-white">{ticket.customer_name}</strong></span>}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                          {ticket.customer_name && <span>👤 Customer: <strong className="text-gray-950 dark:text-white">{ticket.customer_name}</strong></span>}
                           {ticket.customer_contact_phone && (
-                            <a href={`tel:${ticket.customer_contact_phone}`} className="flex items-center gap-1 hover:text-orange-400">
-                              <Phone size={12} className="text-orange-500 animate-pulse" /> Phone: <strong className="text-white">{ticket.customer_contact_phone}</strong>
+                            <a href={`tel:${ticket.customer_contact_phone}`} className="flex items-center gap-1 hover:text-orange-500">
+                              <Phone size={12} className="text-orange-500 animate-pulse" /> Phone: <strong className="text-gray-955 dark:text-white">{ticket.customer_contact_phone}</strong>
                             </a>
                           )}
-                          <span>📍 Location: <strong className="text-white">{ticket.site_city}</strong></span>
+                          <span>📍 Location: <strong className="text-gray-955 dark:text-white">{ticket.site_city}</strong></span>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 border-t md:border-t-0 border-gray-800 pt-4 md:pt-0">
+                      <div className="flex gap-2 border-t md:border-t-0 border-gray-200 dark:border-gray-800 pt-4 md:pt-0">
                         {ticket.customer_contact_phone && (
                           <a
                             href={`https://wa.me/${ticket.customer_contact_phone.replace(/\D/g, "")}`}
@@ -1404,35 +1615,39 @@ export default function AdminPage() {
           {activeSection === "reviews" && (
             /* ── SECTION: Customer Reviews Moderation ────────────────────────── */
             <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-black text-white">Customer Reviews Moderation</h3>
-                <p className="text-xs text-gray-400 mt-1">Approve, hide, or delete customer reviews submitted via the homepage testimonials wall.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {adminReviews.length === 0 ? (
-                  <div className="md:col-span-2 text-center py-20 bg-gray-900/10 border border-gray-900 rounded-3xl">
-                    <Star className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                    <h4 className="font-bold text-white">No reviews submitted yet</h4>
-                    <p className="text-xs text-gray-500 mt-1">When customers submit feedback on the home page testimonials, they will appear here.</p>
-                  </div>
-                ) : (
-                  adminReviews.map((rev) => (
-                    <div key={rev.id} className="bg-gray-900 border border-gray-850 p-5 rounded-3xl space-y-4 flex flex-col justify-between">
+              {adminReviews.length === 0 ? (
+                <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-900/10 border border-gray-200 dark:border-gray-900 rounded-3xl space-y-4">
+                  <Star className="w-12 h-12 text-gray-550 dark:text-gray-600 mx-auto mb-3 animate-pulse" />
+                  <h4 className="font-bold text-gray-955 dark:text-white">No reviews stored in database yet</h4>
+                  <p className="text-xs text-gray-550 dark:text-gray-500 max-w-sm mx-auto leading-relaxed">
+                    Your Supabase database table is empty. Sync all 9 default customer testimonials to populate the table instantly.
+                  </p>
+                  <button
+                    onClick={handleSyncReviews}
+                    disabled={loading}
+                    className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-95 transition-all cursor-pointer"
+                  >
+                    {loading ? "Syncing..." : "Sync Default Reviews"}
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {adminReviews.map((rev) => (
+                    <div key={rev.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-850 p-5 rounded-3xl space-y-4 flex flex-col justify-between transition-colors">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-400 text-[9px] font-black uppercase rounded">
+                            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-[9px] font-black uppercase rounded">
                               {rev.service}
                             </span>
-                            <span className="px-2 py-0.5 bg-white/5 text-gray-300 text-[9px] font-black uppercase rounded">
+                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-[9px] font-black uppercase rounded">
                               {rev.location}
                             </span>
                           </div>
                           <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-wider ${
                             rev.approved 
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                           }`}>
                             {rev.approved ? "Approved" : "Hidden"}
                           </span>
@@ -1440,41 +1655,194 @@ export default function AdminPage() {
 
                         <div className="flex gap-0.5">
                           {Array.from({ length: rev.rating || 5 }).map((_, idx) => (
-                            <Star key={idx} size={12} className="text-yellow-400 fill-yellow-400" />
+                            <Star key={idx} size={12} className="text-yellow-500 fill-yellow-550" />
                           ))}
                         </div>
 
-                        <p className="text-xs text-gray-300 leading-relaxed italic">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed italic">
                           &ldquo;{rev.review}&rdquo;
                         </p>
 
                         <div className="text-[10px] text-gray-500">
-                          By <strong className="text-white">{rev.name}</strong> ({rev.role}) on {rev.date}
+                          By <strong className="text-gray-950 dark:text-white">{rev.name}</strong> ({rev.role}) on {rev.date}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 border-t border-gray-850 pt-3 mt-2">
+                      <div className="flex items-center justify-end gap-2 border-t border-gray-200 dark:border-gray-850 pt-3 mt-2">
                         <button
                           onClick={() => handleToggleReviewApproval(rev.id, rev.approved)}
                           className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                             rev.approved
-                              ? "bg-amber-600/10 hover:bg-amber-600/20 border border-amber-600/20 text-amber-400"
-                              : "bg-emerald-600/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400"
+                              ? "bg-amber-600/10 hover:bg-amber-600/20 border border-amber-600/20 text-amber-600 dark:text-amber-400"
+                              : "bg-emerald-600/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                           }`}
                         >
                           {rev.approved ? "Hide Review" : "Approve"}
                         </button>
                         <button
                           onClick={() => handleDeleteReview(rev.id)}
-                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-lg transition-colors cursor-pointer"
                           title="Delete Review"
                         >
                           <Trash size={12} />
                         </button>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === "admin-users" && userRole === "super_admin" && (
+            /* ── SECTION: Database Synced Admin User Management Panel ────────── */
+            <div className="space-y-8">
+              
+              {/* Info Header alert */}
+              <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex gap-3 text-orange-850 dark:text-orange-355 text-xs">
+                <Lock size={18} className="flex-shrink-0 mt-0.5 text-orange-600 dark:text-orange-400" />
+                <div>
+                  <strong className="font-extrabold block mb-1">Super Administrator Control Panel</strong>
+                  Administrators registered here are authorized to log into the Service Desk Control Panel, modify prices, catalog items, review logs, and manage tickets.
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                
+                {/* Form to Register New User */}
+                <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 transition-colors">
+                  <h3 className="text-base font-black text-gray-950 dark:text-white mb-4">Register New Administrator</h3>
+                  
+                  <form onSubmit={handleCreateAdminUser} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Username</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter unique username"
+                        value={newAdminUsername}
+                        onChange={(e) => setNewAdminUsername(e.target.value)}
+                        className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Access Role</label>
+                      <select
+                        value={newAdminRole}
+                        onChange={(e) => setNewAdminRole(e.target.value as "admin" | "super_admin")}
+                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                      >
+                        <option value="admin">Admin (Modify Products & Leads)</option>
+                        <option value="super_admin">Super Admin (All permissions)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Password</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="Minimum 6 characters"
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                      />
+                    </div>
+
+                    {adminManagerError && (
+                      <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl text-center">
+                        {adminManagerError}
+                      </div>
+                    )}
+
+                    {adminManagerSuccess && (
+                      <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl text-center">
+                        {adminManagerSuccess}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-black rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                    >
+                      {loading ? "Registering..." : "Add Admin Account"}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Table list of all registered accounts */}
+                <div className="bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 lg:col-span-2 transition-colors">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-black text-gray-955 dark:text-white">Active Database Accounts</h3>
+                    <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-655 dark:text-gray-450 text-[10px] font-black rounded-md">
+                      {adminUsers.length} total
+                    </span>
+                  </div>
+
+                  {adminUsers.length === 0 ? (
+                    <div className="text-center py-10 bg-white/5 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl text-xs text-gray-500">
+                      Loading registered account logs...
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-850 text-gray-650 dark:text-gray-400 uppercase tracking-wider font-extrabold text-[10px]">
+                            <th className="py-2.5 px-3">Username</th>
+                            <th className="py-2.5 px-3">Access Level</th>
+                            <th className="py-2.5 px-3">Registered At</th>
+                            <th className="py-2.5 px-3 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminUsers.map((usr) => {
+                            const isSelf = usr.username === sessionUsername;
+                            return (
+                              <tr key={usr.id || usr.username} className="border-b border-gray-200 dark:border-gray-850/50 hover:bg-white/5 transition-colors">
+                                <td className="py-3 px-3 font-extrabold text-gray-950 dark:text-white flex items-center gap-1.5">
+                                  <span>👤 {usr.username}</span>
+                                  {isSelf && (
+                                    <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase rounded">
+                                      You
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase ${
+                                    usr.role === "super_admin"
+                                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20"
+                                      : "bg-gray-200 dark:bg-gray-850 text-gray-700 dark:text-gray-300"
+                                  }`}>
+                                    {usr.role === "super_admin" ? "Super Admin" : "Admin"}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-gray-500">
+                                  {usr.created_at ? new Date(usr.created_at).toLocaleDateString("en-IN", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric"
+                                  }) : "System Default"}
+                                </td>
+                                <td className="py-3 px-3 text-right">
+                                  <button
+                                    onClick={() => handleDeleteAdminUser(usr.username)}
+                                    disabled={isSelf || usr.username === "admin"}
+                                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 disabled:opacity-30 text-rose-500 rounded-lg transition-colors cursor-pointer"
+                                    title={isSelf ? "Cannot delete active session account" : "Delete Admin"}
+                                  >
+                                    <Trash size={12} />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Filter, MessageCircle, Laptop, ShieldCheck, Tag } from "lucide-react";
+import { Search, MessageCircle, Laptop, ShieldCheck, Tag } from "lucide-react";
 
 interface ProductItem {
   brand: string;

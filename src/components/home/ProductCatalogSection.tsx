@@ -95,36 +95,6 @@ const defaultStaticProducts: Product[] = [
     ]
   },
   {
-    id: "prod-6",
-    category: "cctv",
-    title: "4-Camera Full HD CCTV Kit",
-    description: "Complete security surveillance kit with mobile app remote monitoring setup.",
-    price: "₹7,999",
-    originalPrice: "₹15,000",
-    badge: "Home Security",
-    specs: [
-      "4 Channel Full HD Recording DVR",
-      "2 Dome + 2 Bullet Night-Vision Cams",
-      "500GB CCTV Surveillance HDD",
-      "Coaxial Cable Roll & Power Adapters"
-    ]
-  },
-  {
-    id: "prod-7",
-    category: "cctv",
-    title: "8-Camera IP Surveillance Kit",
-    description: "Ultra HD network security cameras with POE network switch and central NVR recording.",
-    price: "₹18,499",
-    originalPrice: "₹35,000",
-    badge: "Enterprise Tech",
-    specs: [
-      "8 Channel Network NVR Recorder",
-      "8 IP Dome Cameras (HD Night Vision)",
-      "2TB Dedicated Surveillance Hard Drive",
-      "Gigabit POE Network Switch Included"
-    ]
-  },
-  {
     id: "prod-8",
     category: "spare-parts",
     title: "Crucial DDR4 8GB Laptop RAM",
@@ -217,7 +187,7 @@ export default function ProductCatalogSection() {
   const getTabLabel = (tab: typeof activeTab) => {
     switch (tab) {
       case "laptops": return "Refurbished Laptops";
-      case "desktops": return "Refurbished Desktops";
+      case "desktops": return "New Desktops";
       case "cctv": return "CCTV Kits";
       case "spare-parts": return "Spare Parts";
       case "accessories": return "Mobile Accessories";
@@ -246,7 +216,7 @@ export default function ProductCatalogSection() {
 
         {/* Tab Controls */}
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-12">
-          {(["laptops", "desktops", "cctv", "spare-parts", "accessories"] as const).map((tab) => (
+          {(["laptops", "desktops", "spare-parts", "accessories"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

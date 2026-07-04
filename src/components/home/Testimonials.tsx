@@ -1,14 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Quote, StarHalf } from "lucide-react";
+import { Star, Quote } from "lucide-react";
+import { Testimonial } from "@/lib/data/testimonials";
 
 export default function Testimonials() {
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [newReview, setNewReview] = useState({
     name: "",
@@ -20,22 +22,25 @@ export default function Testimonials() {
   });
 
   useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  const fetchReviews = async () => {
-    try {
-      const res = await fetch("/api/testimonials");
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data || []);
+    let active = true;
+    const fetchReviewsData = async () => {
+      try {
+        const res = await fetch("/api/testimonials");
+        if (res.ok && active) {
+          const data = await res.json();
+          setReviews(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load testimonials:", err);
+      } finally {
+        if (active) setLoading(false);
       }
-    } catch (err) {
-      console.error("Failed to load testimonials:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchReviewsData();
+    return () => {
+      active = false;
+    };
+  }, [refreshTrigger]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +61,7 @@ export default function Testimonials() {
           role: "Customer",
           review: ""
         });
-        fetchReviews();
+        setRefreshTrigger((prev) => prev + 1);
         setTimeout(() => setSuccess(false), 5000);
         setShowForm(false);
       } else {

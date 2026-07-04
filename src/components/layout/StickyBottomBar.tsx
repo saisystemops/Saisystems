@@ -1,5 +1,5 @@
 "use client";
-import { Phone, MessageCircle, CalendarDays, Search, Tag } from "lucide-react";
+import { Phone, MessageCircle, CalendarDays, Tag } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import { trackCallClick, trackWhatsAppClick, trackBookingClick } from "@/lib/analytics";
 

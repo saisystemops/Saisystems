@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import crypto from "crypto";
 
-const FALLBACK_USER = process.env.ADMIN_USERNAME || "admin";
-const FALLBACK_PASS = process.env.ADMIN_PASSWORD || "saisystems@2026";
+const FALLBACK_USER = process.env.ADMIN_USERNAME;
+const FALLBACK_PASS = process.env.ADMIN_PASSWORD;
 
 function sha256(secret: string): string {
   return crypto.createHash("sha256").update(secret).digest("hex");
@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Username and password required" }, { status: 400 });
     }
 
-    // 1. Verify against config fallbacks
-    if (username === FALLBACK_USER && password === FALLBACK_PASS) {
+    // 1. Verify against config fallbacks (only if defined in environment)
+    if (FALLBACK_USER && FALLBACK_PASS && username === FALLBACK_USER && password === FALLBACK_PASS) {
       const response = NextResponse.json({ success: true, role: "super_admin" });
       response.cookies.set("admin_session", "authenticated-fallback", {
         path: "/",

@@ -2,9 +2,9 @@
 // UPDATE ALL VALUES MARKED WITH "← UPDATE" BEFORE DEPLOYING
 export const siteConfig = {
   name: "Sai Systems",
-  tagline: "New & Refurbished Laptops, Computers, Spare Parts, Mobile Accessories & CCTV Services",
+  tagline: "Premium Refurbished Laptops & New Desktops, Computers, Spare Parts & Accessories",
   description:
-    "Wholesale and retail of new & refurbished laptops, computers, genuine spare parts, mobile accessories, CCTV setups, and professional IT services in Dindigul.",
+    "We supply Refurbished Laptops, New Computers, genuine spare parts, and mobile accessories for wholesale and retail in Dindigul.",
   url: "https://saisystems.org.in",
   phone: "+91 79041 08020",
   whatsapp: "917904108020",
@@ -25,7 +25,7 @@ export const siteConfig = {
     youtube: "https://youtube.com/@saisystems",
     twitter: "https://twitter.com/saisystems",
   },
-  businessHours: "Mon–Sat: 9:00 AM – 7:30 PM | Sun: Closed",
+  businessHours: "Mon–Sat: 10:00 AM – 8:00 PM | Sun: Closed",
   established: "2018",
   gstNumber: "33NACPS2186E1ZI",
   rating: 4.9,

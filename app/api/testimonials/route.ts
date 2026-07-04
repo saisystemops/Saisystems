@@ -25,6 +25,37 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    // Check if it is a sync action
+    if (body.action === "sync_defaults") {
+      const supabase = createServerClient();
+      
+      // Let's check if the table already has data to prevent duplicate seedings
+      const { data: existing } = await supabase.from("testimonials").select("id").limit(1);
+      if (existing && existing.length > 0) {
+        return NextResponse.json({ message: "Reviews already seeded", success: true });
+      }
+
+      // Seed all default testimonials
+      const seedData = defaultTestimonials.map((t) => ({
+        name: t.name,
+        review: t.review,
+        service: t.service,
+        rating: Number(t.rating),
+        location: t.location || "Dindigul",
+        role: t.role || "Customer",
+        date: t.date,
+        approved: true
+      }));
+
+      const { data, error } = await supabase.from("testimonials").insert(seedData).select();
+      if (error) {
+        console.error("Supabase seed testimonials error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, count: data?.length || 0 });
+    }
+
     const { name, review, service, rating, location, role } = body;
 
     if (!name || !review || !service || !rating) {
@@ -61,8 +92,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(data[0]);
-  } catch (err: any) {
+  } catch (err) {
     console.error("Failed to submit review:", err);
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+    const errorVal = err as Error;
+    return NextResponse.json({ error: errorVal.message || "Server error" }, { status: 500 });
   }
 }

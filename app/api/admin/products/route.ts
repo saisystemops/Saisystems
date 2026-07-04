@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-import { defaultProducts } from "@/lib/data/default-products";
+import { defaultProducts, Product } from "@/lib/data/default-products";
+
+interface Ticket {
+  id: string;
+  ticket_ref: string;
+  title: string;
+  description: string;
+  customer_name: string | null;
+  customer_contact_phone: string | null;
+  category: string;
+  priority: string;
+  status: string;
+  site_city: string;
+  created_at: string;
+}
 
 function checkAuth(req: NextRequest): boolean {
   const session = req.cookies.get("admin_session")?.value;
@@ -24,7 +38,7 @@ export async function GET(req: NextRequest) {
     const adminUsersTableReady = !userErr || (userErr.code !== "PGRST116" && !userErr.message?.includes("does not exist"));
 
     // Fetch tickets & leads
-    let tickets: any[] = [];
+    let tickets: Ticket[] = [];
     const { data: ticketData, error: ticketErr } = await supabase
       .from("tickets")
       .select("*")
@@ -32,11 +46,11 @@ export async function GET(req: NextRequest) {
       .limit(50);
 
     if (!ticketErr && ticketData) {
-      tickets = ticketData;
+      tickets = ticketData as unknown as Ticket[];
     }
 
     // Fetch full products list
-    let products: any[] = [];
+    let products: Product[] = [];
     const { data: prodData, error: fetchProdErr } = await supabase
       .from("products")
       .select("*")

@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ChevronLeft, ChevronRight } from "lucide-react";
 import { siteConfig } from "@/lib/config";
-import { trackCallClick, trackWhatsAppClick, trackBookingClick } from "@/lib/analytics";
+import { trackWhatsAppClick, trackBookingClick } from "@/lib/analytics";
+import { Product } from "@/lib/data/default-products";
 
 const stats = [
   { value: "8+", label: "Years Excellence" },
@@ -20,8 +21,18 @@ const badges = [
   { icon: CheckCircle, text: "Free Consultation" },
 ];
 
+interface HeroDeal {
+  id?: string;
+  title: string;
+  price: string;
+  originalPrice?: string;
+  badge?: string;
+  category: string;
+  specs: string[];
+}
+
 export default function HeroSection() {
-  const [deals, setDeals] = useState<any[]>([
+  const [deals, setDeals] = useState<HeroDeal[]>([
     {
       title: "Lenovo ThinkPad T480",
       price: "₹15,499",
@@ -48,11 +59,6 @@ export default function HeroSection() {
     }
   ]);
 
-  const [dealCctv, setDealCctv] = useState({
-    title: "4-Camera Full HD CCTV Kit",
-    price: "₹7,999"
-  });
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -63,11 +69,12 @@ export default function HeroSection() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            const featured = data.filter((p: any) => 
-              p.category === "laptops" || p.category === "desktops" || p.category === "cctv"
+            const featured = data.filter((p: Product) => 
+              p.category === "laptops" || p.category === "desktops"
             );
             if (featured.length > 0) {
-              const mappedDeals = featured.slice(0, 6).map((p: any) => ({
+              const mappedDeals = featured.slice(0, 6).map((p: Product) => ({
+                id: p.id,
                 title: p.title,
                 price: p.price,
                 originalPrice: p.originalPrice || "",
@@ -76,14 +83,6 @@ export default function HeroSection() {
                 specs: Array.isArray(p.specs) ? p.specs : []
               }));
               setDeals(mappedDeals);
-            }
-
-            const cctv = data.find((p: any) => p.category === "cctv");
-            if (cctv) {
-              setDealCctv({
-                title: cctv.title,
-                price: cctv.price
-              });
             }
           }
         }
@@ -94,6 +93,24 @@ export default function HeroSection() {
     loadHeroDeals();
   }, []);
 
+  const handleNext = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % deals.length);
+      setIsTransitioning(false);
+    }, 200);
+  }, [isTransitioning, deals.length]);
+
+  const handlePrev = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + deals.length) % deals.length);
+      setIsTransitioning(false);
+    }, 200);
+  }, [isTransitioning, deals.length]);
+
   // Automatic slideshow
   useEffect(() => {
     if (deals.length <= 1) return;
@@ -101,25 +118,7 @@ export default function HeroSection() {
       handleNext();
     }, 5500);
     return () => clearInterval(timer);
-  }, [deals, currentIndex]);
-
-  const handleNext = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % deals.length);
-      setIsTransitioning(false);
-    }, 200);
-  };
-
-  const handlePrev = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + deals.length) % deals.length);
-      setIsTransitioning(false);
-    }, 200);
-  };
+  }, [deals.length, handleNext]);
 
   const currentDeal = deals[currentIndex] || deals[0];
   const specLabels = currentDeal.category === "cctv" 
@@ -163,7 +162,7 @@ export default function HeroSection() {
 
             {/* Premium Gold/Copper Gradient Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-950 dark:text-white leading-none tracking-tight mb-6">
-              Premium New &amp; Refurbished Laptops &amp; Desktops
+              Premium Refurbished Laptops &amp; New Desktops
               <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-amber-500 to-amber-400 dark:from-orange-500 dark:via-amber-400 dark:to-amber-300">
                 At Wholesale Prices.
               </span>
@@ -171,7 +170,7 @@ export default function HeroSection() {
 
             {/* Description */}
             <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg mb-8 leading-relaxed max-w-2xl font-medium">
-              We supply certified new &amp; refurbished laptops, computers, genuine spare parts, and mobile accessories for wholesale and retail. Also specializing in professional CCTV configurations, office networking, and expert chip-level servicing in Dindigul.
+              We supply Refurbished Laptops, New Computers, genuine spare parts, and mobile accessories for wholesale and retail. Also specializing in office networking and expert chip-level servicing in Dindigul.
             </p>
 
             {/* Call-to-action buttons */}
@@ -297,8 +296,8 @@ export default function HeroSection() {
                     </div>
                     {currentDeal.category === "laptops" ? (
                       <div>
-                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">Surveillance offer</div>
-                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">{dealCctv.title}</div>
+                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">New Desktop Offer</div>
+                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Intel Core i5 Desktop Setup</div>
                       </div>
                     ) : (
                       <div>
@@ -310,7 +309,7 @@ export default function HeroSection() {
                   <div className="text-right">
                     <div className="text-[9px] text-gray-500 dark:text-gray-400 font-bold">Inclusive Pack</div>
                     <div className="text-xs font-black text-gray-950 dark:text-white">
-                      {currentDeal.category === "laptops" ? `${dealCctv.price}*` : "₹14,999*"}
+                      {currentDeal.category === "laptops" ? "₹12,499*" : "₹14,999*"}
                     </div>
                   </div>
                 </div>

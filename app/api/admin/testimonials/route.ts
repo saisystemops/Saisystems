@@ -19,8 +19,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(data || []);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+  } catch (err) {
+    const errorVal = err as Error;
+    return NextResponse.json({ error: errorVal.message || "Server error" }, { status: 500 });
   }
 }
 
@@ -50,8 +51,9 @@ export async function PUT(req: NextRequest) {
     }
 
     return NextResponse.json(data[0]);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+  } catch (err) {
+    const errorVal = err as Error;
+    return NextResponse.json({ error: errorVal.message || "Server error" }, { status: 500 });
   }
 }
 
@@ -80,7 +82,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+  } catch (err) {
+    const errorVal = err as Error;
+    return NextResponse.json({ error: errorVal.message || "Server error" }, { status: 500 });
   }
 }

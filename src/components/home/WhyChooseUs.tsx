@@ -1,5 +1,5 @@
 "use client";
-import { Shield, Zap, RefreshCw, CheckSquare, Award } from "lucide-react";
+import { Shield, RefreshCw, CheckSquare, Award } from "lucide-react";
 
 const metrics = [
   {
@@ -50,7 +50,7 @@ export default function WhyChooseUs() {
             Designed For Complete <span className="text-gradient">Peace of Mind</span>
           </h2>
           <p className="text-gray-700 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base font-semibold leading-relaxed">
-            We don't just supply IT hardware — we back every purchase with rigorous testing, local service support, and transparent wholesale pricing.
+            We don&apos;t just supply IT hardware — we back every purchase with rigorous testing, local service support, and transparent wholesale pricing.
           </p>
         </div>
 

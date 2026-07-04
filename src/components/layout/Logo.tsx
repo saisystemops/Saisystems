@@ -36,7 +36,7 @@ export default function Logo({
       
       {showText && (
         <div className="flex flex-col justify-center">
-          <span className="text-lg font-black uppercase tracking-wider text-orange-600 dark:text-orange-500 leading-none">
+          <span className={`${textSizeClass} font-black uppercase tracking-wider ${textColorClass} leading-none`}>
             SAI
           </span>
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 leading-none mt-1">
