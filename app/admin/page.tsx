@@ -19,7 +19,8 @@ import {
   MessageCircle,
   FileText,
   AlertCircle,
-  Calculator
+  Calculator,
+  Star
 } from "lucide-react";
 import type { Product } from "@/lib/data/default-products";
 
@@ -42,7 +43,7 @@ type Ticket = {
   created_at: string;
 };
 
-type SidebarSection = "all" | "laptops" | "desktops" | "cctv" | "spare-parts" | "accessories" | "tickets" | "estimator";
+type SidebarSection = "all" | "laptops" | "desktops" | "cctv" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,6 +60,9 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [dbStatus, setDbStatus] = useState<DBStatus>({ productsTable: "missing", adminUsersTable: "missing" });
+  
+  // Reviews states
+  const [adminReviews, setAdminReviews] = useState<any[]>([]);
   
   // Cost Estimator pricing states
   const [estimates, setEstimates] = useState<any[]>([]);
@@ -143,6 +147,13 @@ export default function AdminPage() {
       if (estRes.ok) {
         const estData = await estRes.json();
         setEstimates(estData || []);
+      }
+
+      // Fetch reviews
+      const reviewsRes = await fetch("/api/admin/testimonials");
+      if (reviewsRes.ok) {
+        const reviewsData = await reviewsRes.json();
+        setAdminReviews(reviewsData || []);
       }
     } catch (err) {
       console.error("Failed to load admin logs:", err);
@@ -409,6 +420,46 @@ export default function AdminPage() {
     }
   };
 
+  // Reviews handlers
+  const handleToggleReviewApproval = async (id: string, currentlyApproved: boolean) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/testimonials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approved: !currentlyApproved })
+      });
+      if (res.ok) {
+        fetchAdminData();
+      } else {
+        alert("Failed to update review approval");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this customer review permanently?")) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/testimonials?id=${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        fetchAdminData();
+      } else {
+        alert("Failed to delete review");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Counters for sidebar items
   const countByCategory = (cat: Product["category"]) => products.filter((p) => p.category === cat).length;
   
@@ -611,6 +662,18 @@ export default function AdminPage() {
               >
                 <span className="flex items-center gap-2"><Inbox size={13} /> Leads &amp; Tickets</span>
                 <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{tickets.length}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveSection("reviews")}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                  activeSection === "reviews"
+                    ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                }`}
+              >
+                <span className="flex items-center gap-2"><Star size={13} /> Customer Reviews</span>
+                <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{adminReviews.length}</span>
               </button>
             </nav>
           </div>
@@ -1322,6 +1385,84 @@ export default function AdminPage() {
                             <MessageCircle size={14} /> Open WhatsApp
                           </a>
                         )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeSection === "reviews" && (
+            /* ── SECTION: Customer Reviews Moderation ────────────────────────── */
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-black text-white">Customer Reviews Moderation</h3>
+                <p className="text-xs text-gray-400 mt-1">Approve, hide, or delete customer reviews submitted via the homepage testimonials wall.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {adminReviews.length === 0 ? (
+                  <div className="md:col-span-2 text-center py-20 bg-gray-900/10 border border-gray-900 rounded-3xl">
+                    <Star className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                    <h4 className="font-bold text-white">No reviews submitted yet</h4>
+                    <p className="text-xs text-gray-500 mt-1">When customers submit feedback on the home page testimonials, they will appear here.</p>
+                  </div>
+                ) : (
+                  adminReviews.map((rev) => (
+                    <div key={rev.id} className="bg-gray-900 border border-gray-850 p-5 rounded-3xl space-y-4 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-400 text-[9px] font-black uppercase rounded">
+                              {rev.service}
+                            </span>
+                            <span className="px-2 py-0.5 bg-white/5 text-gray-300 text-[9px] font-black uppercase rounded">
+                              {rev.location}
+                            </span>
+                          </div>
+                          <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-wider ${
+                            rev.approved 
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          }`}>
+                            {rev.approved ? "Approved" : "Hidden"}
+                          </span>
+                        </div>
+
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: rev.rating || 5 }).map((_, idx) => (
+                            <Star key={idx} size={12} className="text-yellow-400 fill-yellow-400" />
+                          ))}
+                        </div>
+
+                        <p className="text-xs text-gray-300 leading-relaxed italic">
+                          &ldquo;{rev.review}&rdquo;
+                        </p>
+
+                        <div className="text-[10px] text-gray-500">
+                          By <strong className="text-white">{rev.name}</strong> ({rev.role}) on {rev.date}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 border-t border-gray-850 pt-3 mt-2">
+                        <button
+                          onClick={() => handleToggleReviewApproval(rev.id, rev.approved)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                            rev.approved
+                              ? "bg-amber-600/10 hover:bg-amber-600/20 border border-amber-600/20 text-amber-400"
+                              : "bg-emerald-600/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400"
+                          }`}
+                        >
+                          {rev.approved ? "Hide Review" : "Approve"}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReview(rev.id)}
+                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Review"
+                        >
+                          <Trash size={12} />
+                        </button>
                       </div>
                     </div>
                   ))
