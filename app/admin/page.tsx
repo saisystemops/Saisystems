@@ -1349,7 +1349,7 @@ export default function AdminPage() {
           )}
 
           {/* ── SECTION: Showroom Products List or Estimator ─────────────────── */}
-          {activeSection === "tickets" || activeSection === "reviews" || activeSection === "admin-users" ? null : activeSection === "estimator" ? (
+          {activeSection === "tickets" || activeSection === "reviews" || activeSection === "admin-users" || activeSection === "blogs" ? null : activeSection === "estimator" ? (
             /* ── SECTION: Cost Estimator Pricing Grid ── */
             <div className="space-y-6">
               {/* Header and Add Form */}
