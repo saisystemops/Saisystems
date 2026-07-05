@@ -16,6 +16,7 @@ type Product = {
   specs: string[];
   inStock?: boolean;
   imageUrl?: string;
+  whatsappLink?: string;
 };
 
 const defaultStaticProducts: Product[] = [
@@ -287,7 +288,7 @@ export default function ProductCatalogSection() {
                 {/* Bottom Buttons */}
                 <div className="flex gap-2">
                   <a
-                    href={`https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
+                    href={product.whatsappLink || `https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25d366] text-white text-xs font-black rounded-xl hover:bg-[#20bd5a] transition-all hover:scale-[1.02]"

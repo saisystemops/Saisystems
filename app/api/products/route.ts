@@ -26,6 +26,7 @@ export async function GET() {
       specs: Array.isArray(item.specs) ? item.specs : [],
       inStock: item.in_stock !== false, // Defaults to true if not specified
       imageUrl: item.image_url || "",
+      whatsappLink: item.whatsapp_link || "",
     }));
 
     // Filter out products that are out of stock

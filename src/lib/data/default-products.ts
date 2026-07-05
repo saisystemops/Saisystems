@@ -9,6 +9,7 @@ export type Product = {
   specs: string[];
   inStock?: boolean;
   imageUrl?: string;
+  whatsappLink?: string;
 };
 
 export const defaultProducts: Product[] = [

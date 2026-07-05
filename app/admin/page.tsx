@@ -417,7 +417,8 @@ export default function AdminPage() {
     originalPrice: "",
     badge: "",
     specs: [],
-    inStock: true
+    inStock: true,
+    whatsappLink: ""
   });
   const [newSpecText, setNewSpecText] = useState("");
 
@@ -1282,6 +1283,16 @@ export default function AdminPage() {
                       className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">WhatsApp Catalog Link (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://wa.me/p/10032918260090500/182592162779309"
+                      value={newProduct.whatsappLink || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
+                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
                   <div className="sm:col-span-2 md:col-span-3">
                     <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
                     <input
@@ -1693,6 +1704,16 @@ export default function AdminPage() {
                                     specs: e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
                                   })
                                 }
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 md:col-span-3">
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link (Optional)</label>
+                              <input
+                                type="text"
+                                value={editProduct.whatsappLink || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, whatsappLink: e.target.value })}
+                                placeholder="e.g. https://wa.me/p/10032918260090500/182592162779309"
                                 className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>

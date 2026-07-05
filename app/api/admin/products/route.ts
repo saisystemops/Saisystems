@@ -145,6 +145,7 @@ export async function GET(req: NextRequest) {
         specs: Array.isArray(item.specs) ? item.specs : [],
         inStock: item.in_stock !== false,
         imageUrl: item.image_url || "",
+        whatsappLink: item.whatsapp_link || "",
       }));
     }
 
@@ -175,7 +176,7 @@ export async function POST(req: NextRequest) {
     const supabase = createServerClient();
 
     if (action === "create" && product) {
-      const { id, category, title, description, price, originalPrice, badge, specs, inStock, imageUrl } = product;
+      const { id, category, title, description, price, originalPrice, badge, specs, inStock, imageUrl, whatsappLink } = product;
 
       // Clean up any existing product with this ID to prevent duplicate keys
       await supabase.from("products").delete().eq("id", id);
@@ -191,6 +192,7 @@ export async function POST(req: NextRequest) {
         specs: Array.isArray(specs) ? specs : [],
         in_stock: inStock !== false,
         image_url: imageUrl || "",
+        whatsapp_link: whatsappLink || "",
       });
 
       if (error) {
@@ -232,6 +234,7 @@ export async function PUT(req: NextRequest) {
         specs: Array.isArray(product.specs) ? product.specs : [],
         in_stock: product.inStock !== false,
         image_url: product.imageUrl || "",
+        whatsapp_link: product.whatsappLink || "",
       })
       .eq("id", product.id);
 

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search, MessageCircle, Laptop, ShieldCheck, Tag } from "lucide-react";
+import { siteConfig } from "@/lib/config";
 
 interface ProductItem {
   brand: string;
@@ -186,7 +187,7 @@ export default function ProductsClient() {
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">{item.desc}</p>
                       </div>
                       <a
-                        href={`https://wa.me/919487179676?text=${encodeURIComponent(inquiryText)}`}
+                        href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(inquiryText)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-green-700 dark:text-green-400 font-bold hover:underline flex items-center gap-1.5 self-start group"
