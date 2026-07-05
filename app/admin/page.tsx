@@ -190,6 +190,38 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteTicket = async (ticket: Ticket) => {
+    if (!confirm(`Are you sure you want to permanently delete this repair incident (${ticket.ticket_ref})?`)) {
+      return;
+    }
+    setTicketSaveLoading(true);
+    setTicketError("");
+    setTicketSuccess("");
+    try {
+      const res = await fetch(
+        `/api/admin/tickets?type=${ticket.category === "appointment" ? "appointment" : ticket.category === "lead" ? "lead" : "ticket"}&id=${ticket.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTicketSuccess("Incident deleted successfully!");
+        await fetchAdminData();
+      } else {
+        setTicketError(data.message || "Failed to delete incident.");
+        alert(data.message || "Failed to delete incident.");
+      }
+    } catch (err) {
+      console.error(err);
+      setTicketError("Network issue. Failed to delete.");
+      alert("Network issue. Failed to delete.");
+    } finally {
+      setTicketSaveLoading(false);
+    }
+  };
+
   const fetchBlogsList = async () => {
     setBlogsLoading(true);
     setBlogsError("");
@@ -1858,7 +1890,7 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 self-start md:self-center">
+                        <div className="flex gap-2 self-start md:self-center items-center">
                           {ticket.customer_contact_phone && (
                             <a
                               href={`https://wa.me/${ticket.customer_contact_phone.replace(/\D/g, "")}`}
@@ -1869,6 +1901,14 @@ export default function AdminPage() {
                               <MessageCircle size={14} /> Open WhatsApp
                             </a>
                           )}
+                          <button
+                            onClick={() => handleDeleteTicket(ticket)}
+                            disabled={ticketSaveLoading}
+                            className="p-3.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+                            title="Delete Incident"
+                          >
+                            <Trash size={14} />
+                          </button>
                         </div>
                       </div>
 
