@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
       // Clean up any existing product with this ID to prevent duplicate keys
       await supabase.from("products").delete().eq("id", id);
 
-      const { error } = await supabase.from("products").insert({
+      let { error } = await supabase.from("products").insert({
         id,
         category,
         title,
@@ -194,6 +194,23 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl || "",
         whatsapp_link: whatsappLink || "",
       });
+
+      // Fallback if whatsapp_link column does not exist yet in Supabase
+      if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
+        const retryResult = await supabase.from("products").insert({
+          id,
+          category,
+          title,
+          description,
+          price,
+          original_price: originalPrice,
+          badge,
+          specs: Array.isArray(specs) ? specs : [],
+          in_stock: inStock !== false,
+          image_url: imageUrl || "",
+        });
+        error = retryResult.error;
+      }
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -222,7 +239,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const supabase = createServerClient();
-    const { error } = await supabase
+    let { error } = await supabase
       .from("products")
       .update({
         category: product.category,
@@ -237,6 +254,25 @@ export async function PUT(req: NextRequest) {
         whatsapp_link: product.whatsappLink || "",
       })
       .eq("id", product.id);
+
+    // Fallback if whatsapp_link column does not exist yet in Supabase
+    if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
+      const retryResult = await supabase
+        .from("products")
+        .update({
+          category: product.category,
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          original_price: product.originalPrice,
+          badge: product.badge,
+          specs: Array.isArray(product.specs) ? product.specs : [],
+          in_stock: product.inStock !== false,
+          image_url: product.imageUrl || "",
+        })
+        .eq("id", product.id);
+      error = retryResult.error;
+    }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
