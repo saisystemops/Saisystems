@@ -286,21 +286,23 @@ export default function ProductCatalogSection() {
                 </div>
 
                 {/* Bottom Buttons */}
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <a
-                    href={product.whatsappLink || `https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
+                    href={`https://wa.me/${siteConfig.whatsapp}?text=${getWhatsAppMsg(product)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25d366] text-white text-xs font-black rounded-xl hover:bg-[#20bd5a] transition-all hover:scale-[1.02]"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25d366] text-white text-xs font-black rounded-xl hover:bg-[#20bd5a] transition-all hover:scale-[1.02] cursor-pointer"
                   >
-                    <MessageCircle size={14} /> Get Price List
+                    <MessageCircle size={14} /> Inquire via Chat
                   </a>
-                  <Link
-                    href="/book-service"
-                    className="px-3.5 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:border-orange-500 hover:text-orange-500 transition-all hover:scale-[1.02]"
+                  <a
+                    href={product.whatsappLink || `https://wa.me/c/${siteConfig.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-705 dark:text-gray-300 text-xs font-black rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer"
                   >
-                    <ArrowRight size={14} />
-                  </Link>
+                    🔍 View Catalogue
+                  </a>
                 </div>
 
                 {/* Trust Stamp */}
