@@ -321,14 +321,24 @@ export default function ProductCatalogSection() {
             <p className="text-xs text-gray-500 dark:text-gray-450 max-w-sm mx-auto mb-6 leading-relaxed font-bold">
               We are currently updating our showroom stock for {getTabLabel(activeTab).toLowerCase()}. New systems and genuine accessories are added daily!
             </p>
-            <a
-              href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(`Hi Sai Systems! I am looking for refurbished deals and models in ${getTabLabel(activeTab)}. Please send me the latest pricing list.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#25d366] hover:bg-[#20bd5a] text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer"
-            >
-              <MessageCircle size={15} /> WhatsApp Support for Price List
-            </a>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+              <a
+                href={`https://wa.me/c/${siteConfig.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#25d366] hover:bg-[#20bd5a] text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer"
+              >
+                <MessageCircle size={15} /> Browse Live Catalogue
+              </a>
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(`Hi Sai Systems! I am looking for refurbished deals and models in ${getTabLabel(activeTab)}. Please send me the latest pricing list.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-gray-800 border border-gray-250 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs font-black rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm active:scale-[0.98] cursor-pointer"
+              >
+                Inquire via Chat
+              </a>
+            </div>
           </div>
         )}
 
