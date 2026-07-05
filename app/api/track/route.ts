@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const query = searchParams.get("q")?.trim() || "";
 
-    if (!query) {
-      return NextResponse.json({ success: false, message: "Search query is required." }, { status: 400 });
+    if (!query || query.length < 4) {
+      return NextResponse.json({ success: false, message: "Search query must be at least 4 characters long." }, { status: 400 });
     }
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
