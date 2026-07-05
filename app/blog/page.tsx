@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { blogPosts as fallbackPosts } from "@/lib/data/blog-posts";
+import { blogPosts as fallbackPosts, getBlogFallbackImage } from "@/lib/data/blog-posts";
 import { createServerClient } from "@/lib/supabase";
 import { Clock, ArrowRight } from "lucide-react";
 
@@ -70,23 +70,14 @@ export default async function BlogPage() {
               className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:border-orange-500/20 dark:hover:border-orange-500/20 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                {post.imageUrl ? (
-                  <div 
-                    className="h-44 bg-cover bg-center relative"
-                    style={{ backgroundImage: `url('${post.imageUrl}')` }}
-                  >
-                    <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
-                      {post.category}
-                    </div>
+                <div 
+                  className="h-44 bg-cover bg-center relative"
+                  style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title)}')` }}
+                >
+                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
+                    {post.category}
                   </div>
-                ) : (
-                  <div className="h-44 bg-gradient-to-r from-orange-655 to-amber-550 flex items-center justify-center relative">
-                    <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
-                      {post.category}
-                    </div>
-                    <div className="text-5xl drop-shadow-md">📝</div>
-                  </div>
-                )}
+                </div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-550 mb-3">
                     <Clock size={12} />
@@ -103,7 +94,7 @@ export default async function BlogPage() {
                 </div>
               </div>
               <div className="px-6 pb-6 pt-0">
-                <div className="flex items-center gap-1 text-orange-655 dark:text-orange-400 text-xs font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider">
                   Read More <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>

@@ -684,3 +684,22 @@ For businesses, we recommend:
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
   return blogPosts.find((p) => p.slug === slug);
 }
+
+export function getBlogFallbackImage(category: string, title: string): string {
+  const cat = (category || "").toLowerCase();
+  const t = (title || "").toLowerCase();
+  
+  if (cat.includes("laptop") || cat.includes("battery") || cat.includes("screen") || t.includes("laptop") || t.includes("battery") || t.includes("screen")) {
+    return "/images/laptop-repair.jpg";
+  }
+  if (cat.includes("networking") || cat.includes("wifi") || t.includes("wifi") || t.includes("network")) {
+    return "/images/computer-networking.jpg";
+  }
+  if (cat.includes("hardware") || cat.includes("ssd") || cat.includes("storage") || t.includes("ssd") || t.includes("storage") || t.includes("hdd")) {
+    return "/images/hard-disk-repair.png";
+  }
+  if (cat.includes("maintenance") || t.includes("maintenance") || t.includes("antivirus") || t.includes("backup") || cat.includes("backup")) {
+    return "/images/cpu-repair.png";
+  }
+  return "/images/computer-repair.jpg";
+}

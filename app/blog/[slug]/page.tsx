@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { blogPosts as fallbackPosts, getBlogPostBySlug } from "@/lib/data/blog-posts";
+import { blogPosts as fallbackPosts, getBlogPostBySlug, getBlogFallbackImage } from "@/lib/data/blog-posts";
 import { createServerClient } from "@/lib/supabase";
 import { Clock, ArrowLeft, ArrowRight } from "lucide-react";
 import { siteConfig } from "@/lib/config";
@@ -105,7 +105,7 @@ export default async function BlogPostPage({ params }: Props) {
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         {/* Header */}
         <div className="mb-8">
-          <div className="inline-block px-3 py-1 bg-orange-500/10 dark:bg-orange-500/15 text-orange-655 dark:text-orange-400 text-xs font-bold uppercase rounded-full mb-4">
+          <div className="inline-block px-3 py-1 bg-orange-500/10 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase rounded-full mb-4">
             {post.category}
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-gray-950 dark:text-white mb-4 leading-tight tracking-tight">
@@ -124,27 +124,17 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
 
         {/* Hero image */}
-        {post.imageUrl ? (
-          <div 
-            className="h-64 bg-cover bg-center rounded-3xl mb-10 shadow-sm relative overflow-hidden"
-            style={{ backgroundImage: `url('${post.imageUrl}')` }}
-          >
-            <div className="absolute inset-0 bg-black/25" />
-            <div className="absolute bottom-6 left-6 text-white z-10">
-              <p className="bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider inline-block">
-                {post.category}
-              </p>
-            </div>
+        <div 
+          className="h-64 bg-cover bg-center rounded-3xl mb-10 shadow-sm relative overflow-hidden"
+          style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title)}')` }}
+        >
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute bottom-6 left-6 text-white z-10">
+            <p className="bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider inline-block">
+              {post.category}
+            </p>
           </div>
-        ) : (
-          <div className="h-64 bg-gradient-to-r from-orange-655 to-amber-550 rounded-3xl flex items-center justify-center mb-10 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
-            <div className="text-center text-white z-10">
-              <div className="text-6xl mb-2 drop-shadow-md">📝</div>
-              <p className="text-white/80 font-black text-xs uppercase tracking-wider">{post.category}</p>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Content */}
         <div className="prose prose-lg dark:prose-invert max-w-none">
@@ -158,12 +148,12 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
 
         {/* CTA */}
-        <div className="mt-12 p-8 bg-gradient-to-r from-orange-655 to-amber-550 rounded-3xl text-center shadow-lg relative overflow-hidden">
+        <div className="mt-12 p-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl text-center shadow-lg relative overflow-hidden">
           <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
           <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Need Help with Your Device?</h3>
           <p className="text-white/80 mb-6 text-sm font-medium">Contact Sai Systems for expert certified IT support and doorstep pickup.</p>
           <div className="flex flex-wrap justify-center gap-3 relative z-10">
-            <Link href="/book-service" className="px-6 py-3 bg-white text-orange-655 hover:bg-orange-50 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md">
+            <Link href="/book-service" className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md">
               Book Service
             </Link>
             <a href={`tel:${siteConfig.phone}`} className="px-6 py-3 bg-white/20 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider hover:bg-white/30 transition-all border border-white/30">
@@ -174,11 +164,11 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Back */}
         <div className="mt-8 flex justify-between items-center border-t border-gray-100 dark:border-gray-900 pt-6">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-655 dark:text-orange-400 hover:underline">
+          <Link href="/blog" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 hover:underline">
             <ArrowLeft size={16} /> All Articles
           </Link>
           {related.length > 0 && (
-            <Link href={`/blog/${related[0].slug}`} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-655 dark:text-orange-400 hover:underline">
+            <Link href={`/blog/${related[0].slug}`} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 hover:underline">
               {related[0].title.substring(0, 30)}... <ArrowRight size={16} />
             </Link>
           )}
