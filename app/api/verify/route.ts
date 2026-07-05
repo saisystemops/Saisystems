@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth-secure";
 
 export async function GET(req: NextRequest) {
+  const session = verifySession(req);
+  if (!session.valid) {
+    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  }
+
   const results: Record<string, any> = {
     timestamp: new Date().toISOString(),
     supabase: { status: "unchecked", details: null },

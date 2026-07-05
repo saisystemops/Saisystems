@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { verifySession } from "@/lib/auth-secure";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -103,8 +104,13 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
-  // Admin: Get all leads (protected by middleware in production)
+export async function GET(req: NextRequest) {
+  const session = verifySession(req);
+  if (!session.valid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Admin: Get all leads
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
     const { createServerClient } = await import("@/lib/supabase");
     const supabase = createServerClient();

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth-secure";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = verifySession(req);
+    if (!session.valid) {
+      return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+    }
+
     const { id } = await params;
 
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {

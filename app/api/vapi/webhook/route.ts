@@ -158,10 +158,10 @@ async function handleEscalation(
     // Send WhatsApp to service desk
     const token = process.env.WHATSAPP_API_TOKEN;
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const serviceDesk = (process.env.WHATSAPP_SERVICE_DESK_NUMBER || "919487179676").replace(/\D/g, "");
+    const serviceDesk = (process.env.WHATSAPP_SERVICE_DESK_NUMBER || "918778003397").replace(/\D/g, "");
 
     if (token && phoneNumberId) {
-      await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
+      await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({

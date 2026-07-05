@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth-secure";
 
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const session = verifySession(req);
+    if (!session.valid) {
+      return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+    }
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const { createServerClient } = await import("@/lib/supabase");
       const supabase = createServerClient();
@@ -59,6 +63,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = verifySession(req);
+    if (!session.valid) {
+      return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+    }
     const body = await req.json();
     const id = `e-${Date.now()}`;
 

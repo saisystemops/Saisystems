@@ -27,7 +27,7 @@ export const blogPosts: BlogPost[] = [
     readTime: 5,
     publishedAt: "2025-05-01",
     author: "Sai Systems Team",
-    imageUrl: "/images/laptop-repair.jpg",
+    imageUrl: "/images/blog/laptop-repair-service.png",
     content: `
 ## How to Find the Best Laptop Repair Service Near You
 
@@ -82,7 +82,7 @@ Many modern repair services like Sai Systems offer doorstep service — they com
     readTime: 7,
     publishedAt: "2025-04-20",
     author: "Sai Systems Team",
-    imageUrl: "/images/cpu-repair.png",
+    imageUrl: "/images/blog/laptop-diagnostic-issues.png",
     content: `
 ## 10 Most Common Laptop Problems and Solutions
 
@@ -163,7 +163,7 @@ Laptops are complex machines and problems are inevitable over time. Here are the
     readTime: 6,
     publishedAt: "2025-04-10",
     author: "Sai Systems Team",
-    imageUrl: "/images/hard-disk-repair.png",
+    imageUrl: "/images/blog/ssd-vs-hdd.png",
     content: `
 ## SSD vs HDD: The Complete 2025 Guide
 
@@ -222,6 +222,7 @@ For almost everyone in 2025, an **SSD is the right choice**. Prices have dropped
     readTime: 5,
     publishedAt: "2025-03-25",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/computer-maintenance-motherboard.png",
     content: `
 ## 10 Computer Maintenance Tips Every User Should Know
 
@@ -282,6 +283,7 @@ Even with good home care, get your computer professionally serviced annually. We
     readTime: 6,
     publishedAt: "2025-03-10",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/wifi-troubleshooting-router.png",
     content: `
 ## Complete WiFi Troubleshooting Guide
 
@@ -358,6 +360,7 @@ If none of the above works, the issue could be:
     readTime: 5,
     publishedAt: "2025-02-20",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/antivirus-security-shield.png",
     content: `
 ## Antivirus Protection Guide 2025
 
@@ -423,6 +426,7 @@ Every day, over 450,000 new malware samples are detected globally. These include
     readTime: 4,
     publishedAt: "2025-02-05",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/laptop-battery-care.png",
     content: `
 ## Laptop Battery Care Tips: Extend Your Battery Life
 
@@ -477,6 +481,7 @@ Manufacturers often release updates that improve battery management. Keep your f
     readTime: 5,
     publishedAt: "2025-01-25",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/laptop-screen-repair.png",
     content: `
 ## Laptop Screen Repair Cost in India — 2025 Price Guide
 
@@ -536,6 +541,7 @@ We always diagnose thoroughly before recommending screen replacement.
     readTime: 6,
     publishedAt: "2025-01-10",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/business-it-support.png",
     content: `
 ## 10 Benefits of Professional IT Support for Your Business
 
@@ -608,6 +614,7 @@ We support businesses of all sizes — startups, SMEs, corporate offices, school
     readTime: 5,
     publishedAt: "2024-12-15",
     author: "Sai Systems Team",
+    imageUrl: "/images/blog/data-backup-practices.png",
     content: `
 ## Data Backup Best Practices for 2025
 
@@ -690,16 +697,16 @@ export function getBlogFallbackImage(category: string, title: string): string {
   const t = (title || "").toLowerCase();
   
   if (cat.includes("laptop") || cat.includes("battery") || cat.includes("screen") || t.includes("laptop") || t.includes("battery") || t.includes("screen")) {
-    return "/images/laptop-repair.jpg";
+    return "/images/blog/laptop-repair-service.png";
   }
   if (cat.includes("networking") || cat.includes("wifi") || t.includes("wifi") || t.includes("network")) {
-    return "/images/computer-networking.jpg";
+    return "/images/blog/wifi-troubleshooting-router.png";
   }
   if (cat.includes("hardware") || cat.includes("ssd") || cat.includes("storage") || t.includes("ssd") || t.includes("storage") || t.includes("hdd")) {
-    return "/images/hard-disk-repair.png";
+    return "/images/blog/ssd-vs-hdd.png";
   }
   if (cat.includes("maintenance") || t.includes("maintenance") || t.includes("antivirus") || t.includes("backup") || cat.includes("backup")) {
-    return "/images/cpu-repair.png";
+    return "/images/blog/computer-maintenance-motherboard.png";
   }
-  return "/images/computer-repair.jpg";
+  return "/images/blog/laptop-repair-service.png";
 }

@@ -40,12 +40,20 @@ export async function askFlowise(
 ): Promise<FlowiseResponse> {
   // Try Flowise first
   if (FLOWISE_URL && FLOWISE_CHATFLOW_ID) {
-    return callFlowise(question, sessionId, overrideConfig);
+    try {
+      return await callFlowise(question, sessionId, overrideConfig);
+    } catch (err) {
+      console.error("Flowise call failed, trying fallback:", err);
+    }
   }
 
   // Try Dify as alternative
   if (DIFY_URL && DIFY_API_KEY) {
-    return callDify(question, sessionId);
+    try {
+      return await callDify(question, sessionId);
+    } catch (err) {
+      console.error("Dify call failed, trying fallback:", err);
+    }
   }
 
   // Fallback to Gemini directly (you already have the key)
@@ -148,30 +156,40 @@ async function fallbackToGemini(question: string, sessionId: string): Promise<Fl
     };
   }
 
-  const history = sessionMemory.get(sessionId) || [];
+  try {
+    const history = sessionMemory.get(sessionId) || [];
 
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const chat = model.startChat({
-    history: history.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    })),
-    systemInstruction: SAI_SYSTEM_PROMPT,
-    generationConfig: { maxOutputTokens: 300, temperature: 0.6 },
-  });
+    const chat = model.startChat({
+      history: history.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+      systemInstruction: SAI_SYSTEM_PROMPT,
+      generationConfig: { maxOutputTokens: 300, temperature: 0.6 },
+    });
 
-  const result = await chat.sendMessage(question);
-  const text = result.response.text();
+    const result = await chat.sendMessage(question);
+    const text = result.response.text();
 
-  // Update memory (keep last 10 turns)
-  history.push({ role: "user", content: question });
-  history.push({ role: "assistant", content: text });
-  sessionMemory.set(sessionId, history.slice(-20));
+    // Update memory (keep last 20 turns)
+    history.push({ role: "user", content: question });
+    history.push({ role: "assistant", content: text });
+    sessionMemory.set(sessionId, history.slice(-20));
 
-  return { text, intent: detectIntent(text), sessionId };
+    return { text, intent: detectIntent(text), sessionId };
+  } catch (error) {
+    console.error("Gemini fallback failed:", error);
+    const deskPhone = (process.env.WHATSAPP_SERVICE_DESK_NUMBER || "918778003397").replace(/\D/g, "");
+    return {
+      text: `Hi! I received your message. I am having trouble connecting to my service database right now, but our team at Sai Systems will help you shortly! You can also reach us directly on WhatsApp/Call at +${deskPhone}. 🙏`,
+      intent: "handoff",
+      sessionId,
+    };
+  }
 }
 
 // ── Intent detection from AI response text ────────────────────────────────────

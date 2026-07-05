@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
             category: post.category,
             read_time: post.readTime,
             published_at: new Date(post.publishedAt).toISOString(),
-            author: post.author
+            author: post.author,
+            image_url: post.imageUrl || "",
           }, { onConflict: "slug" });
 
         if (error) {

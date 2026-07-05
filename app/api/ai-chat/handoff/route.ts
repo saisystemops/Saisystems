@@ -69,11 +69,11 @@ export async function POST(req: NextRequest) {
     let whatsappSent = false;
     const token = process.env.WHATSAPP_API_TOKEN;
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const serviceDesk = process.env.WHATSAPP_SERVICE_DESK_NUMBER || "919487179676";
+    const serviceDesk = process.env.WHATSAPP_SERVICE_DESK_NUMBER || "918778003397";
 
     if (token && phoneNumberId) {
       const res = await fetch(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+        `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
         {
           method: "POST",
           headers: {

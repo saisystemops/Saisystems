@@ -119,8 +119,13 @@ Return ONLY the JSON, no explanation.`;
 
   const raw = await callGemini(prompt, 350);
   try {
-    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const cleaned = raw.replace(/```json\n?/gi, "").replace(/```\n?/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return current;
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return current;
+    }
     // Merge with existing, new values override
     return { ...current, ...Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== null)) };
   } catch {
@@ -310,11 +315,9 @@ export async function runTriage(input: TriageInput): Promise<TriageResult> {
     { role: "user", content: userMessage },
   ];
 
-  // Parallelize data extraction and conversation node selection to cut response time in half
-  const [updatedData, stateNodeResult] = await Promise.all([
-    extractData(updatedHistory, collectedData),
-    runStateNode(currentState, userMessage, updatedHistory, collectedData),
-  ]);
+  // Extract data first, then run the state node with the updated data to prevent 1-turn lag in conversational state machine
+  const updatedData = await extractData(updatedHistory, collectedData);
+  const stateNodeResult = await runStateNode(currentState, userMessage, updatedHistory, updatedData);
 
   const { text, nextState, action } = stateNodeResult;
 

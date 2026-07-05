@@ -19,7 +19,7 @@ const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "sai_verify_t
 const SERVICE_DESK_NUMBER = (process.env.WHATSAPP_SERVICE_DESK_NUMBER || "918778003397").replace(/\D/g, "");
 
 // ── Message dedup (prevents processing same message twice) ────────────────────
-const processedMessages = new Set<string>();
+const processedMessages = new Map<string, number>();
 
 // ── GET: Meta webhook verification handshake ──────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -56,12 +56,18 @@ export async function POST(req: NextRequest) {
     const msgId = message.id;
 
     // Dedup — WhatsApp sometimes delivers the same message twice
+    const now = Date.now();
+    // Clean up old dedup entries (older than 5 minutes)
+    for (const [id, timestamp] of processedMessages.entries()) {
+      if (now - timestamp > 5 * 60 * 1000) {
+        processedMessages.delete(id);
+      }
+    }
+
     if (processedMessages.has(msgId)) {
       return NextResponse.json({ status: "duplicate" });
     }
-    processedMessages.add(msgId);
-    // Clean up old dedup entries after 5 mins
-    setTimeout(() => processedMessages.delete(msgId), 5 * 60 * 1000);
+    processedMessages.set(msgId, now);
 
     // Extract message details
     const customerPhone = message.from; // e.g. "919876543210"
