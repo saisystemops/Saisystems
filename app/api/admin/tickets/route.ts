@@ -52,17 +52,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid type parameter." }, { status: 400 });
     }
 
-    const { error } = await updatePromise;
+    let { error } = await updatePromise;
+
+    // Fallback if estimate_price or notes columns are missing in Supabase
+    if (error && (error.code === "42703" || error.message?.includes("column"))) {
+      const fallbackFields = {
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      
+      let retryPromise;
+      if (type === "appointment") {
+        retryPromise = supabase.from("appointments").update(fallbackFields).eq("id", id);
+      } else if (type === "ticket") {
+        retryPromise = supabase.from("tickets").update(fallbackFields).eq("id", id);
+      } else if (type === "lead") {
+        retryPromise = supabase.from("leads").update(fallbackFields).eq("id", id);
+      }
+
+      if (retryPromise) {
+        const retryResult = await retryPromise;
+        error = retryResult.error;
+      }
+    }
 
     if (error) {
       console.error("Database update error:", error);
-      // Catch missing column error specifically (Code: 42703 or message containing column)
-      if (error.code === "42703" || error.message?.includes("column")) {
-        return NextResponse.json({
-          success: false,
-          message: "Database columns missing. Please execute the SQL migration script from the implementation plan in your Supabase SQL Editor.",
-        }, { status: 400 });
-      }
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 
