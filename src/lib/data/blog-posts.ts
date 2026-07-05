@@ -11,6 +11,7 @@ export interface BlogPost {
   readTime: number;
   publishedAt: string;
   author: string;
+  imageUrl?: string;
 }
 
 export const blogPosts: BlogPost[] = [
@@ -26,6 +27,7 @@ export const blogPosts: BlogPost[] = [
     readTime: 5,
     publishedAt: "2025-05-01",
     author: "Sai Systems Team",
+    imageUrl: "/images/laptop-repair.jpg",
     content: `
 ## How to Find the Best Laptop Repair Service Near You
 
@@ -80,6 +82,7 @@ Many modern repair services like Sai Systems offer doorstep service — they com
     readTime: 7,
     publishedAt: "2025-04-20",
     author: "Sai Systems Team",
+    imageUrl: "/images/cpu-repair.png",
     content: `
 ## 10 Most Common Laptop Problems and Solutions
 
@@ -160,6 +163,7 @@ Laptops are complex machines and problems are inevitable over time. Here are the
     readTime: 6,
     publishedAt: "2025-04-10",
     author: "Sai Systems Team",
+    imageUrl: "/images/hard-disk-repair.png",
     content: `
 ## SSD vs HDD: The Complete 2025 Guide
 

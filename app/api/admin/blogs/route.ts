@@ -18,6 +18,7 @@ const blogPostSchema = z.object({
   read_time: z.number().int().min(1).default(5),
   published_at: z.string().optional(),
   author: z.string().default("Sai Systems Team"),
+  image_url: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -107,16 +108,43 @@ export async function POST(req: NextRequest) {
       read_time: data.read_time,
       author: data.author,
       published_at: data.published_at ? new Date(data.published_at).toISOString() : new Date().toISOString(),
+      image_url: data.image_url || "",
+    };
+
+    const fallbackPayload = {
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      content: data.content,
+      meta_title: data.meta_title,
+      meta_description: data.meta_description,
+      keywords: data.keywords,
+      category: data.category,
+      read_time: data.read_time,
+      author: data.author,
+      published_at: data.published_at ? new Date(data.published_at).toISOString() : new Date().toISOString(),
     };
 
     if (data.id) {
       // Update
-      const { data: updated, error } = await supabase
+      let { data: updated, error } = await supabase
         .from("blogs")
         .update(dbPayload)
         .eq("id", data.id)
         .select()
-        .single();
+        .maybeSingle();
+
+      // Fallback if image_url column is missing in Supabase blogs table
+      if (error && (error.code === "42703" || error.message?.includes("image_url"))) {
+        const retryResult = await supabase
+          .from("blogs")
+          .update(fallbackPayload)
+          .eq("id", data.id)
+          .select()
+          .maybeSingle();
+        updated = retryResult.data;
+        error = retryResult.error;
+      }
 
       if (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 550 });
@@ -134,11 +162,22 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: "A blog post with this URL slug already exists. Please choose a unique title/slug." }, { status: 400 });
       }
 
-      const { data: inserted, error } = await supabase
+      let { data: inserted, error } = await supabase
         .from("blogs")
         .insert(dbPayload)
         .select()
-        .single();
+        .maybeSingle();
+
+      // Fallback if image_url column is missing in Supabase blogs table
+      if (error && (error.code === "42703" || error.message?.includes("image_url"))) {
+        const retryResult = await supabase
+          .from("blogs")
+          .insert(fallbackPayload)
+          .select()
+          .maybeSingle();
+        inserted = retryResult.data;
+        error = retryResult.error;
+      }
 
       if (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 550 });

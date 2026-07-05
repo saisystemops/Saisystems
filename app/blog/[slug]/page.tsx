@@ -37,6 +37,7 @@ async function getBlogPost(slug: string) {
           readTime: data.read_time,
           publishedAt: data.published_at,
           author: data.author,
+          imageUrl: data.image_url || "",
         };
       }
     }
@@ -122,14 +123,28 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Hero image placeholder */}
-        <div className="h-64 bg-gradient-to-r from-orange-655 to-amber-550 rounded-3xl flex items-center justify-center mb-10 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
-          <div className="text-center text-white z-10">
-            <div className="text-6xl mb-2 drop-shadow-md">📝</div>
-            <p className="text-white/80 font-black text-xs uppercase tracking-wider">{post.category}</p>
+        {/* Hero image */}
+        {post.imageUrl ? (
+          <div 
+            className="h-64 bg-cover bg-center rounded-3xl mb-10 shadow-sm relative overflow-hidden"
+            style={{ backgroundImage: `url('${post.imageUrl}')` }}
+          >
+            <div className="absolute inset-0 bg-black/25" />
+            <div className="absolute bottom-6 left-6 text-white z-10">
+              <p className="bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider inline-block">
+                {post.category}
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="h-64 bg-gradient-to-r from-orange-655 to-amber-550 rounded-3xl flex items-center justify-center mb-10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+            <div className="text-center text-white z-10">
+              <div className="text-6xl mb-2 drop-shadow-md">📝</div>
+              <p className="text-white/80 font-black text-xs uppercase tracking-wider">{post.category}</p>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="prose prose-lg dark:prose-invert max-w-none">

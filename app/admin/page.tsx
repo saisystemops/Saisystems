@@ -138,6 +138,7 @@ export default function AdminPage() {
   const [blogMetaTitle, setBlogMetaTitle] = useState("");
   const [blogMetaDescription, setBlogMetaDescription] = useState("");
   const [blogKeywords, setBlogKeywords] = useState("");
+  const [blogImageUrl, setBlogImageUrl] = useState("");
 
   // Ticket progress updating states
   const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
@@ -254,6 +255,7 @@ export default function AdminPage() {
     setBlogMetaTitle("");
     setBlogMetaDescription("");
     setBlogKeywords("");
+    setBlogImageUrl("");
     setEditingBlog(null);
   };
 
@@ -270,6 +272,7 @@ export default function AdminPage() {
     setBlogMetaTitle(blog.meta_title);
     setBlogMetaDescription(blog.meta_description);
     setBlogKeywords(Array.isArray(blog.keywords) ? blog.keywords.join(", ") : "");
+    setBlogImageUrl(blog.image_url || "");
     setShowBlogForm(true);
   };
 
@@ -297,6 +300,7 @@ export default function AdminPage() {
       meta_title: blogMetaTitle || blogTitle,
       meta_description: blogMetaDescription || blogExcerpt,
       keywords: keywordsArray,
+      image_url: blogImageUrl,
     };
 
     try {
@@ -2387,6 +2391,17 @@ export default function AdminPage() {
                           className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-650 dark:text-gray-400 uppercase mb-1">Blog Header Image URL/Path (GitHub Asset / External Link)</label>
+                      <input
+                        type="text"
+                        value={blogImageUrl}
+                        onChange={(e) => setBlogImageUrl(e.target.value)}
+                        placeholder="e.g. /images/laptop-repair.jpg or /images/my-custom-blog.png"
+                        className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                      />
                     </div>
 
                     {/* Markdown Content editor */}

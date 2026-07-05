@@ -36,6 +36,7 @@ async function getBlogs() {
           readTime: post.read_time,
           publishedAt: post.published_at,
           author: post.author,
+          imageUrl: post.image_url || "",
         }));
       }
     }
@@ -69,12 +70,23 @@ export default async function BlogPage() {
               className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:border-orange-500/20 dark:hover:border-orange-500/20 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                <div className="h-44 bg-gradient-to-r from-orange-655 to-amber-550 flex items-center justify-center relative">
-                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
-                    {post.category}
+                {post.imageUrl ? (
+                  <div 
+                    className="h-44 bg-cover bg-center relative"
+                    style={{ backgroundImage: `url('${post.imageUrl}')` }}
+                  >
+                    <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
+                      {post.category}
+                    </div>
                   </div>
-                  <div className="text-5xl drop-shadow-md">📝</div>
-                </div>
+                ) : (
+                  <div className="h-44 bg-gradient-to-r from-orange-655 to-amber-550 flex items-center justify-center relative">
+                    <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
+                      {post.category}
+                    </div>
+                    <div className="text-5xl drop-shadow-md">📝</div>
+                  </div>
+                )}
                 <div className="p-6">
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-550 mb-3">
                     <Clock size={12} />

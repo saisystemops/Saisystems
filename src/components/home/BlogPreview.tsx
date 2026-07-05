@@ -35,15 +35,26 @@ export default function BlogPreview() {
               id={`blog-${post.id}`}
               className="group card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-700"
             >
-              {/* Placeholder image */}
-              <div className="h-44 gradient-primary flex items-center justify-center p-6">
-                <div className="text-center text-white">
-                  <div className="text-4xl mb-2">📝</div>
-                  <div className="text-xs font-medium bg-white/20 rounded-full px-3 py-1">
+              {/* Card Image or Placeholder */}
+              {post.imageUrl ? (
+                <div 
+                  className="h-44 bg-cover bg-center relative"
+                  style={{ backgroundImage: `url('${post.imageUrl}')` }}
+                >
+                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
                     {post.category}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="h-44 gradient-primary flex items-center justify-center p-6">
+                  <div className="text-center text-white">
+                    <div className="text-4xl mb-2">📝</div>
+                    <div className="text-xs font-medium bg-white/20 rounded-full px-3 py-1">
+                      {post.category}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="p-6">
                 <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
