@@ -4,7 +4,6 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/layout/WhatsAppButton";
 import StickyBottomBar from "@/components/layout/StickyBottomBar";
-import AIChatWidget from "@/components/ai/AIChatWidget";
 import WebsiteCustomizer from "@/components/layout/WebsiteCustomizer";
 import CookieConsent from "@/components/layout/CookieConsent";
 
@@ -22,7 +21,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <main>{children}</main>
       <Footer />
       <WhatsAppButton />
-      <AIChatWidget />
       <StickyBottomBar />
       <WebsiteCustomizer />
       <CookieConsent />

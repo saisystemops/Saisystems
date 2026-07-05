@@ -15,7 +15,7 @@ export default function WhatsAppButton() {
   };
 
   return (
-    <div className="fixed bottom-24 left-4 z-50 flex flex-col items-start gap-2">
+    <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2">
       {/* Message panel */}
       {open && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-72 overflow-hidden">
