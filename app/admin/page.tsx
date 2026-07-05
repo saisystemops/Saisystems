@@ -111,7 +111,7 @@ export default function AdminPage() {
   });
   const [editingEstimateKey, setEditingEstimateKey] = useState<string | null>(null);
   const [editEstimate, setEditEstimate] = useState<Estimate | null>(null);
-  const [fetchingData, setFetchingData] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -884,10 +884,17 @@ export default function AdminPage() {
     return matchesSection && matchesSearch;
   });
 
-  // Login Screen render
   if (!isAuthenticated) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-950" : "bg-gray-50"} flex items-center justify-center px-4 py-12 relative overflow-hidden transition-colors duration-300`}>
+      <div 
+        className={`min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden transition-colors duration-300`}
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, ${isDarkMode ? 0.85 : 0.45}), rgba(0, 0, 0, ${isDarkMode ? 0.95 : 0.65})), url('/images/login-bg.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         {/* Floating Top-Right Theme Toggle */}
         <button
           onClick={() => {
@@ -1619,11 +1626,17 @@ export default function AdminPage() {
                 />
               </div>
 
-              {filteredProducts.length === 0 ? (
+              {fetchingData ? (
+                <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-900/10 border border-gray-200 dark:border-gray-900 rounded-3xl">
+                  <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-3" />
+                  <h4 className="font-bold text-gray-950 dark:text-white">Syncing database products...</h4>
+                  <p className="text-xs text-gray-555 dark:text-gray-500 mt-1">Please wait while the inventory logs load.</p>
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-900/10 border border-gray-200 dark:border-gray-900 rounded-3xl">
                   <AlertCircle className="w-12 h-12 text-gray-550 dark:text-gray-650 mx-auto mb-3" />
                   <h4 className="font-bold text-gray-950 dark:text-white">No products found</h4>
-                  <p className="text-xs text-gray-550 dark:text-gray-500 mt-1">Try refining your search terms or select another category from the sidebar.</p>
+                  <p className="text-xs text-gray-555 dark:text-gray-500 mt-1">Try refining your search terms or select another category from the sidebar.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
