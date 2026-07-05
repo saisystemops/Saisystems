@@ -72,7 +72,7 @@ export default async function BlogPage() {
               <div>
                 <div 
                   className="h-44 bg-cover bg-center relative"
-                  style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title)}')` }}
+                  style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title, post.slug)}')` }}
                 >
                   <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-full px-3 py-1 border border-white/10">
                     {post.category}

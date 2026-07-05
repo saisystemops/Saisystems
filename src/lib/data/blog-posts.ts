@@ -692,7 +692,40 @@ export function getBlogPostBySlug(slug: string): BlogPost | undefined {
   return blogPosts.find((p) => p.slug === slug);
 }
 
-export function getBlogFallbackImage(category: string, title: string): string {
+export function getBlogFallbackImage(category: string, title: string, slug?: string): string {
+  const s = (slug || "").toLowerCase();
+  
+  if (s.includes("near-me") || s.includes("service-near-me")) {
+    return "/images/blog/laptop-repair-service.png";
+  }
+  if (s.includes("problems") || s.includes("solutions") || s.includes("common-laptop")) {
+    return "/images/blog/laptop-diagnostic-issues.png";
+  }
+  if (s.includes("ssd-vs-hdd") || s.includes("ssd") || s.includes("hdd")) {
+    return "/images/blog/ssd-vs-hdd.png";
+  }
+  if (s.includes("maintenance") || s.includes("pc-care")) {
+    return "/images/blog/computer-maintenance-motherboard.png";
+  }
+  if (s.includes("wifi") || s.includes("network") || s.includes("troubleshooting")) {
+    return "/images/blog/wifi-troubleshooting-router.png";
+  }
+  if (s.includes("antivirus") || s.includes("security") || s.includes("antivirus-protection")) {
+    return "/images/blog/antivirus-security-shield.png";
+  }
+  if (s.includes("battery") || s.includes("charging")) {
+    return "/images/blog/laptop-battery-care.png";
+  }
+  if (s.includes("screen") || s.includes("lcd")) {
+    return "/images/blog/laptop-screen-repair.png";
+  }
+  if (s.includes("business-it") || s.includes("it-support") || s.includes("amc")) {
+    return "/images/blog/business-it-support.png";
+  }
+  if (s.includes("backup") || s.includes("recovery")) {
+    return "/images/blog/data-backup-practices.png";
+  }
+
   const cat = (category || "").toLowerCase();
   const t = (title || "").toLowerCase();
   

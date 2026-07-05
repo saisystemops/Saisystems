@@ -126,7 +126,7 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Hero image */}
         <div 
           className="h-64 bg-cover bg-center rounded-3xl mb-10 shadow-sm relative overflow-hidden"
-          style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title)}')` }}
+          style={{ backgroundImage: `url('${post.imageUrl || getBlogFallbackImage(post.category, post.title, post.slug)}')` }}
         >
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute bottom-6 left-6 text-white z-10">
