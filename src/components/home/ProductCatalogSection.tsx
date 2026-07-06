@@ -17,6 +17,7 @@ type Product = {
   inStock?: boolean;
   imageUrl?: string;
   whatsappLink?: string;
+  dealTag?: string;
 };
 
 const defaultStaticProducts: Product[] = [
@@ -244,6 +245,13 @@ export default function ProductCatalogSection() {
                 {product.badge && (
                   <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] uppercase font-extrabold tracking-wider rounded-xl">
                     {product.badge}
+                  </div>
+                )}
+
+                {/* Deal Tag */}
+                {product.dealTag && (
+                  <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] uppercase font-extrabold tracking-wider rounded-xl flex items-center gap-1 shadow-sm">
+                    🏷️ {product.dealTag}
                   </div>
                 )}
 
