@@ -1157,40 +1157,7 @@ export default function AdminPage() {
 
           {/* Bottom Footer Section */}
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-            {/* Database indicator */}
-            <div className="flex flex-col gap-1.5 px-2">
-              <div className="flex items-center justify-between text-[9px] font-bold text-gray-500 uppercase tracking-wider">
-                <span>Supabase Status</span>
-                <button onClick={fetchAdminData} className="text-orange-500 hover:text-orange-400 transition-colors cursor-pointer">
-                  <RefreshCw size={10} className={fetchingData ? "animate-spin" : ""} />
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 text-[9px] font-black">
-                <span className={`w-2 h-2 rounded-full ${dbStatus.productsTable === "ready" ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
-                <span className="text-gray-600 dark:text-gray-300">Catalog Database</span>
-              </div>
-              {/* DB Column Migration Check */}
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch("/api/admin/migrate");
-                    const data = await res.json();
-                    if (data.manualSQL && data.manualSQL.length > 0) {
-                      alert(
-                        `⚠️ Missing DB columns detected!\n\nRun this SQL in your Supabase SQL Editor:\n\n${data.manualSQL.join("\n")}\n\nThen refresh the page.`
-                      );
-                    } else {
-                      alert("✅ All database columns are correctly set up. No action needed.");
-                    }
-                  } catch {
-                    alert("Could not reach migration check API.");
-                  }
-                }}
-                className="mt-1 px-2 py-1 text-[9px] font-black text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 border border-gray-200 dark:border-gray-800 hover:border-orange-500/30 rounded-lg transition-colors cursor-pointer text-left"
-              >
-                🔧 Check DB Columns
-              </button>
-            </div>
+
 
 
             <button
