@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    // Fetch full products list
+    // Fetch full products list — with column-error resilience
     let products: Product[] = [];
     const { data: prodData, error: fetchProdErr } = await supabase
       .from("products")
@@ -146,8 +146,33 @@ export async function GET(req: NextRequest) {
         inStock: item.in_stock !== false,
         imageUrl: item.image_url || "",
         whatsappLink: item.whatsapp_link || "",
+        dealTag: item.deal_tag || "",
       }));
+    } else if (fetchProdErr && (fetchProdErr.code === "42703" || fetchProdErr.message?.includes("column"))) {
+      // One or more columns missing (e.g. deal_tag, whatsapp_link) — retry with safe core columns only
+      console.warn("Column error fetching products, retrying with safe columns:", fetchProdErr.message);
+      const { data: safeData } = await supabase
+        .from("products")
+        .select("id, category, title, description, price, original_price, badge, specs, in_stock, image_url")
+        .order("created_at", { ascending: false });
+      if (safeData) {
+        products = safeData.map((item) => ({
+          id: item.id,
+          category: item.category,
+          title: item.title,
+          description: item.description || "",
+          price: item.price,
+          originalPrice: item.original_price || "",
+          badge: item.badge || "",
+          specs: Array.isArray(item.specs) ? item.specs : [],
+          inStock: item.in_stock !== false,
+          imageUrl: item.image_url || "",
+          whatsappLink: "",
+          dealTag: "",
+        }));
+      }
     }
+
 
     return NextResponse.json({
       dbStatus: {
@@ -176,13 +201,20 @@ export async function POST(req: NextRequest) {
     const supabase = createServerClient();
 
     if (action === "create" && product) {
-      const { id, category, title, description, price, originalPrice, badge, specs, inStock, imageUrl, whatsappLink } = product;
+      const { category, title, description, price, originalPrice, badge, specs, inStock, imageUrl, whatsappLink } = product;
 
-      // Clean up any existing product with this ID to prevent duplicate keys
-      await supabase.from("products").delete().eq("id", id);
+      // Auto-generate a unique ID based on title + millisecond timestamp
+      // This guarantees every product insert is unique, even same-named products
+      const baseId = (title || "product")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .substring(0, 30);
+      const uniqueId = `${baseId}-${Date.now()}`;
 
+      // Stage 1: Full insert with all columns
       let { error } = await supabase.from("products").insert({
-        id,
+        id: uniqueId,
         category,
         title,
         description,
@@ -193,12 +225,33 @@ export async function POST(req: NextRequest) {
         in_stock: inStock !== false,
         image_url: imageUrl || "",
         whatsapp_link: whatsappLink || "",
+        deal_tag: product.dealTag || "",
       });
 
-      // Fallback if whatsapp_link column does not exist yet in Supabase
+      // Stage 2: Fallback without deal_tag if that column is missing
+      if (error && (error.code === "42703" || error.message?.includes("deal_tag"))) {
+        console.warn("deal_tag column missing, retrying without it:", error.message);
+        const retry2 = await supabase.from("products").insert({
+          id: uniqueId,
+          category,
+          title,
+          description,
+          price,
+          original_price: originalPrice,
+          badge,
+          specs: Array.isArray(specs) ? specs : [],
+          in_stock: inStock !== false,
+          image_url: imageUrl || "",
+          whatsapp_link: whatsappLink || "",
+        });
+        error = retry2.error;
+      }
+
+      // Stage 3: Fallback without whatsapp_link if that column is also missing
       if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
-        const retryResult = await supabase.from("products").insert({
-          id,
+        console.warn("whatsapp_link column missing, retrying without it:", error.message);
+        const retry3 = await supabase.from("products").insert({
+          id: uniqueId,
           category,
           title,
           description,
@@ -209,14 +262,15 @@ export async function POST(req: NextRequest) {
           in_stock: inStock !== false,
           image_url: imageUrl || "",
         });
-        error = retryResult.error;
+        error = retry3.error;
       }
 
       if (error) {
+        console.error("Product insert final error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, id });
+      return NextResponse.json({ success: true, id: uniqueId });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -226,7 +280,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Edit a product
+// PUT: Edit a product (also used for stock toggle)
 export async function PUT(req: NextRequest) {
   if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -239,6 +293,8 @@ export async function PUT(req: NextRequest) {
     }
 
     const supabase = createServerClient();
+
+    // Stage 1: Full update with all columns — targets ONLY this product's ID
     let { error } = await supabase
       .from("products")
       .update({
@@ -252,12 +308,35 @@ export async function PUT(req: NextRequest) {
         in_stock: product.inStock !== false,
         image_url: product.imageUrl || "",
         whatsapp_link: product.whatsappLink || "",
+        deal_tag: product.dealTag || "",
       })
-      .eq("id", product.id);
+      .eq("id", product.id); // ← strictly targets one row only by unique ID
 
-    // Fallback if whatsapp_link column does not exist yet in Supabase
+    // Stage 2: Fallback without deal_tag if that column is missing
+    if (error && (error.code === "42703" || error.message?.includes("deal_tag"))) {
+      console.warn("deal_tag column missing on update, retrying without it:", error.message);
+      const retry2 = await supabase
+        .from("products")
+        .update({
+          category: product.category,
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          original_price: product.originalPrice,
+          badge: product.badge,
+          specs: Array.isArray(product.specs) ? product.specs : [],
+          in_stock: product.inStock !== false,
+          image_url: product.imageUrl || "",
+          whatsapp_link: product.whatsappLink || "",
+        })
+        .eq("id", product.id);
+      error = retry2.error;
+    }
+
+    // Stage 3: Fallback without whatsapp_link if that column is also missing
     if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
-      const retryResult = await supabase
+      console.warn("whatsapp_link column missing on update, retrying without it:", error.message);
+      const retry3 = await supabase
         .from("products")
         .update({
           category: product.category,
@@ -271,10 +350,11 @@ export async function PUT(req: NextRequest) {
           image_url: product.imageUrl || "",
         })
         .eq("id", product.id);
-      error = retryResult.error;
+      error = retry3.error;
     }
 
     if (error) {
+      console.error("Product update final error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -284,6 +364,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }
+
 
 // DELETE: Delete a product
 export async function DELETE(req: NextRequest) {

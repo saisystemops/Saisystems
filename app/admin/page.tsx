@@ -454,7 +454,8 @@ export default function AdminPage() {
     badge: "",
     specs: [],
     inStock: true,
-    whatsappLink: ""
+    whatsappLink: "",
+    dealTag: ""
   });
   const [newSpecText, setNewSpecText] = useState("");
 
@@ -606,8 +607,8 @@ export default function AdminPage() {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProduct.id || !newProduct.title || !newProduct.price) {
-      alert("Please fill in the ID, Title, and Offer Price");
+    if (!newProduct.title || !newProduct.price) {
+      alert("Please fill in the Title and Offer Price");
       return;
     }
     setLoading(true);
@@ -628,7 +629,8 @@ export default function AdminPage() {
           originalPrice: "",
           badge: "",
           specs: [],
-          inStock: true
+          inStock: true,
+          dealTag: ""
         });
         fetchAdminData();
       } else {
@@ -1167,7 +1169,29 @@ export default function AdminPage() {
                 <span className={`w-2 h-2 rounded-full ${dbStatus.productsTable === "ready" ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
                 <span className="text-gray-600 dark:text-gray-300">Catalog Database</span>
               </div>
+              {/* DB Column Migration Check */}
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/admin/migrate");
+                    const data = await res.json();
+                    if (data.manualSQL && data.manualSQL.length > 0) {
+                      alert(
+                        `⚠️ Missing DB columns detected!\n\nRun this SQL in your Supabase SQL Editor:\n\n${data.manualSQL.join("\n")}\n\nThen refresh the page.`
+                      );
+                    } else {
+                      alert("✅ All database columns are correctly set up. No action needed.");
+                    }
+                  } catch {
+                    alert("Could not reach migration check API.");
+                  }
+                }}
+                className="mt-1 px-2 py-1 text-[9px] font-black text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 border border-gray-200 dark:border-gray-800 hover:border-orange-500/30 rounded-lg transition-colors cursor-pointer text-left"
+              >
+                🔧 Check DB Columns
+              </button>
             </div>
+
 
             <button
               onClick={handleLogout}
@@ -1250,17 +1274,7 @@ export default function AdminPage() {
               <form onSubmit={handleCreateProduct} className="space-y-4">
                 <h3 className="text-base font-black text-gray-950 dark:text-white">Create New Showroom Item</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Unique Product ID</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. prod-t480-deals"
-                      value={newProduct.id}
-                      onChange={(e) => setNewProduct({ ...newProduct, id: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                    />
-                  </div>
+                  {/* Product ID is auto-generated server-side with a timestamp suffix for guaranteed uniqueness */}
                   <div>
                     <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
                     <select
@@ -1335,6 +1349,24 @@ export default function AdminPage() {
                       onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
                       className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🏷️ Deal Tag / Promo Label</label>
+                    <select
+                      value={newProduct.dealTag || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, dealTag: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    >
+                      <option value="">— No Deal Tag —</option>
+                      <option value="Festival Deal">🎉 Festival Deal</option>
+                      <option value="This Month Deal">📅 This Month Deal</option>
+                      <option value="Weekend Offer">⚡ Weekend Offer</option>
+                      <option value="Clearance Sale">🔥 Clearance Sale</option>
+                      <option value="Limited Stock">⏳ Limited Stock</option>
+                      <option value="New Arrival">✨ New Arrival</option>
+                      <option value="Flash Sale">💥 Flash Sale</option>
+                      <option value="Bulk Deal">📦 Bulk Deal</option>
+                    </select>
                   </div>
                   <div className="sm:col-span-2 md:col-span-3">
                     <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
@@ -1766,6 +1798,24 @@ export default function AdminPage() {
                                 className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
                             </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🏷️ Deal Tag / Promo Label</label>
+                              <select
+                                value={editProduct.dealTag || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, dealTag: e.target.value })}
+                                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              >
+                                <option value="">— No Deal Tag —</option>
+                                <option value="Festival Deal">🎉 Festival Deal</option>
+                                <option value="This Month Deal">📅 This Month Deal</option>
+                                <option value="Weekend Offer">⚡ Weekend Offer</option>
+                                <option value="Clearance Sale">🔥 Clearance Sale</option>
+                                <option value="Limited Stock">⏳ Limited Stock</option>
+                                <option value="New Arrival">✨ New Arrival</option>
+                                <option value="Flash Sale">💥 Flash Sale</option>
+                                <option value="Bulk Deal">📦 Bulk Deal</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -1784,6 +1834,11 @@ export default function AdminPage() {
                               {product.badge && (
                                 <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase rounded">
                                   {product.badge}
+                                </span>
+                              )}
+                              {product.dealTag && (
+                                <span className="px-2.5 py-0.5 bg-gradient-to-r from-rose-500/15 to-pink-500/15 border border-rose-400/40 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase rounded-full flex items-center gap-1">
+                                  🏷️ {product.dealTag}
                                 </span>
                               )}
                               <span className="text-[9px] text-gray-500 font-mono font-bold">ID: {product.id}</span>

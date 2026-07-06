@@ -10,6 +10,7 @@ export type Product = {
   inStock?: boolean;
   imageUrl?: string;
   whatsappLink?: string;
+  dealTag?: string; // e.g. "Festival Deal", "This Month Deal", "Weekend Offer"
 };
 
 export const defaultProducts: Product[] = [
