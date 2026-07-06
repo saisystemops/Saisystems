@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageCircle, CalendarDays, Star, Shield, Zap, Award, CheckCircle, Cpu, HardDrive, Monitor, ChevronLeft, ChevronRight, ShoppingBag, Keyboard } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import { trackWhatsAppClick, trackBookingClick } from "@/lib/analytics";
 import { Product } from "@/lib/data/default-products";
@@ -292,24 +292,28 @@ export default function HeroSection() {
                 <div className="bg-gray-50 dark:bg-gray-950/70 border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-orange-600/10 border border-orange-600/20 flex items-center justify-center flex-shrink-0">
-                      <Monitor className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      {currentDeal.category === "laptops" ? (
+                        <ShoppingBag className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      ) : (
+                        <Keyboard className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      )}
                     </div>
                     {currentDeal.category === "laptops" ? (
                       <div>
-                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">New Desktop Offer</div>
-                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Intel Core i5 Desktop Setup</div>
+                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">💻 Included Free Accessary</div>
+                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Laptop Bag &amp; Charger</div>
                       </div>
                     ) : (
                       <div>
-                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">Refurbished laptop</div>
-                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">HP EliteBook 840 G5</div>
+                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">🖥️ Included Free Accessary</div>
+                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Keyboard &amp; Mouse Set</div>
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-[9px] text-gray-500 dark:text-gray-400 font-bold">Inclusive Pack</div>
-                    <div className="text-xs font-black text-gray-950 dark:text-white">
-                      {currentDeal.category === "laptops" ? "₹12,499*" : "₹14,999*"}
+                    <div className="text-[9px] text-gray-500 dark:text-gray-400 font-bold">Offer Value</div>
+                    <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                      FREE
                     </div>
                   </div>
                 </div>
