@@ -1234,6 +1234,26 @@ export default function AdminPage() {
                 >
                   + Add Deal
                 </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/admin/migrate");
+                      const data = await res.json();
+                      if (data.manualSQL && data.manualSQL.length > 0) {
+                        alert(
+                          `⚠️ Missing DB columns detected!\n\nRun this SQL in your Supabase SQL Editor:\n\n${data.manualSQL.join("\n")}\n\nThen refresh the page.`
+                        );
+                      } else {
+                        alert("✅ All database columns are correctly set up. No action needed.");
+                      }
+                    } catch {
+                      alert("Could not reach migration check API.");
+                    }
+                  }}
+                  className="px-3 py-2 bg-gray-100 hover:bg-gray-250 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  🔧 Check DB Columns
+                </button>
               </div>
             )}
           </div>

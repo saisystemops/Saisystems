@@ -60,18 +60,36 @@ export async function GET(req: NextRequest) {
     results.push({ migration: "check deal_tag column", status: "error", error: String(err) });
   }
 
+  // Migration 4: Verify included_accessory column exists on products table
+  try {
+    const { error } = await supabase.from("products").select("included_accessory").limit(1);
+    if (error && error.code === "42703") {
+      results.push({ migration: "check included_accessory column", status: "MISSING — run SQL manually", error: error.message });
+    } else {
+      results.push({ migration: "check included_accessory column", status: "exists ✓" });
+    }
+  } catch (err: unknown) {
+    results.push({ migration: "check included_accessory column", status: "error", error: String(err) });
+  }
+
   const needsManualSQL = results.some((r) => r.status.includes("MISSING"));
+
+  const sqlToRun: string[] = [];
+  if (results.find(r => r.migration === "check whatsapp_link column" && r.status.includes("MISSING"))) {
+    sqlToRun.push("ALTER TABLE products ADD COLUMN IF NOT EXISTS whatsapp_link TEXT DEFAULT '';");
+  }
+  if (results.find(r => r.migration === "check deal_tag column" && r.status.includes("MISSING"))) {
+    sqlToRun.push("ALTER TABLE products ADD COLUMN IF NOT EXISTS deal_tag TEXT DEFAULT '';");
+  }
+  if (results.find(r => r.migration === "check included_accessory column" && r.status.includes("MISSING"))) {
+    sqlToRun.push("ALTER TABLE products ADD COLUMN IF NOT EXISTS included_accessory TEXT DEFAULT '';");
+  }
 
   return NextResponse.json({
     message: needsManualSQL
       ? "⚠️ Some columns are missing. Run the SQL commands below in your Supabase SQL Editor."
       : "✅ All columns verified. Database is ready.",
-    manualSQL: needsManualSQL
-      ? [
-          "ALTER TABLE products ADD COLUMN IF NOT EXISTS whatsapp_link TEXT DEFAULT '';",
-          "ALTER TABLE products ADD COLUMN IF NOT EXISTS deal_tag TEXT DEFAULT '';",
-        ]
-      : [],
+    manualSQL: sqlToRun,
     results,
   });
 }
