@@ -990,7 +990,7 @@ export default function AdminPage() {
       <div className="flex-1 flex flex-col md:flex-row">
         
         {/* ── Sidebar (Left Column) ────────────────────────────────────────── */}
-        <aside className="w-full md:w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800/80 p-6 flex flex-col justify-between gap-6 md:sticky md:top-0 md:h-screen transition-colors">
+        <aside className="w-full md:w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800/80 p-6 flex flex-col justify-between gap-6 md:sticky md:top-0 md:h-screen md:max-h-screen overflow-y-auto scrollbar-thin transition-colors">
           <div className="space-y-6">
             
             {/* Header */}
