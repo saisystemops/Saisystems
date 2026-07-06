@@ -11,6 +11,7 @@ export type Product = {
   imageUrl?: string;
   whatsappLink?: string;
   dealTag?: string; // e.g. "Festival Deal", "This Month Deal", "Weekend Offer"
+  includedAccessory?: string; // e.g. "Laptop Bag & Charger", "Keyboard & Mouse Set"
 };
 
 export const defaultProducts: Product[] = [

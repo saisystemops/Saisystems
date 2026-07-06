@@ -16,6 +16,7 @@ function mapProductRow(item: Record<string, unknown>) {
     imageUrl: (item.image_url as string) || "",
     whatsappLink: (item.whatsapp_link as string) || "",
     dealTag: (item.deal_tag as string) || "",
+    includedAccessory: (item.included_accessory as string) || "",
   };
 }
 
@@ -61,6 +62,7 @@ export async function GET() {
         imageUrl: (item.image_url as string) || "",
         whatsappLink: "",
         dealTag: "",
+        includedAccessory: "",
       }));
       return NextResponse.json(mapped.filter((p) => p.inStock));
     }

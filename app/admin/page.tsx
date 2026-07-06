@@ -455,7 +455,8 @@ export default function AdminPage() {
     specs: [],
     inStock: true,
     whatsappLink: "",
-    dealTag: ""
+    dealTag: "",
+    includedAccessory: ""
   });
   const [newSpecText, setNewSpecText] = useState("");
 
@@ -630,7 +631,9 @@ export default function AdminPage() {
           badge: "",
           specs: [],
           inStock: true,
-          dealTag: ""
+          whatsappLink: "",
+          dealTag: "",
+          includedAccessory: ""
         });
         fetchAdminData();
       } else {
@@ -1783,6 +1786,16 @@ export default function AdminPage() {
                                 <option value="Bulk Deal">📦 Bulk Deal</option>
                               </select>
                             </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🎁 Included Free Accessory (Optional)</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Laptop Bag &amp; Charger"
+                                value={editProduct.includedAccessory || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, includedAccessory: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -1806,6 +1819,11 @@ export default function AdminPage() {
                               {product.dealTag && (
                                 <span className="px-2.5 py-0.5 bg-gradient-to-r from-rose-500/15 to-pink-500/15 border border-rose-400/40 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase rounded-full flex items-center gap-1">
                                   🏷️ {product.dealTag}
+                                </span>
+                              )}
+                              {product.includedAccessory && (
+                                <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase rounded-full flex items-center gap-1">
+                                  🎁 {product.includedAccessory}
                                 </span>
                               )}
                               <span className="text-[9px] text-gray-500 font-mono font-bold">ID: {product.id}</span>

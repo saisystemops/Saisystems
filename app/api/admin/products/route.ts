@@ -147,9 +147,10 @@ export async function GET(req: NextRequest) {
         imageUrl: item.image_url || "",
         whatsappLink: item.whatsapp_link || "",
         dealTag: item.deal_tag || "",
+        includedAccessory: item.included_accessory || "",
       }));
     } else if (fetchProdErr && (fetchProdErr.code === "42703" || fetchProdErr.message?.includes("column"))) {
-      // One or more columns missing (e.g. deal_tag, whatsapp_link) — retry with safe core columns only
+      // One or more columns missing — retry with safe core columns only
       console.warn("Column error fetching products, retrying with safe columns:", fetchProdErr.message);
       const { data: safeData } = await supabase
         .from("products")
@@ -169,6 +170,7 @@ export async function GET(req: NextRequest) {
           imageUrl: item.image_url || "",
           whatsappLink: "",
           dealTag: "",
+          includedAccessory: "",
         }));
       }
     }
@@ -204,7 +206,6 @@ export async function POST(req: NextRequest) {
       const { category, title, description, price, originalPrice, badge, specs, inStock, imageUrl, whatsappLink } = product;
 
       // Auto-generate a unique ID based on title + millisecond timestamp
-      // This guarantees every product insert is unique, even same-named products
       const baseId = (title || "product")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -226,9 +227,30 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl || "",
         whatsapp_link: whatsappLink || "",
         deal_tag: product.dealTag || "",
+        included_accessory: product.includedAccessory || "",
       });
 
-      // Stage 2: Fallback without deal_tag if that column is missing
+      // Stage 2: Fallback without included_accessory if column missing
+      if (error && (error.code === "42703" || error.message?.includes("included_accessory"))) {
+        console.warn("included_accessory column missing, retrying without it:", error.message);
+        const retry1 = await supabase.from("products").insert({
+          id: uniqueId,
+          category,
+          title,
+          description,
+          price,
+          original_price: originalPrice,
+          badge,
+          specs: Array.isArray(specs) ? specs : [],
+          in_stock: inStock !== false,
+          image_url: imageUrl || "",
+          whatsapp_link: whatsappLink || "",
+          deal_tag: product.dealTag || "",
+        });
+        error = retry1.error;
+      }
+
+      // Stage 3: Fallback without deal_tag if that column is missing
       if (error && (error.code === "42703" || error.message?.includes("deal_tag"))) {
         console.warn("deal_tag column missing, retrying without it:", error.message);
         const retry2 = await supabase.from("products").insert({
@@ -247,7 +269,7 @@ export async function POST(req: NextRequest) {
         error = retry2.error;
       }
 
-      // Stage 3: Fallback without whatsapp_link if that column is also missing
+      // Stage 4: Fallback without whatsapp_link if that column is also missing
       if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
         console.warn("whatsapp_link column missing, retrying without it:", error.message);
         const retry3 = await supabase.from("products").insert({
@@ -294,7 +316,7 @@ export async function PUT(req: NextRequest) {
 
     const supabase = createServerClient();
 
-    // Stage 1: Full update with all columns — targets ONLY this product's ID
+    // Stage 1: Full update with all columns
     let { error } = await supabase
       .from("products")
       .update({
@@ -309,10 +331,33 @@ export async function PUT(req: NextRequest) {
         image_url: product.imageUrl || "",
         whatsapp_link: product.whatsappLink || "",
         deal_tag: product.dealTag || "",
+        included_accessory: product.includedAccessory || "",
       })
-      .eq("id", product.id); // ← strictly targets one row only by unique ID
+      .eq("id", product.id);
 
-    // Stage 2: Fallback without deal_tag if that column is missing
+    // Stage 2: Fallback without included_accessory if column missing
+    if (error && (error.code === "42703" || error.message?.includes("included_accessory"))) {
+      console.warn("included_accessory column missing on update, retrying without it:", error.message);
+      const retry1 = await supabase
+        .from("products")
+        .update({
+          category: product.category,
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          original_price: product.originalPrice,
+          badge: product.badge,
+          specs: Array.isArray(product.specs) ? product.specs : [],
+          in_stock: product.inStock !== false,
+          image_url: product.imageUrl || "",
+          whatsapp_link: product.whatsappLink || "",
+          deal_tag: product.dealTag || "",
+        })
+        .eq("id", product.id);
+      error = retry1.error;
+    }
+
+    // Stage 3: Fallback without deal_tag if that column is missing
     if (error && (error.code === "42703" || error.message?.includes("deal_tag"))) {
       console.warn("deal_tag column missing on update, retrying without it:", error.message);
       const retry2 = await supabase
@@ -333,7 +378,7 @@ export async function PUT(req: NextRequest) {
       error = retry2.error;
     }
 
-    // Stage 3: Fallback without whatsapp_link if that column is also missing
+    // Stage 4: Fallback without whatsapp_link if that column is also missing
     if (error && (error.code === "42703" || error.message?.includes("whatsapp_link"))) {
       console.warn("whatsapp_link column missing on update, retrying without it:", error.message);
       const retry3 = await supabase

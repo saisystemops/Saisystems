@@ -29,6 +29,7 @@ interface HeroDeal {
   badge?: string;
   category: string;
   specs: string[];
+  includedAccessory?: string;
 }
 
 export default function HeroSection() {
@@ -39,7 +40,8 @@ export default function HeroSection() {
       originalPrice: "₹52,000",
       badge: "Premium Grade",
       category: "laptops",
-      specs: ["Intel Core i5", "16GB DDR4 RAM", "512GB High-Speed SSD"]
+      specs: ["Intel Core i5", "16GB DDR4 RAM", "512GB High-Speed SSD"],
+      includedAccessory: "Laptop Bag & Charger"
     },
     {
       title: "HP EliteBook 840 G5",
@@ -47,7 +49,8 @@ export default function HeroSection() {
       originalPrice: "₹45,000",
       badge: "Best Seller",
       category: "laptops",
-      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB NVMe SSD"]
+      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB NVMe SSD"],
+      includedAccessory: "Laptop Bag & Charger"
     },
     {
       title: "Dell Latitude 5490",
@@ -55,7 +58,8 @@ export default function HeroSection() {
       originalPrice: "₹42,000",
       badge: "Value Deal",
       category: "laptops",
-      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB SSD Storage"]
+      specs: ["Intel Core i5", "8GB DDR4 RAM", "256GB SSD Storage"],
+      includedAccessory: "Laptop Bag & Charger"
     }
   ]);
 
@@ -80,7 +84,8 @@ export default function HeroSection() {
                 originalPrice: p.originalPrice || "",
                 badge: p.badge || "Hot Deal",
                 category: p.category,
-                specs: Array.isArray(p.specs) ? p.specs : []
+                specs: Array.isArray(p.specs) ? p.specs : [],
+                includedAccessory: p.includedAccessory || ""
               }));
               setDeals(mappedDeals);
             }
@@ -289,34 +294,29 @@ export default function HeroSection() {
                 </div>
 
                 {/* Dynamic secondary banner */}
-                <div className="bg-gray-50 dark:bg-gray-950/70 border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-orange-600/10 border border-orange-600/20 flex items-center justify-center flex-shrink-0">
-                      {currentDeal.category === "laptops" ? (
-                        <ShoppingBag className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      ) : (
-                        <Keyboard className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      )}
+                {currentDeal.includedAccessory && (
+                  <div className="bg-gray-50 dark:bg-gray-950/70 border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-orange-600/10 border border-orange-600/20 flex items-center justify-center flex-shrink-0">
+                        {currentDeal.category === "laptops" ? (
+                          <ShoppingBag className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                        ) : (
+                          <Keyboard className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">🎁 Included Free Accessory</div>
+                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">{currentDeal.includedAccessory}</div>
+                      </div>
                     </div>
-                    {currentDeal.category === "laptops" ? (
-                      <div>
-                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">💻 Included Free Accessary</div>
-                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Laptop Bag &amp; Charger</div>
+                    <div className="text-right">
+                      <div className="text-[9px] text-gray-500 dark:text-gray-400 font-bold">Offer Value</div>
+                      <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                        FREE
                       </div>
-                    ) : (
-                      <div>
-                        <div className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">🖥️ Included Free Accessary</div>
-                        <div className="text-xs font-extrabold text-gray-900 dark:text-white">Keyboard &amp; Mouse Set</div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[9px] text-gray-500 dark:text-gray-400 font-bold">Offer Value</div>
-                    <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                      FREE
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Warranty indicator */}
                 <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-xl px-3 py-2 border border-gray-200 dark:border-white/5">
