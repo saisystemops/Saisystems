@@ -449,7 +449,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       if (props.ratio === "9:16") {
         const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
         let showX = W / 2;
-        let showY = isGridSpecs ? 720 : 490;
+        let showY = isGridSpecs ? 720 : 550;
         let pedestalW = isGridSpecs ? 680 : 600;
         let pedestalH = isGridSpecs ? 120 : 100;
         W = 1080;
@@ -712,7 +712,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       if (props.ratio === "9:16") {
         const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
         let showX = W / 2;
-        let showY = isGridSpecs ? 720 : 490;
+        let showY = isGridSpecs ? 720 : 550;
         let pedestalW = isGridSpecs ? 680 : 600;
         let pedestalH = isGridSpecs ? 120 : 100;
         footerY = 1370; // Dedicated vertical split for Story
@@ -838,7 +838,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       if (props.ratio === "9:16") {
         const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
         let showX = W / 2;
-        let showY = isGridSpecs ? 720 : 490;
+        let showY = isGridSpecs ? 720 : 550;
         let pedestalW = isGridSpecs ? 680 : 600;
         let pedestalH = isGridSpecs ? 120 : 100;
         // Logo card
@@ -1078,7 +1078,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         }
 
         // Specs List (Wide cards centered or grid, Y starts at 750)
-        const specStartY = isGridSpecs ? 960 : 750;
+        const specStartY = isGridSpecs ? 960 : 800;
         const specCardW = isGridSpecs ? 470 : 980;
         const specCardH = isGridSpecs ? 68 : 76;
         const specSpaceY = isGridSpecs ? 80 : 88;
@@ -1182,7 +1182,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         });
 
         // Horizontal Policies Bar
-        const trustY = isGridSpecs ? 1160 : 1230;
+        const trustY = isGridSpecs ? 1160 : 1210;
         ctx.save();
         ctx.fillStyle = cardFill;
         ctx.strokeStyle = cardOutline;
