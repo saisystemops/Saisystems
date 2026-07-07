@@ -917,7 +917,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.font = "bold 11px Arial";
         ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
-        // WhatsApp
+        // Primary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
@@ -926,14 +926,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.stroke();
         
         drawWhatsAppIcon(ctx, contactX + 25, contactY + 70);
+        drawPhoneIcon(ctx, contactX + 60, contactY + 70);
         ctx.fillStyle = "#64748b";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", contactX + 68, contactY + 64);
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(props.isTamil ? "முதன்மை (அழைப்பு & WhatsApp)" : "Primary Contact (Call & WA)", contactX + 102, contactY + 64);
         ctx.fillStyle = "#15803d";
         ctx.font = "bold 18px Arial";
-        ctx.fillText(whatsappChat, contactX + 68, contactY + 85);
+        ctx.fillText(whatsappChat, contactX + 102, contactY + 85);
 
-        // Phone Support
+        // Secondary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
         ctx.lineWidth = 1;
@@ -941,13 +942,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fill();
         ctx.stroke();
         
-        drawPhoneIcon(ctx, contactX + 25, contactY + 136);
+        drawWhatsAppIcon(ctx, contactX + 25, contactY + 136);
+        drawPhoneIcon(ctx, contactX + 60, contactY + 136);
         ctx.fillStyle = "#64748b";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", contactX + 68, contactY + 130);
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(props.isTamil ? "மாற்று எண் (அழைப்பு & WhatsApp)" : "Secondary Contact (Call & WA)", contactX + 102, contactY + 130);
         ctx.fillStyle = "#c2410c";
         ctx.font = "bold 18px Arial";
-        ctx.fillText(phoneSupport, contactX + 68, contactY + 151);
+        ctx.fillText(phoneSupport, contactX + 102, contactY + 151);
 
         // WhatsApp QR Code
         if (qrImg) {
@@ -1290,25 +1292,27 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         // Bottom contact rows (drawn horizontally next to price)
         const contactRowY = footerY + 75;
         const waRowX = 530;
-        const callRowX = 830;
+        const callRowX = 810;
 
-        // WhatsApp Details
+        // Primary Contact details
         drawWhatsAppIcon(ctx, waRowX, contactRowY);
+        drawPhoneIcon(ctx, waRowX + 32, contactRowY);
         ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 9px Arial";
-        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", waRowX + 42, contactRowY - 8);
+        ctx.font = "bold 8.5px Arial";
+        ctx.fillText(props.isTamil ? "முதன்மை (அழைப்பு & WA)" : "Primary (Call & WA)", waRowX + 72, contactRowY - 8);
         ctx.fillStyle = "#22c55e";
-        ctx.font = "bold 17px Arial";
-        ctx.fillText(whatsappChat, waRowX + 42, contactRowY + 12);
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(whatsappChat, waRowX + 72, contactRowY + 12);
 
-        // Call details
-        drawPhoneIcon(ctx, callRowX, contactRowY);
+        // Secondary contact details
+        drawWhatsAppIcon(ctx, callRowX, contactRowY);
+        drawPhoneIcon(ctx, callRowX + 32, contactRowY);
         ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 9px Arial";
-        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", callRowX + 42, contactRowY - 8);
+        ctx.font = "bold 8.5px Arial";
+        ctx.fillText(props.isTamil ? "மாற்று எண் (அழைப்பு & WA)" : "Secondary (Call & WA)", callRowX + 72, contactRowY - 8);
         ctx.fillStyle = "#f97316";
-        ctx.font = "bold 17px Arial";
-        ctx.fillText(phoneSupport, callRowX + 42, contactRowY + 12);
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(phoneSupport, callRowX + 72, contactRowY + 12);
 
         // WhatsApp QR Code
         if (qrImg) {
@@ -1687,7 +1691,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.font = "bold 11px Arial";
         ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
-        // WhatsApp
+        // Primary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
@@ -1696,14 +1700,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.stroke();
         
         drawWhatsAppIcon(ctx, contactX + 25, contactY + 70);
+        drawPhoneIcon(ctx, contactX + 60, contactY + 70);
         ctx.fillStyle = "#64748b";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", contactX + 68, contactY + 64);
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(props.isTamil ? "முதன்மை (அழைப்பு & WhatsApp)" : "Primary Contact (Call & WA)", contactX + 102, contactY + 64);
         ctx.fillStyle = "#15803d";
         ctx.font = "bold 18px Arial";
-        ctx.fillText(whatsappChat, contactX + 68, contactY + 85);
+        ctx.fillText(whatsappChat, contactX + 102, contactY + 85);
 
-        // Phone Support
+        // Secondary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
         ctx.lineWidth = 1;
@@ -1711,13 +1716,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fill();
         ctx.stroke();
         
-        drawPhoneIcon(ctx, contactX + 25, contactY + 136);
+        drawWhatsAppIcon(ctx, contactX + 25, contactY + 136);
+        drawPhoneIcon(ctx, contactX + 60, contactY + 136);
         ctx.fillStyle = "#64748b";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", contactX + 68, contactY + 130);
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(props.isTamil ? "மாற்று எண் (அழைப்பு & WhatsApp)" : "Secondary Contact (Call & WA)", contactX + 102, contactY + 130);
         ctx.fillStyle = "#c2410c";
         ctx.font = "bold 18px Arial";
-        ctx.fillText(phoneSupport, contactX + 68, contactY + 151);
+        ctx.fillText(phoneSupport, contactX + 102, contactY + 151);
 
         // WhatsApp QR Code
         if (qrImg) {
