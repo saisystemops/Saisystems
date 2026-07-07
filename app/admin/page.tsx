@@ -574,6 +574,8 @@ export default function AdminPage() {
   const [phoneSupport, setPhoneSupport] = useState("+91 87780 03397");
   const [whatsappChat, setWhatsappChat] = useState("+91 79041 08020");
   const [showroomAddress, setShowroomAddress] = useState("");
+  const [emiTenure, setEmiTenure] = useState<number>(12);
+  const [customEmiText, setCustomEmiText] = useState<string>("");
 
   const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
 
@@ -1842,6 +1844,8 @@ export default function AdminPage() {
                     showroomAddress={showroomAddress}
                     isTamil={isTamil}
                     showEmi={showEmi}
+                    emiTenure={emiTenure}
+                    customEmiText={customEmiText}
                   />
 
                   {/* Design combinator selectors */}
@@ -2505,6 +2509,8 @@ export default function AdminPage() {
                                 showroomAddress={showroomAddress}
                                 isTamil={isTamil}
                                 showEmi={showEmi}
+                                emiTenure={emiTenure}
+                                customEmiText={customEmiText}
                               />
 
                               {/* Canvas style combinators */}
@@ -2869,6 +2875,35 @@ export default function AdminPage() {
                         </label>
                       </div>
 
+                      {showEmi && (
+                        <div className="col-span-2 grid grid-cols-2 gap-3 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">EMI Tenure (Months)</label>
+                            <select
+                              value={emiTenure}
+                              onChange={(e) => setEmiTenure(Number(e.target.value))}
+                              className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none cursor-pointer"
+                            >
+                              <option value={6}>6 Months</option>
+                              <option value={9}>9 Months</option>
+                              <option value={12}>12 Months (Default)</option>
+                              <option value={18}>18 Months</option>
+                              <option value={24}>24 Months</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Manual EMI Text (Optional)</label>
+                            <input
+                              type="text"
+                              value={customEmiText}
+                              placeholder="e.g. Starts at ₹999/month*"
+                              onChange={(e) => setCustomEmiText(e.target.value)}
+                              className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       {/* Brand Name */}
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
@@ -3108,6 +3143,8 @@ export default function AdminPage() {
                     showroomAddress={showroomAddress}
                     isTamil={isTamil}
                     showEmi={showEmi}
+                    emiTenure={emiTenure}
+                    customEmiText={customEmiText}
                   />
 
                   {/* Canvas Style Combinators */}

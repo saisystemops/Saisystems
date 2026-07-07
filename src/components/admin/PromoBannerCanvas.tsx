@@ -35,6 +35,8 @@ export interface PromoBannerCanvasProps {
   trustPolicies?: string[];
   isTamil?: boolean;
   showEmi?: boolean;
+  emiTenure?: number;
+  customEmiText?: string;
 }
 
 export interface PromoBannerCanvasHandle {
@@ -444,19 +446,22 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         let savingsLabel = "";
         let emiLabel = "";
         
-        if (dealNum) {
-          const emiVal = Math.round(dealNum / 12);
+        if (props.customEmiText) {
+          emiLabel = props.customEmiText;
+        } else if (dealNum) {
+          const tenure = props.emiTenure || 12;
+          const emiVal = Math.round(dealNum / tenure);
           emiLabel = props.isTamil
-            ? `மாதாந்திர EMI: ₹${formatRupee(String(emiVal))} முதல்*`
-            : `Easy EMI starts at ₹${formatRupee(String(emiVal))}/mo*`;
-            
-          if (origNum && origNum > dealNum) {
-            const savings = origNum - dealNum;
-            const pct = Math.round((savings / origNum) * 100);
-            savingsLabel = props.isTamil
-              ? `சேமிப்பு ₹${formatRupee(String(savings))} (${pct}% தள்ளுபடி)`
-              : `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
-          }
+            ? `மாதாந்திர EMI: ₹${formatRupee(String(emiVal))} (${tenure} மாதங்கள்)*`
+            : `Easy EMI starts at ₹${formatRupee(String(emiVal))} (${tenure} Months)*`;
+        }
+
+        if (dealNum && origNum && origNum > dealNum) {
+          const savings = origNum - dealNum;
+          const pct = Math.round((savings / origNum) * 100);
+          savingsLabel = props.isTamil
+            ? `சேமிப்பு ₹${formatRupee(String(savings))} (${pct}% தள்ளுபடி)`
+            : `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
         }
 
         return { priceVal, originalVal, savingsLabel, emiLabel };
