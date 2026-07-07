@@ -16,11 +16,11 @@ export interface PromoBannerCanvasProps {
     imageUrl?: string;
   };
   ratio: "1:1" | "9:16" | "16:9";
-  themeColor: "orange" | "blue" | "gold" | "slate" | "green";
+  themeColor: string;
   bgPattern: "none" | "grid" | "circuit" | "fiber";
   platformStyle: "pedestal" | "ring" | "shadow";
   cardStyle: "glass" | "light" | "dark";
-  accentColor: "orange" | "cyan" | "gold" | "green" | "purple";
+  accentColor: string;
   zoom: number;
   offsetX: number;
   offsetY: number;
@@ -145,21 +145,36 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       ctx.clearRect(0, 0, W, H);
 
       // Color Palette Configurations
-      const accents = {
+      const accents: Record<string, string> = {
         orange: "#f97316",
         cyan: "#06b6d4",
         gold: "#fbbf24",
         green: "#10b981",
         purple: "#a855f7"
       };
-      const activeAccent = accents[props.accentColor] || accents.orange;
+      const activeAccent = accents[props.accentColor] || props.accentColor || accents.orange;
 
-      const bgGradients = {
-        orange: ["#fef8f6", "#fff1eb", "#f97316", "#2c1203", "#111827"], // [LightStart, LightEnd, AccentColor, DarkEnd, BottomEnd]
+      const bgGradients: Record<string, string[]> = {
+        orange: ["#fef8f6", "#fff1eb", "#f97316", "#2c1203", "#111827"],
         blue: ["#f8fafc", "#f1f5f9", "#2563eb", "#0b1b3d", "#061026"],
         gold: ["#fafafa", "#f4f4f5", "#d97706", "#1c160c", "#09090b"],
         slate: ["#f8fafc", "#f1f5f9", "#64748b", "#0f172a", "#090d16"],
-        green: ["#f0fdf4", "#dcfce7", "#16a34a", "#022c22", "#011611"]
+        green: ["#f0fdf4", "#dcfce7", "#16a34a", "#022c22", "#011611"],
+        purple: ["#faf5ff", "#f3e8ff", "#a855f7", "#2e1065", "#0f052d"],
+        sunset: ["#fff7ed", "#ffedd5", "#f97316", "#450a0a", "#18000a"],
+        ocean: ["#f0fdfa", "#ccfbf1", "#0d9488", "#115e59", "#042f2e"],
+        rose: ["#fff1f2", "#ffe4e6", "#f43f5e", "#4c0519", "#1f0005"],
+        silver: ["#f8fafc", "#f1f5f9", "#94a3b8", "#1e293b", "#0f172a"],
+        dark: ["#1e293b", "#0f172a", "#475569", "#020617", "#000000"],
+        neon: ["#1e1b4b", "#0c0a09", "#d946ef", "#03001e", "#7303c0"],
+        mint: ["#f0fdf4", "#f0fdf4", "#34d399", "#064e3b", "#022c22"],
+        royal: ["#faf5ff", "#f3e8ff", "#7c3aed", "#1e1b4b", "#090514"],
+        matrix: ["#022c22", "#000000", "#10b981", "#000000", "#000000"],
+        minimal: ["#ffffff", "#f8fafc", "#0f172a", "#ffffff", "#f1f5f9"],
+        burgundy: ["#ffe4e6", "#fecdd3", "#be123c", "#4c0519", "#1a0005"],
+        frost: ["#f0f9ff", "#e0f2fe", "#0284c7", "#0c4a6e", "#031b29"],
+        goldrush: ["#fef9c3", "#fef08a", "#eab308", "#451a03", "#1c0b00"],
+        teal: ["#ecfeff", "#cffafe", "#06b6d4", "#164e63", "#082f49"]
       };
       const activeBgGrad = bgGradients[props.themeColor] || bgGradients.orange;
 
@@ -521,7 +536,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.stroke();
           }
 
-          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
+          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 10px Arial, sans-serif";
           ctx.fillText(specLabel, iconX + 35, currentY + 23);
@@ -732,8 +747,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         // Spec Cards (Left vertical stack, compact)
         const specStartY = 205;
         const specCardW = 400;
-        const specCardH = 48;
-        const specSpaceY = 56;
+        const specCardH = specsList.length > 4 ? 42 : 48;
+        const specSpaceY = specsList.length > 4 ? 46 : 56;
         specsList.forEach((specText, idx) => {
           const currentY = specStartY + idx * specSpaceY;
           ctx.save();
@@ -749,47 +764,47 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           const iconCenterY = currentY + specCardH / 2;
           ctx.fillStyle = activeAccent + "15";
           ctx.beginPath();
-          ctx.arc(iconX, iconCenterY, 13, 0, Math.PI * 2);
+          ctx.arc(iconX, iconCenterY, specsList.length > 4 ? 11 : 13, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 1.5;
 
           if (idx === 0) {
             ctx.beginPath();
-            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
+            ctx.rect(iconX - 5, iconCenterY - 5, 10, 10);
             ctx.stroke();
           } else if (idx === 1) {
             ctx.beginPath();
-            ctx.rect(iconX - 8, iconCenterY - 4, 16, 8);
+            ctx.rect(iconX - 7, iconCenterY - 3, 14, 6);
             ctx.stroke();
           } else if (idx === 2) {
             ctx.beginPath();
-            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
+            ctx.rect(iconX - 5, iconCenterY - 5, 10, 10);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY - 2, 3, 0, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY - 1, 2, 0, Math.PI * 2);
             ctx.stroke();
           } else {
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 4, 2, 0, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 3, 1.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 4, 6, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 3, 5, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
 
-          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
+          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 8px Arial, sans-serif";
-          ctx.fillText(specLabel, iconX + 22, currentY + 16);
+          ctx.fillText(specLabel, iconX + 22, currentY + (specsList.length > 4 ? 13 : 16));
 
           ctx.fillStyle = "#1e293b";
           ctx.font = "bold 13px Arial, sans-serif";
-          ctx.fillText(specText, iconX + 22, currentY + 34);
+          ctx.fillText(specText, iconX + 22, currentY + (specsList.length > 4 ? 28 : 34));
         });
 
         // Showcase & Pedestal (Middle Column)
-        const showX = W * 0.58;
+        const showX = W * 0.55;
         const showY = 320;
         const pedestalW = 340;
         const pedestalH = 60;
@@ -938,11 +953,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             const pct = Math.round(((origNum - dealNum) / origNum) * 100);
             const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
             ctx.fillStyle = "#f59e0b";
-            drawRoundedRect(ctx, priceX, priceY + 36, 270, 26, 4);
+            drawRoundedRect(ctx, priceX, priceY + 32, 250, 20, 4);
             ctx.fill();
             ctx.fillStyle = "#0f172a";
-            ctx.font = "bold 10px Arial";
-            ctx.fillText(savingsLabel, priceX + 12, priceY + 53);
+            ctx.font = "bold 9.5px Arial";
+            ctx.fillText(savingsLabel, priceX + 10, priceY + 46);
           }
         }
 
@@ -993,10 +1008,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.stroke();
 
         const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
-        ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
-        ctx.font = "bold 10px Arial, sans-serif";
-        const addrWidth = ctx.measureText(address).width;
-        ctx.fillText(address, W / 2 - addrWidth / 2, H - 20);
+        ctx.fillStyle = "rgba(148, 163, 184, 0.85)";
+        ctx.font = "bold 8.5px Arial, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(address, W - 40, H - 12);
+        ctx.textAlign = "left"; // Reset to default
       }
 
       // ----------------------------------------------------
@@ -1136,7 +1152,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.stroke();
           }
 
-          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
+          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 11px Arial, sans-serif";
           ctx.fillText(specLabel, 120, currentY + 23);
@@ -1542,6 +1558,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     );
   }
 );
+
+const getSpecLabel = (text: string, idx: number): string => {
+  const t = text.toLowerCase();
+  if (idx === 0) return "PROCESSOR";
+  if (idx === 1) return "MEMORY";
+  if (idx === 2) return "STORAGE";
+  if (idx === 3) return "CONNECTIVITY";
+  
+  if (t.includes("warranty") || t.includes("year") || t.includes("month")) return "WARRANTY";
+  if (t.includes("bag") || t.includes("mouse") || t.includes("charger") || t.includes("box") || t.includes("included")) return "INCLUDED";
+  if (t.includes("windows") || t.includes("os") || t.includes("mac") || t.includes("operating") || t.includes("ubuntu")) return "OS & SOFTWARE";
+  if (t.includes("graphic") || t.includes("nvidia") || t.includes("intel hd") || t.includes("gpu")) return "GRAPHICS";
+  return "SPECIFICATION";
+};
 
 PromoBannerCanvas.displayName = "PromoBannerCanvas";
 

@@ -26,6 +26,38 @@ import {
 } from "lucide-react";
 import type { Product } from "@/lib/data/default-products";
 
+const PRESETS: Record<string, {
+  name: string;
+  themeColor: string;
+  bgPattern: "none" | "grid" | "circuit" | "fiber";
+  accentColor: string;
+  cardStyle: "glass" | "light" | "dark";
+  platformStyle: "pedestal" | "ring" | "shadow";
+}> = {
+  eco_green: { name: "🟢 Refurb Eco Green", themeColor: "green", bgPattern: "circuit", accentColor: "green", cardStyle: "glass", platformStyle: "pedestal" },
+  midnight_blue: { name: "🔵 Midnight Grid Blue", themeColor: "blue", bgPattern: "grid", accentColor: "cyan", cardStyle: "dark", platformStyle: "ring" },
+  luxury_gold: { name: "🟡 Luxury Black Gold", themeColor: "gold", bgPattern: "fiber", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
+  slate_corp: { name: "⚪ Corporate Slate", themeColor: "slate", bgPattern: "circuit", accentColor: "orange", cardStyle: "light", platformStyle: "shadow" },
+  hot_red: { name: "🔴 Hot Deal Crimson", themeColor: "burgundy", bgPattern: "grid", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
+  cyberpunk: { name: "🟣 Cyberpunk Neon", themeColor: "neon", bgPattern: "grid", accentColor: "purple", cardStyle: "glass", platformStyle: "ring" },
+  sunset: { name: "🌅 Sunset Glow", themeColor: "sunset", bgPattern: "circuit", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
+  ocean: { name: "🌊 Ocean Breeze", themeColor: "ocean", bgPattern: "fiber", accentColor: "cyan", cardStyle: "glass", platformStyle: "shadow" },
+  electric_purple: { name: "⚡ Electric Violet", themeColor: "royal", bgPattern: "grid", accentColor: "purple", cardStyle: "dark", platformStyle: "ring" },
+  rose_gold: { name: "🌸 Rose Gold Elite", themeColor: "rose", bgPattern: "circuit", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
+  silver_frost: { name: "❄️ Nordic Silver Frost", themeColor: "frost", bgPattern: "circuit", accentColor: "cyan", cardStyle: "light", platformStyle: "shadow" },
+  carbon_dark: { name: "⚫ Carbon Tech Slate", themeColor: "dark", bgPattern: "grid", accentColor: "gold", cardStyle: "dark", platformStyle: "shadow" },
+  volcano: { name: "🌋 Volcanic Orange", themeColor: "sunset", bgPattern: "grid", accentColor: "orange", cardStyle: "dark", platformStyle: "pedestal" },
+  moss: { name: "🌲 Deep Forest Moss", themeColor: "green", bgPattern: "fiber", accentColor: "green", cardStyle: "glass", platformStyle: "pedestal" },
+  matrix: { name: "📟 Matrix Code Terminal", themeColor: "matrix", bgPattern: "grid", accentColor: "green", cardStyle: "dark", platformStyle: "ring" },
+  light_minimal: { name: "🔲 Ultra-Minimal Light", themeColor: "minimal", bgPattern: "grid", accentColor: "orange", cardStyle: "light", platformStyle: "shadow" },
+  royal_gold: { name: "👑 Royal Purple & Gold", themeColor: "royal", bgPattern: "circuit", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
+  burgundy: { name: "🍷 Vintage Burgundy", themeColor: "burgundy", bgPattern: "fiber", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
+  mint_fresh: { name: "🍃 Mint Freshness", themeColor: "mint", bgPattern: "circuit", accentColor: "green", cardStyle: "light", platformStyle: "shadow" },
+  gold_rush: { name: "🪙 Gold Rush Treasure", themeColor: "goldrush", bgPattern: "grid", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
+  classic_teal: { name: "💎 Classic Teal Ocean", themeColor: "teal", bgPattern: "circuit", accentColor: "cyan", cardStyle: "glass", platformStyle: "ring" },
+  glass_cyber: { name: "🔮 Holographic Cyber", themeColor: "neon", bgPattern: "circuit", accentColor: "cyan", cardStyle: "glass", platformStyle: "ring" }
+};
+
 type DBStatus = {
   productsTable: "ready" | "missing" | "error";
   adminUsersTable: "ready" | "missing" | "error";
@@ -465,11 +497,11 @@ export default function AdminPage() {
 
   // Banner Canvas States for Add Product
   const [addRatio, setAddRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
-  const [addThemeColor, setAddThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [addThemeColor, setAddThemeColor] = useState<string>("orange");
   const [addBgPattern, setAddBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
   const [addPlatformStyle, setAddPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
   const [addCardStyle, setAddCardStyle] = useState<"glass" | "light" | "dark">("glass");
-  const [addAccentColor, setAddAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [addAccentColor, setAddAccentColor] = useState<string>("orange");
   const [addZoom, setAddZoom] = useState(1);
   const [addOffsetX, setAddOffsetX] = useState(0);
   const [addOffsetY, setAddOffsetY] = useState(0);
@@ -484,11 +516,11 @@ export default function AdminPage() {
 
   // Banner Canvas States for Edit Product
   const [editRatio, setEditRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
-  const [editThemeColor, setEditThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [editThemeColor, setEditThemeColor] = useState<string>("orange");
   const [editBgPattern, setEditBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
   const [editPlatformStyle, setEditPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
   const [editCardStyle, setEditCardStyle] = useState<"glass" | "light" | "dark">("glass");
-  const [editAccentColor, setEditAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [editAccentColor, setEditAccentColor] = useState<string>("orange");
   const [editZoom, setEditZoom] = useState(1);
   const [editOffsetX, setEditOffsetX] = useState(0);
   const [editOffsetY, setEditOffsetY] = useState(0);
@@ -519,11 +551,11 @@ export default function AdminPage() {
     includedAccessory: "Laptop Bag & Charger"
   });
   const [bannerRatio, setBannerRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
-  const [bannerThemeColor, setBannerThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [bannerThemeColor, setBannerThemeColor] = useState<string>("orange");
   const [bannerBgPattern, setBannerBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
   const [bannerPlatformStyle, setBannerPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
   const [bannerCardStyle, setBannerCardStyle] = useState<"glass" | "light" | "dark">("glass");
-  const [bannerAccentColor, setBannerAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [bannerAccentColor, setBannerAccentColor] = useState<string>("orange");
   const [bannerZoom, setBannerZoom] = useState(1);
   const [bannerOffsetX, setBannerOffsetX] = useState(0);
   const [bannerOffsetY, setBannerOffsetY] = useState(0);
@@ -532,6 +564,7 @@ export default function AdminPage() {
   const [bannerAiPromptText, setBannerAiPromptText] = useState("");
   const [bannerParsingAi, setBannerParsingAi] = useState(false);
   const [bannerNewSpecText, setBannerNewSpecText] = useState("");
+  const [editNewSpecText, setEditNewSpecText] = useState("");
 
   const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
 
@@ -586,6 +619,46 @@ export default function AdminPage() {
       ...prev,
       specs: (prev.specs || []).filter((_, i) => i !== idx)
     }));
+  };
+
+  const handleAddEditSpec = () => {
+    if (!editNewSpecText.trim()) return;
+    setEditProduct(prev => ({
+      ...prev,
+      specs: [...(prev.specs || []), editNewSpecText.trim()]
+    }));
+    setEditNewSpecText("");
+  };
+
+  const handleRemoveEditSpec = (idx: number) => {
+    setEditProduct(prev => ({
+      ...prev,
+      specs: (prev.specs || []).filter((_, i) => i !== idx)
+    }));
+  };
+
+  const applyPreset = (presetKey: string, target: "add" | "edit" | "banner") => {
+    const config = PRESETS[presetKey];
+    if (!config) return;
+    if (target === "add") {
+      setAddThemeColor(config.themeColor);
+      setAddBgPattern(config.bgPattern);
+      setAddPlatformStyle(config.platformStyle);
+      setAddCardStyle(config.cardStyle);
+      setAddAccentColor(config.accentColor);
+    } else if (target === "edit") {
+      setEditThemeColor(config.themeColor);
+      setEditBgPattern(config.bgPattern);
+      setEditPlatformStyle(config.platformStyle);
+      setEditCardStyle(config.cardStyle);
+      setEditAccentColor(config.accentColor);
+    } else {
+      setBannerThemeColor(config.themeColor);
+      setBannerBgPattern(config.bgPattern);
+      setBannerPlatformStyle(config.platformStyle);
+      setBannerCardStyle(config.cardStyle);
+      setBannerAccentColor(config.accentColor);
+    }
   };
 
   const handleAiParseDeal = async () => {
@@ -1639,6 +1712,7 @@ export default function AdminPage() {
                         placeholder="e.g. Intel Core i5 10th Gen"
                         value={newSpecText}
                         onChange={(e) => setNewSpecText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSpecToNew())}
                         className="flex-1 bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
                       />
                       <button
@@ -1704,42 +1778,16 @@ export default function AdminPage() {
                   <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
                         <select
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "orange") {
-                              setAddThemeColor("orange");
-                              setAddAccentColor("orange");
-                              setAddBgPattern("circuit");
-                              setAddPlatformStyle("pedestal");
-                              setAddCardStyle("glass");
-                            } else if (val === "blue") {
-                              setAddThemeColor("blue");
-                              setAddAccentColor("cyan");
-                              setAddBgPattern("grid");
-                              setAddPlatformStyle("pedestal");
-                              setAddCardStyle("light");
-                            } else if (val === "gold") {
-                              setAddThemeColor("gold");
-                              setAddAccentColor("gold");
-                              setAddBgPattern("fiber");
-                              setAddPlatformStyle("pedestal");
-                              setAddCardStyle("dark");
-                            } else if (val === "green") {
-                              setAddThemeColor("green");
-                              setAddAccentColor("green");
-                              setAddBgPattern("fiber");
-                              setAddPlatformStyle("shadow");
-                              setAddCardStyle("glass");
-                            }
-                          }}
-                          className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                          onChange={(e) => applyPreset(e.target.value, "add")}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
                         >
-                          <option value="orange">🍊 Sai Signature Orange</option>
-                          <option value="blue">💙 Midnight Grid Blue</option>
-                          <option value="gold">🏆 Luxury Black Gold</option>
-                          <option value="green">🍃 Refurb Eco Green</option>
+                          {Object.entries(PRESETS).map(([key, config]) => (
+                            <option key={key} value={key}>
+                              {config.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
@@ -2289,18 +2337,38 @@ export default function AdminPage() {
                                   />
                                 </div>
                                 <div className="sm:col-span-2">
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Specifications (comma separated)</label>
-                                  <input
-                                    type="text"
-                                    value={(editProduct.specs || []).join(", ")}
-                                    onChange={(e) =>
-                                      setEditProduct({
-                                        ...editProduct,
-                                        specs: e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                                      })
-                                    }
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Specifications (Up to 5 specs)</label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. 16GB DDR4 RAM Memory"
+                                      value={editNewSpecText}
+                                      onChange={(e) => setEditNewSpecText(e.target.value)}
+                                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEditSpec())}
+                                      className="flex-1 bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={handleAddEditSpec}
+                                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black rounded-lg cursor-pointer transition-colors"
+                                    >
+                                      + Add Spec
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mt-3">
+                                    {(editProduct.specs || []).map((spec, sidx) => (
+                                      <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
+                                        {spec}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveEditSpec(sidx)}
+                                          className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px] cursor-pointer"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link</label>
@@ -2365,42 +2433,16 @@ export default function AdminPage() {
                               <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
                                 <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
                                     <select
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === "orange") {
-                                          setEditThemeColor("orange");
-                                          setEditAccentColor("orange");
-                                          setEditBgPattern("circuit");
-                                          setEditPlatformStyle("pedestal");
-                                          setEditCardStyle("glass");
-                                        } else if (val === "blue") {
-                                          setEditThemeColor("blue");
-                                          setEditAccentColor("cyan");
-                                          setEditBgPattern("grid");
-                                          setEditPlatformStyle("pedestal");
-                                          setEditCardStyle("light");
-                                        } else if (val === "gold") {
-                                          setEditThemeColor("gold");
-                                          setEditAccentColor("gold");
-                                          setEditBgPattern("fiber");
-                                          setEditPlatformStyle("pedestal");
-                                          setEditCardStyle("dark");
-                                        } else if (val === "green") {
-                                          setEditThemeColor("green");
-                                          setEditAccentColor("green");
-                                          setEditBgPattern("fiber");
-                                          setEditPlatformStyle("shadow");
-                                          setEditCardStyle("glass");
-                                        }
-                                      }}
-                                      className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                                      onChange={(e) => applyPreset(e.target.value, "edit")}
+                                      className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
                                     >
-                                      <option value="orange">🍊 Sai Signature Orange</option>
-                                      <option value="blue">💙 Midnight Grid Blue</option>
-                                      <option value="gold">🏆 Luxury Black Gold</option>
-                                      <option value="green">🍃 Refurb Eco Green</option>
+                                      {Object.entries(PRESETS).map(([key, config]) => (
+                                        <option key={key} value={key}>
+                                          {config.name}
+                                        </option>
+                                      ))}
                                     </select>
                                   </div>
                                   <div>
@@ -2748,6 +2790,20 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Category</label>
+                    <select
+                      value={bannerProduct.category}
+                      onChange={(e) => setBannerProduct({ ...bannerProduct, category: e.target.value as any })}
+                      className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50 cursor-pointer"
+                    >
+                      <option value="laptops">💻 Refurbished Laptops</option>
+                      <option value="desktops">🖥️ New Desktops</option>
+                      <option value="spare-parts">⚙️ Spare Parts</option>
+                      <option value="accessories">🔌 Accessories / Add-ons</option>
+                    </select>
+                  </div>
+
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price (₹)</label>
@@ -2858,42 +2914,16 @@ export default function AdminPage() {
                   <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
                         <select
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "orange") {
-                              setBannerThemeColor("orange");
-                              setBannerAccentColor("orange");
-                              setBannerBgPattern("circuit");
-                              setBannerPlatformStyle("pedestal");
-                              setBannerCardStyle("glass");
-                            } else if (val === "blue") {
-                              setBannerThemeColor("blue");
-                              setBannerAccentColor("cyan");
-                              setBannerBgPattern("grid");
-                              setBannerPlatformStyle("pedestal");
-                              setBannerCardStyle("light");
-                            } else if (val === "gold") {
-                              setBannerThemeColor("gold");
-                              setBannerAccentColor("gold");
-                              setBannerBgPattern("fiber");
-                              setBannerPlatformStyle("pedestal");
-                              setBannerCardStyle("dark");
-                            } else if (val === "green") {
-                              setBannerThemeColor("green");
-                              setBannerAccentColor("green");
-                              setBannerBgPattern("fiber");
-                              setBannerPlatformStyle("shadow");
-                              setBannerCardStyle("glass");
-                            }
-                          }}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                          onChange={(e) => applyPreset(e.target.value, "banner")}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
                         >
-                          <option value="orange">🍊 Sai Signature Orange</option>
-                          <option value="blue">💙 Midnight Grid Blue</option>
-                          <option value="gold">🏆 Luxury Black Gold</option>
-                          <option value="green">🍃 Refurb Eco Green</option>
+                          {Object.entries(PRESETS).map(([key, config]) => (
+                            <option key={key} value={key}>
+                              {config.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
