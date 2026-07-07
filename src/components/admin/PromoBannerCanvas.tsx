@@ -807,18 +807,18 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         // Floating Badges (Shifted Up, dynamic tracking)
         const zoomOffset = (props.zoom - 1) * 120;
-        const badgeX = W / 2 - 180 + props.offsetX;
-        const badgeY = 370 + props.offsetY - zoomOffset;
+        const badgeX = W / 2 - 165 + props.offsetX;
+        const badgeY = 305 + props.offsetY - zoomOffset;
         if (dealTag) {
           ctx.save();
           ctx.fillStyle = "#dc2626";
           ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX, badgeY, 170, 42, 10);
+          drawRoundedRect(ctx, badgeX, badgeY, 150, 36, 8);
           ctx.fill();
           ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.fillText(dealTag, badgeX + 16, badgeY + 26);
+          ctx.font = "bold 12px Arial";
+          ctx.fillText(dealTag, badgeX + 14, badgeY + 22);
           ctx.restore();
         }
         if (accessory) {
@@ -826,11 +826,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.fillStyle = "#059669";
           ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX + 185, badgeY, 210, 42, 10);
+          drawRoundedRect(ctx, badgeX + 165, badgeY, 190, 36, 8);
           ctx.fill();
           ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.fillText(accessory, badgeX + 200, badgeY + 26);
+          ctx.font = "bold 12px Arial";
+          ctx.fillText(accessory, badgeX + 180, badgeY + 22);
           ctx.restore();
         }
 
