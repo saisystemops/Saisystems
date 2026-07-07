@@ -163,15 +163,12 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       };
       const activeBgGrad = bgGradients[props.themeColor] || bgGradients.orange;
 
-      // ----------------------------------------------------
-      // 2. BACKGROUND DRAWING
-      // ----------------------------------------------------
       // Determine vertical limit where bottom blue section starts
-      let footerY = H * 0.65; // e.g. 700px in 1080x1080
+      let footerY = H * 0.65; 
       if (props.ratio === "9:16") {
-        footerY = H * 0.76;
+        footerY = 1370; // Dedicated vertical split for Story
       } else if (props.ratio === "16:9") {
-        footerY = H * 0.70;
+        footerY = 441;  // Dedicated vertical split for Landscape
       }
 
       // Draw Top Half Background Gradient
@@ -193,7 +190,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       ctx.fillRect(0, footerY - 6, W, 6);
 
       // ----------------------------------------------------
-      // 3. BACKGROUND PATTERNS
+      // 2. BACKGROUND PATTERNS
       // ----------------------------------------------------
       if (props.bgPattern === "grid") {
         ctx.strokeStyle = "rgba(100, 116, 139, 0.04)";
@@ -245,19 +242,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         }
       }
 
-      // ----------------------------------------------------
-      // 4. BRANDING LOGO & TYPOGRAPHY ("SAI SYSTEMS")
-      // ----------------------------------------------------
-      let headerX = 40;
-      let headerY = 40;
-
-      // Draw Glassmorphism Branding Card Container
-      ctx.save();
-      ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetY = 4;
-      
-      // Select Card Fill Color based on props.cardStyle
+      // Card Fill Color based on props.cardStyle
       let cardFill = "rgba(255, 255, 255, 0.93)";
       let cardTextBrand = "#ea580c";
       let cardTextSub = "#64748b";
@@ -272,194 +257,886 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         cardOutline = "rgba(255, 255, 255, 0.5)";
       }
 
-      // Draw rounded header brand box
-      drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
-      ctx.fillStyle = cardFill;
-      ctx.fill();
-      ctx.strokeStyle = cardOutline;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.restore();
-
-      // Draw Peacock Logo inside card
-      if (logoImgRef.current) {
-        ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
-      } else {
-        // Vector fallback if image failed loading
-        ctx.fillStyle = activeAccent;
-        ctx.beginPath();
-        ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 20px Arial";
-        ctx.fillText("S", headerX + 38, headerY + 57);
-      }
-
-      // Draw brand text (Orange "SAI", Slate/Gray "SYSTEMS")
-      ctx.fillStyle = "#ea580c"; // Brand orange
-      ctx.font = "black 28px Arial, Helvetica, sans-serif";
-      ctx.fillText("SAI", headerX + 105, headerY + 50);
-
-      ctx.fillStyle = cardTextSub;
-      ctx.font = "black 11px Arial, Helvetica, sans-serif";
-      // Draw letter spacing manually on canvas
-      const subText = "SYSTEMS";
-      let textX = headerX + 105;
-      for (let i = 0; i < subText.length; i++) {
-        ctx.fillText(subText[i], textX, headerY + 76);
-        textX += 13;
-      }
-
-      // ----------------------------------------------------
-      // 5. PRODUCT TITLE & TAGS
-      // ----------------------------------------------------
       const pTitle = props.product.title || "Dell Latitude 3410";
       const pBadge = props.product.badge || "";
       const pCategory = (props.product.category || "Laptops").toUpperCase();
+      const dealTag = props.product.dealTag || "";
+      const accessory = props.product.includedAccessory || "";
 
-      let titleX = W - 40;
-      let titleY = 100;
-      
-      // If portrait layout, center-align the header title
-      if (props.ratio === "9:16") {
-        titleX = W / 2;
-        titleY = 240;
-        ctx.textAlign = "center";
-      } else {
-        ctx.textAlign = "right";
-      }
-
-      // Category Tag Box
-      ctx.font = "bold 11px Arial, sans-serif";
-      const catWidth = ctx.measureText(pCategory).width + 30;
-      ctx.fillStyle = "rgba(254, 215, 170, 0.7)";
-      ctx.strokeStyle = "rgba(251, 146, 60, 0.4)";
-      ctx.lineWidth = 1;
-      
-      if (props.ratio === "9:16") {
-        drawRoundedRect(ctx, W / 2 - catWidth / 2, 170, catWidth, 32, 6);
-      } else {
-        drawRoundedRect(ctx, W - 40 - catWidth, 40, catWidth, 32, 6);
-      }
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#c2410c";
-      if (props.ratio === "9:16") {
-        ctx.fillText(pCategory, W / 2, 190);
-      } else {
-        ctx.fillText(pCategory, W - 40 - catWidth / 2, 60);
-      }
-
-      // Main product title text
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "900 44px Arial, Helvetica, sans-serif";
-      ctx.fillText(pTitle, titleX, titleY);
-
-      // Subtitle/tagline under title
-      ctx.fillStyle = "#64748b";
-      ctx.font = "bold 18px Arial, sans-serif";
-      ctx.fillText("— Professional Performance. Business Ready. —", titleX, titleY + 45);
-
-      // Reset align
-      ctx.textAlign = "left";
-
-      // ----------------------------------------------------
-      // 6. SPECIFICATIONS CARDS (Left Column)
-      // ----------------------------------------------------
       const specsList = props.product.specs && props.product.specs.length > 0
         ? props.product.specs
         : ["Intel Core i5 Processor", "8GB DDR4 RAM", "256GB SSD Storage", "Wi-Fi (Built-in)"];
 
-      let specStartY = 200;
-      let specCardW = 460;
-      let specCardH = 74;
-      let specSpaceY = 88;
+      let priceVal = String(props.product.price || "25000");
+      let originalVal = String(props.product.originalPrice || "");
+      priceVal = formatRupee(priceVal);
+      if (originalVal) originalVal = formatRupee(originalVal);
 
+      // ----------------------------------------------------
+      // BRANCH: STORY LAYOUT (9:16, 1080x1920)
+      // ----------------------------------------------------
       if (props.ratio === "9:16") {
-        specStartY = 1140;
-        specCardW = W - 80;
-        specSpaceY = 84;
-      } else if (props.ratio === "16:9") {
-        specStartY = 180;
-        specCardW = 420;
-        specCardH = 68;
-        specSpaceY = 78;
-      }
+        // Logo card
+        const headerX = 40;
+        const headerY = 80;
+        ctx.save();
+        ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
+        drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
+        ctx.fillStyle = cardFill;
+        ctx.fill();
+        ctx.strokeStyle = cardOutline;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
 
-      if (props.ratio !== "9:16" && props.ratio !== "16:9") {
-        // Standard square layout
-        specStartY = 195;
-        specCardW = 470;
-        specCardH = 74;
-        specSpaceY = 88;
-      }
+        if (logoImgRef.current) {
+          ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
+        } else {
+          ctx.fillStyle = activeAccent;
+          ctx.beginPath();
+          ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 20px Arial";
+          ctx.fillText("S", headerX + 38, headerY + 57);
+        }
 
-      // Render spec rows
-      if (props.ratio !== "16:9" || W > 900) { // Safety check
-        specsList.slice(0, 4).forEach((specText, idx) => {
-          const currentY = specStartY + (idx * specSpaceY);
-          
-          // Draw card background
+        ctx.fillStyle = "#ea580c";
+        ctx.font = "black 28px Arial, sans-serif";
+        ctx.fillText("SAI", headerX + 105, headerY + 50);
+
+        ctx.fillStyle = cardTextSub;
+        ctx.font = "black 11px Arial, sans-serif";
+        const subText = "SYSTEMS";
+        let textX = headerX + 105;
+        for (let i = 0; i < subText.length; i++) {
+          ctx.fillText(subText[i], textX, headerY + 76);
+          textX += 13;
+        }
+
+        // Category Tag
+        ctx.font = "bold 11px Arial, sans-serif";
+        const catWidth = ctx.measureText(pCategory).width + 30;
+        ctx.fillStyle = "rgba(254, 215, 170, 0.7)";
+        ctx.strokeStyle = "rgba(251, 146, 60, 0.4)";
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, W / 2 - catWidth / 2, 220, catWidth, 32, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#c2410c";
+        ctx.textAlign = "center";
+        ctx.fillText(pCategory, W / 2, 240);
+        ctx.textAlign = "left";
+
+        // Title and Subtitle (Centered)
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#0f172a";
+        let titleFontSize = 46;
+        ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        while (ctx.measureText(pTitle).width > W - 100 && titleFontSize > 28) {
+          titleFontSize -= 2;
+          ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        }
+        ctx.fillText(pTitle, W / 2, 310);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 16px Arial, sans-serif";
+        ctx.fillText("— Professional Performance. Business Ready. —", W / 2, 355);
+        ctx.textAlign = "left";
+
+        // Pedestal & Showcase
+        const showX = W / 2;
+        const showY = 560;
+        const pedestalW = 600;
+        const pedestalH = 100;
+
+        if (props.platformStyle === "pedestal") {
+          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = activeAccent + "22";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (props.platformStyle === "ring") {
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 6;
           ctx.save();
+          ctx.shadowColor = activeAccent;
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (props.product.category === "desktops") {
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(showX - 40, showY + 60);
+          ctx.lineTo(showX - 25, showY);
+          ctx.lineTo(showX + 25, showY);
+          ctx.lineTo(showX + 40, showY + 60);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        if (productImg) {
+          ctx.save();
+          const pWidth = productImg.width;
+          const pHeight = productImg.height;
+          const baseScale = (pedestalW * 0.95) / pWidth;
+          const finalScale = baseScale * props.zoom;
+          const drawW = pWidth * finalScale;
+          const drawH = pHeight * finalScale;
+          ctx.translate(showX + props.offsetX, showY + props.offsetY);
+          ctx.rotate((props.rotation * Math.PI) / 180);
+          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 4;
+          drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#f1f5f9";
+          ctx.fillRect(showX - 148, showY - 128, 296, 174);
+          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+          ctx.font = "bold 20px Arial";
+          ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(showX - 200, showY + 70, 400, 15);
+          ctx.restore();
+        }
+
+        // Floating Badges
+        const badgeX = W / 2 - 180;
+        const badgeY = 440;
+        if (dealTag) {
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, badgeX, badgeY, 170, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.fillText(dealTag, badgeX + 16, badgeY + 26);
+          ctx.restore();
+        }
+        if (accessory) {
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, badgeX + 185, badgeY, 210, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.fillText(accessory, badgeX + 200, badgeY + 26);
+          ctx.restore();
+        }
+
+        // Specs List (Wide cards centered, lower Y starts at 800)
+        const specStartY = 800;
+        const specCardW = 980;
+        const specCardH = 70;
+        const specSpaceY = 82;
+        specsList.forEach((specText, idx) => {
+          const currentY = specStartY + idx * specSpaceY;
+          ctx.save();
+          ctx.shadowColor = "rgba(0,0,0,0.02)";
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 2;
+          drawRoundedRect(ctx, W / 2 - specCardW / 2, currentY, specCardW, specCardH, 16);
           ctx.fillStyle = cardFill;
+          ctx.fill();
           ctx.strokeStyle = cardOutline;
           ctx.lineWidth = 1;
-          drawRoundedRect(ctx, 40, currentY, specCardW, specCardH, 12);
-          ctx.fill();
           ctx.stroke();
           ctx.restore();
 
-          // Draw spec circle ring
-          ctx.fillStyle = activeAccent;
-          ctx.beginPath();
-          ctx.arc(75, currentY + specCardH / 2, 23, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Programmatic vector icons
-          ctx.strokeStyle = "white";
-          ctx.lineWidth = 2.5;
-          ctx.fillStyle = "white";
+          const iconX = W / 2 - specCardW / 2 + 35;
           const iconCenterY = currentY + specCardH / 2;
+          ctx.fillStyle = activeAccent + "15";
+          ctx.beginPath();
+          ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 2;
 
           if (idx === 0) {
-            // CPU Icon
-            ctx.strokeRect(66, iconCenterY - 9, 18, 18);
-            ctx.fillRect(72, iconCenterY - 3, 6, 6);
-            // Draw pins
-            for (let offset = -6; offset <= 6; offset += 6) {
-              ctx.fillRect(74 + offset, iconCenterY - 14, 2, 5);
-              ctx.fillRect(74 + offset, iconCenterY + 9, 2, 5);
-              ctx.fillRect(61, iconCenterY + offset - 1, 5, 2);
-              ctx.fillRect(84, iconCenterY + offset - 1, 5, 2);
+            ctx.beginPath();
+            ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
+            ctx.stroke();
+            for (let i = -7; i <= 7; i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - 12, 2, 3);
+              ctx.fillRect(iconX + i - 1, iconCenterY + 9, 2, 3);
+              ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
+              ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
             }
           } else if (idx === 1) {
-            // RAM Icon
-            ctx.strokeRect(62, iconCenterY - 5, 26, 10);
-            ctx.fillRect(68, iconCenterY - 5, 2, 10);
-            ctx.fillRect(74, iconCenterY - 5, 2, 10);
-            ctx.fillRect(80, iconCenterY - 5, 2, 10);
-          } else if (idx === 2) {
-            // Hard Drive SSD Icon
-            ctx.strokeRect(65, iconCenterY - 10, 20, 20);
             ctx.beginPath();
-            ctx.arc(75, iconCenterY + 1, 6, 0, Math.PI * 2);
+            ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
             ctx.stroke();
-          } else {
-            // WiFi Icon
+            for (let i = -8; i <= 8; i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
+            }
+          } else if (idx === 2) {
             ctx.beginPath();
-            ctx.arc(75, iconCenterY + 6, 3, 0, Math.PI * 2);
+            ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(75, iconCenterY + 6, 10, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 6, 10, Math.PI, Math.PI * 2);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(75, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
 
-          // Spec Text labels
-          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx];
+          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 10px Arial, sans-serif";
+          ctx.fillText(specLabel, iconX + 35, currentY + 23);
+
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "bold 18px Arial, sans-serif";
+          ctx.fillText(specText, iconX + 35, currentY + 45);
+        });
+
+        // Horizontal Policies Bar
+        const trustY = 1250;
+        ctx.save();
+        ctx.fillStyle = cardFill;
+        ctx.strokeStyle = cardOutline;
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, 50, trustY, W - 100, 66, 14);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#475569";
+        ctx.font = "bold 13px Arial";
+        ctx.fillText("🛡️ 365-Day Warranty", 90, trustY + 38);
+        ctx.fillText("⚙️ 100% Genuine Parts", 430, trustY + 38);
+        ctx.fillText("🔌 Charger Included", 770, trustY + 38);
+        ctx.restore();
+
+        // Bottom Pricing
+        const priceY = 1480;
+        const priceX = 80;
+        ctx.fillStyle = activeAccent;
+        ctx.font = "black 12px Arial, sans-serif";
+        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY);
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 58px Arial, sans-serif";
+        ctx.fillText(`₹${priceVal}`, priceX, priceY + 54);
+        const priceValWidth = ctx.measureText(`₹${priceVal}`).width;
+
+        if (originalVal) {
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 26px Arial";
+          const origX = priceX + priceValWidth + 20;
+          ctx.fillText(`₹${originalVal}`, origX, priceY + 46);
+          ctx.strokeStyle = "#ef4444";
+          ctx.lineWidth = 3.5;
+          const origWidth = ctx.measureText(`₹${originalVal}`).width;
+          ctx.beginPath();
+          ctx.moveTo(origX - 2, priceY + 37);
+          ctx.lineTo(origX + origWidth + 2, priceY + 37);
+          ctx.stroke();
+
+          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
+          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
+          if (dealNum && origNum && origNum > dealNum) {
+            const savings = origNum - dealNum;
+            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
+            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+            ctx.fillStyle = "#f59e0b";
+            drawRoundedRect(ctx, priceX, priceY + 76, 320, 36, 6);
+            ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(savingsLabel, priceX + 16, priceY + 99);
+          }
+        }
+
+        // Contact Box
+        const contactX = W - 440;
+        const contactY = 1450;
+        ctx.save();
+        ctx.fillStyle = "white";
+        drawRoundedRect(ctx, contactX, contactY, 360, 185, 24);
+        ctx.fill();
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("GET THIS DEAL INSTANTLY", contactX + 30, contactY + 28);
+
+        // WhatsApp
+        ctx.fillStyle = "#f0fdf4";
+        ctx.strokeStyle = "#bbf7d0";
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, contactX + 25, contactY + 44, 310, 52, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.arc(contactX + 50, contactY + 70, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("WA", contactX + 41, iconCenterTextY(contactY + 70));
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("WhatsApp Chat", contactX + 78, contactY + 64);
+        ctx.fillStyle = "#15803d";
+        ctx.font = "bold 19px Arial";
+        ctx.fillText("+91 79041 08020", contactX + 78, contactY + 85);
+
+        // Phone Support
+        ctx.fillStyle = "#fff7ed";
+        ctx.strokeStyle = "#fed7aa";
+        drawRoundedRect(ctx, contactX + 25, contactY + 110, 310, 52, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f97316";
+        ctx.beginPath();
+        ctx.arc(contactX + 50, contactY + 136, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("PH", contactX + 42, iconCenterTextY(contactY + 136));
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("Call Support", contactX + 78, contactY + 130);
+        ctx.fillStyle = "#c2410c";
+        ctx.font = "bold 19px Arial";
+        ctx.fillText("+91 87780 03397", contactX + 78, contactY + 151);
+        ctx.restore();
+
+        // Footer Address
+        const footerLineY = H - 110;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(40, footerLineY);
+        ctx.lineTo(W - 40, footerLineY);
+        ctx.stroke();
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("✔ Quality Refurbished", 60, footerLineY + 25);
+        ctx.fillText("✔ Wholesale Prices", W * 0.32, footerLineY + 25);
+        ctx.fillText("✔ Lifetime Support", W * 0.58, footerLineY + 25);
+        ctx.fillText("✔ 100% Satisfaction", W * 0.82, footerLineY + 25);
+
+        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
+        ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+        ctx.font = "bold 12px Arial, sans-serif";
+        const addrWidth = ctx.measureText(address).width;
+        ctx.fillText(address, W / 2 - addrWidth / 2, H - 40);
+      }
+
+      // ----------------------------------------------------
+      // BRANCH: LANDSCAPE LAYOUT (16:9, 1200x630)
+      // ----------------------------------------------------
+      else if (props.ratio === "16:9") {
+        // Branding Box
+        const headerX = 40;
+        const headerY = 25;
+        ctx.save();
+        ctx.shadowColor = "rgba(15, 23, 42, 0.03)";
+        ctx.shadowBlur = 6;
+        drawRoundedRect(ctx, headerX, headerY, 220, 72, 12);
+        ctx.fillStyle = cardFill;
+        ctx.fill();
+        ctx.strokeStyle = cardOutline;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        if (logoImgRef.current) {
+          ctx.drawImage(logoImgRef.current, headerX + 10, headerY + 8, 56, 56);
+        } else {
+          ctx.fillStyle = activeAccent;
+          ctx.beginPath();
+          ctx.arc(headerX + 38, headerY + 36, 18, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "#ea580c";
+        ctx.font = "black 20px Arial, sans-serif";
+        ctx.fillText("SAI", headerX + 78, headerY + 34);
+
+        ctx.fillStyle = cardTextSub;
+        ctx.font = "black 9px Arial, sans-serif";
+        const subText = "SYSTEMS";
+        let textX = headerX + 78;
+        for (let i = 0; i < subText.length; i++) {
+          ctx.fillText(subText[i], textX, headerY + 54);
+          textX += 10;
+        }
+
+        // Category Tag
+        ctx.font = "bold 10px Arial, sans-serif";
+        const catWidth = ctx.measureText(pCategory).width + 20;
+        ctx.fillStyle = "rgba(254, 215, 170, 0.7)";
+        ctx.strokeStyle = "rgba(251, 146, 60, 0.4)";
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, 280, 48, catWidth, 26, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#c2410c";
+        ctx.fillText(pCategory, 290, 65);
+
+        // Title and subtitle
+        ctx.fillStyle = "#0f172a";
+        let titleFontSize = 32;
+        ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        while (ctx.measureText(pTitle).width > 480 && titleFontSize > 22) {
+          titleFontSize -= 2;
+          ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        }
+        ctx.fillText(pTitle, 40, 135);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 14px Arial, sans-serif";
+        ctx.fillText("— Professional Performance. Business Ready. —", 40, 170);
+
+        // Spec Cards (Left vertical stack, compact)
+        const specStartY = 205;
+        const specCardW = 400;
+        const specCardH = 48;
+        const specSpaceY = 56;
+        specsList.forEach((specText, idx) => {
+          const currentY = specStartY + idx * specSpaceY;
+          ctx.save();
+          drawRoundedRect(ctx, 40, currentY, specCardW, specCardH, 10);
+          ctx.fillStyle = cardFill;
+          ctx.fill();
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+
+          const iconX = 65;
+          const iconCenterY = currentY + specCardH / 2;
+          ctx.fillStyle = activeAccent + "15";
+          ctx.beginPath();
+          ctx.arc(iconX, iconCenterY, 13, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 1.5;
+
+          if (idx === 0) {
+            ctx.beginPath();
+            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
+            ctx.stroke();
+          } else if (idx === 1) {
+            ctx.beginPath();
+            ctx.rect(iconX - 8, iconCenterY - 4, 16, 8);
+            ctx.stroke();
+          } else if (idx === 2) {
+            ctx.beginPath();
+            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY - 2, 3, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 4, 6, Math.PI, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 8px Arial, sans-serif";
+          ctx.fillText(specLabel, iconX + 22, currentY + 16);
+
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "bold 13px Arial, sans-serif";
+          ctx.fillText(specText, iconX + 22, currentY + 34);
+        });
+
+        // Showcase & Pedestal (Middle Column)
+        const showX = W * 0.58;
+        const showY = 320;
+        const pedestalW = 340;
+        const pedestalH = 60;
+
+        if (props.platformStyle === "pedestal") {
+          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 60, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 45, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (props.platformStyle === "ring") {
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 55, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 65, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (props.product.category === "desktops") {
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(showX - 25, showY + 45);
+          ctx.lineTo(showX - 15, showY);
+          ctx.lineTo(showX + 15, showY);
+          ctx.lineTo(showX + 25, showY + 45);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        if (productImg) {
+          ctx.save();
+          const pWidth = productImg.width;
+          const pHeight = productImg.height;
+          const baseScale = (pedestalW * 0.85) / pWidth;
+          const finalScale = baseScale * props.zoom;
+          const drawW = pWidth * finalScale;
+          const drawH = pHeight * finalScale;
+          ctx.translate(showX + props.offsetX, showY + props.offsetY);
+          ctx.rotate((props.rotation * Math.PI) / 180);
+          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 3;
+          drawRoundedRect(ctx, showX - 110, showY - 100, 220, 140, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#f1f5f9";
+          ctx.fillRect(showX - 102, showY - 92, 204, 116);
+          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+          ctx.font = "bold 14px Arial";
+          ctx.fillText("SAI SYSTEMS", showX - 50, showY - 25);
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(showX - 130, showY + 40, 260, 10);
+          ctx.restore();
+        }
+
+        // Floating Badges
+        const badgeX = showX - 120;
+        const badgeY = showY - 120;
+        if (dealTag) {
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          drawRoundedRect(ctx, badgeX, badgeY, 130, 32, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 11px Arial";
+          ctx.fillText(dealTag, badgeX + 10, badgeY + 20);
+          ctx.restore();
+        }
+        if (accessory) {
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          drawRoundedRect(ctx, badgeX + 140, badgeY, 160, 32, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 11px Arial";
+          ctx.fillText(accessory, badgeX + 150, badgeY + 20);
+          ctx.restore();
+        }
+
+        // Trust Policies (Stacked vertically on the Right)
+        const trustX = 920;
+        const trustStartY = 130;
+        const trustSpaceY = 70;
+        const policies = ["🛡️ 365-Day Warranty", "⚙️ 100% Genuine Parts", "🔌 Charger Included"];
+        policies.forEach((policyText, idx) => {
+          const currentY = trustStartY + idx * trustSpaceY;
+          ctx.save();
+          drawRoundedRect(ctx, trustX, currentY, 240, 52, 10);
+          ctx.fillStyle = cardFill;
+          ctx.fill();
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = "#475569";
+          ctx.font = "bold 12px Arial";
+          ctx.fillText(policyText, trustX + 25, currentY + 31);
+          ctx.restore();
+        });
+
+        // Bottom pricing section
+        const priceY = footerY + 70;
+        const priceX = 50;
+        ctx.fillStyle = activeAccent;
+        ctx.font = "black 10px Arial, sans-serif";
+        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY - 20);
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 46px Arial, sans-serif";
+        ctx.fillText(`₹${priceVal}`, priceX, priceY + 20);
+        const priceValWidth = ctx.measureText(`₹${priceVal}`).width;
+
+        if (originalVal) {
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 20px Arial";
+          const origX = priceX + priceValWidth + 18;
+          ctx.fillText(`₹${originalVal}`, origX, priceY + 14);
+          ctx.strokeStyle = "#ef4444";
+          ctx.lineWidth = 2.5;
+          const origWidth = ctx.measureText(`₹${originalVal}`).width;
+          ctx.beginPath();
+          ctx.moveTo(origX - 2, priceY + 7);
+          ctx.lineTo(origX + origWidth + 2, priceY + 7);
+          ctx.stroke();
+
+          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
+          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
+          if (dealNum && origNum && origNum > dealNum) {
+            const savings = origNum - dealNum;
+            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
+            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+            ctx.fillStyle = "#f59e0b";
+            drawRoundedRect(ctx, priceX, priceY + 36, 270, 26, 4);
+            ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 10px Arial";
+            ctx.fillText(savingsLabel, priceX + 12, priceY + 53);
+          }
+        }
+
+        // Bottom contact rows (drawn horizontally next to price)
+        const contactRowY = footerY + 75;
+        const waRowX = 530;
+        const callRowX = 850;
+
+        // WhatsApp Details
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.arc(waRowX + 16, contactRowY, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText("WA", waRowX + 8, contactRowY + 4);
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("WhatsApp Chat", waRowX + 42, contactRowY - 8);
+        ctx.fillStyle = "#22c55e";
+        ctx.font = "bold 17px Arial";
+        ctx.fillText("+91 79041 08020", waRowX + 42, contactRowY + 12);
+
+        // Call details
+        ctx.fillStyle = "#f97316";
+        ctx.beginPath();
+        ctx.arc(callRowX + 16, contactRowY, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText("PH", callRowX + 9, contactRowY + 4);
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("Call Support", callRowX + 42, contactRowY - 8);
+        ctx.fillStyle = "#f97316";
+        ctx.font = "bold 17px Arial";
+        ctx.fillText("+91 87780 03397", callRowX + 42, contactRowY + 12);
+
+        // Address Footer
+        const footerLineY = H - 50;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(40, footerLineY);
+        ctx.lineTo(W - 40, footerLineY);
+        ctx.stroke();
+
+        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
+        ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+        ctx.font = "bold 10px Arial, sans-serif";
+        const addrWidth = ctx.measureText(address).width;
+        ctx.fillText(address, W / 2 - addrWidth / 2, H - 20);
+      }
+
+      // ----------------------------------------------------
+      // BRANCH: SQUARE LAYOUT (1:1, 1080x1080) - DEFAULT FALLBACK
+      // ----------------------------------------------------
+      else {
+        // Branding Logo
+        const headerX = 40;
+        const headerY = 40;
+        ctx.save();
+        ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
+        drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
+        ctx.fillStyle = cardFill;
+        ctx.fill();
+        ctx.strokeStyle = cardOutline;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        if (logoImgRef.current) {
+          ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
+        } else {
+          ctx.fillStyle = activeAccent;
+          ctx.beginPath();
+          ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 20px Arial";
+          ctx.fillText("S", headerX + 38, headerY + 57);
+        }
+
+        ctx.fillStyle = "#ea580c";
+        ctx.font = "black 28px Arial, sans-serif";
+        ctx.fillText("SAI", headerX + 105, headerY + 50);
+
+        ctx.fillStyle = cardTextSub;
+        ctx.font = "black 11px Arial, sans-serif";
+        const subText = "SYSTEMS";
+        let textX = headerX + 105;
+        for (let i = 0; i < subText.length; i++) {
+          ctx.fillText(subText[i], textX, headerY + 76);
+          textX += 13;
+        }
+
+        // Category Tag
+        ctx.font = "bold 11px Arial, sans-serif";
+        const catWidth = ctx.measureText(pCategory).width + 30;
+        ctx.fillStyle = "rgba(254, 215, 170, 0.7)";
+        ctx.strokeStyle = "rgba(251, 146, 60, 0.4)";
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, W - 40 - catWidth, 40, catWidth, 32, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#c2410c";
+        ctx.fillText(pCategory, W - 40 - catWidth / 2 - (ctx.measureText(pCategory).width / 2), 60);
+
+        // Product Title and subtitle (Aligned Right, auto-scales down to avoid logo overlaps)
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#0f172a";
+        let titleFontSize = 42;
+        ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        while (ctx.measureText(pTitle).width > W - 380 && titleFontSize > 24) {
+          titleFontSize -= 2;
+          ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
+        }
+        ctx.fillText(pTitle, W - 40, 180);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 17px Arial, sans-serif";
+        ctx.fillText("— Professional Performance. Business Ready. —", W - 40, 225);
+        ctx.textAlign = "left"; // reset
+
+        // Spec Cards (Left Column)
+        const specStartY = 270;
+        const specCardW = 460;
+        const specCardH = 74;
+        const specSpaceY = 88;
+        specsList.forEach((specText, idx) => {
+          const currentY = specStartY + idx * specSpaceY;
+          ctx.save();
+          ctx.shadowColor = "rgba(0,0,0,0.02)";
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 2;
+          drawRoundedRect(ctx, 40, currentY, specCardW, specCardH, 16);
+          ctx.fillStyle = cardFill;
+          ctx.fill();
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+
+          const iconX = 75;
+          const iconCenterY = currentY + specCardH / 2;
+          ctx.fillStyle = activeAccent + "15";
+          ctx.beginPath();
+          ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 2;
+
+          if (idx === 0) {
+            ctx.beginPath();
+            ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
+            ctx.stroke();
+            for (let i = -7; i <= 7; i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - 12, 2, 3);
+              ctx.fillRect(iconX + i - 1, iconCenterY + 9, 2, 3);
+              ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
+              ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
+            }
+          } else if (idx === 1) {
+            ctx.beginPath();
+            ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
+            ctx.stroke();
+            for (let i = -8; i <= 8; i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
+            }
+          } else if (idx === 2) {
+            ctx.beginPath();
+            ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 6, 10, Math.PI, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          const specLabel = ["PROCESSOR", "MEMORY", "STORAGE", "CONNECTIVITY"][idx] || "SPECIFICATION";
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 11px Arial, sans-serif";
           ctx.fillText(specLabel, 120, currentY + 23);
@@ -468,387 +1145,252 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.font = "bold 20px Arial, sans-serif";
           ctx.fillText(specText, 120, currentY + 47);
         });
-      }
 
-      // ----------------------------------------------------
-      // 7. SHOWCASE PRODUCT IMAGE & NEON PEDESTAL (Right Column)
-      // ----------------------------------------------------
-      // Determine center position of pedestal & product showcase
-      let showX = W * 0.72;
-      let showY = H * 0.44;
-      let pedestalW = 420;
-      let pedestalH = 80;
+        // Pedestal & Showcase (Right Column)
+        const showX = 770;
+        const showY = 475;
+        const pedestalW = 420;
+        const pedestalH = 80;
 
-      if (props.ratio === "9:16") {
-        showX = W / 2;
-        showY = 660;
-        pedestalW = 600;
-        pedestalH = 100;
-      } else if (props.ratio === "16:9") {
-        showX = W * 0.75;
-        showY = H * 0.40;
-        pedestalW = 450;
-        pedestalH = 80;
-      }
+        if (props.platformStyle === "pedestal") {
+          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = activeAccent + "22";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (props.platformStyle === "ring") {
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = 6;
+          ctx.save();
+          ctx.shadowColor = activeAccent;
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+          ctx.beginPath();
+          ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
-      // DRAW PRODUCT PLATFORM (Adaptive Styles)
-      if (props.platformStyle === "pedestal") {
-        // 3D Perspective Glowing Platform
-        // 1st Layer: Drop Shadow base
-        ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
-        ctx.beginPath();
-        ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
-        ctx.fill();
+        if (props.product.category === "desktops") {
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(showX - 40, showY + 60);
+          ctx.lineTo(showX - 25, showY);
+          ctx.lineTo(showX + 25, showY);
+          ctx.lineTo(showX + 40, showY + 60);
+          ctx.fill();
+          ctx.stroke();
+        }
 
-        // 2nd Layer: Pedestal ring rim
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.strokeStyle = activeAccent;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        if (productImg) {
+          ctx.save();
+          const pWidth = productImg.width;
+          const pHeight = productImg.height;
+          const baseScale = (pedestalW * 0.9) / pWidth;
+          const finalScale = baseScale * props.zoom;
+          const drawW = pWidth * finalScale;
+          const drawH = pHeight * finalScale;
+          ctx.translate(showX + props.offsetX, showY + props.offsetY);
+          ctx.rotate((props.rotation * Math.PI) / 180);
+          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.fillStyle = "#334155";
+          ctx.strokeStyle = "#475569";
+          ctx.lineWidth = 4;
+          drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#f1f5f9";
+          ctx.fillRect(showX - 148, showY - 128, 296, 174);
+          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+          ctx.font = "bold 20px Arial";
+          ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(showX - 200, showY + 70, 400, 15);
+          ctx.restore();
+        }
 
-        // 3rd Layer: Glowing Platform top
-        ctx.fillStyle = activeAccent + "22"; // 13% opacity accent glow
-        ctx.beginPath();
-        ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (props.platformStyle === "ring") {
-        // Floating circular neon loop
-        ctx.strokeStyle = activeAccent;
-        ctx.lineWidth = 6;
-        ctx.shadowColor = activeAccent;
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 0; // reset glow
-      } else if (props.platformStyle === "shadow") {
-        // Standard Simple Shadow
-        ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
-        ctx.beginPath();
-        ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+        // Floating Badges
+        const badgeX = showX - 150;
+        const badgeY = showY - 160;
+        if (dealTag) {
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, badgeX, badgeY, 170, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.fillText(dealTag, badgeX + 16, badgeY + 26);
+          ctx.restore();
+        }
+        if (accessory) {
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, badgeX + 185, badgeY, 210, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.fillText(accessory, badgeX + 200, badgeY + 26);
+          ctx.restore();
+        }
 
-      // Draw Desktop Stand graphic if category is desktops
-      if (props.product.category === "desktops") {
-        ctx.fillStyle = "#334155";
-        ctx.strokeStyle = "#475569";
-        ctx.lineWidth = 2;
-        // Monitor base stand
-        ctx.beginPath();
-        ctx.moveTo(showX - 40, showY + 60);
-        ctx.lineTo(showX - 25, showY);
-        ctx.lineTo(showX + 25, showY);
-        ctx.lineTo(showX + 40, showY + 60);
-        ctx.fill();
-        ctx.stroke();
-      }
-
-      // RENDER THE DYNAMIC PRODUCT IMAGE
-      if (productImg) {
-        ctx.save();
-        
-        // Define clipping mask for pedestal image boundary if necessary
-        // Position product image according to sliders
-        const pWidth = productImg.width;
-        const pHeight = productImg.height;
-        
-        // Calculate scaling
-        const baseScale = (pedestalW * 0.9) / pWidth;
-        const finalScale = baseScale * props.zoom;
-        const drawW = pWidth * finalScale;
-        const drawH = pHeight * finalScale;
-
-        // Apply Translate, Scale, Rotate
-        ctx.translate(showX + props.offsetX, showY + props.offsetY);
-        ctx.rotate((props.rotation * Math.PI) / 180);
-        
-        // Draw the image centered
-        ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
-        
-        ctx.restore();
-      } else {
-        // Fallback computer drawing outline
-        ctx.save();
-        ctx.fillStyle = "#334155";
-        ctx.strokeStyle = "#475569";
-        ctx.lineWidth = 4;
-        
-        // Screen outer bezel
-        drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Display glass screen
-        ctx.fillStyle = "#f1f5f9";
-        ctx.fillRect(showX - 148, showY - 128, 296, 174);
-        
-        // Brand logo watermark inside display
-        ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
-        ctx.font = "bold 20px Arial";
-        ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
-        
-        // Laptop base plate
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(showX - 200, showY + 70, 400, 15);
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(showX - 200, showY + 85, 400, 5);
-        
-        ctx.restore();
-      }
-
-      // ----------------------------------------------------
-      // 8. FLOATING DEAL BADGES
-      // ----------------------------------------------------
-      const dealTag = props.product.dealTag || "";
-      const accessory = props.product.includedAccessory || "";
-
-      let badgeX = showX - 150;
-      let badgeY = showY - 160;
-
-      if (props.ratio === "9:16") {
-        badgeX = W / 2 - 180;
-        badgeY = 400;
-      }
-
-      // Red Hot Deal Badge
-      if (dealTag) {
-        ctx.save();
-        ctx.fillStyle = "#dc2626";
-        ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
-        ctx.shadowBlur = 10;
-        drawRoundedRect(ctx, badgeX, badgeY, 170, 42, 10);
-        ctx.fill();
-        
-        ctx.fillStyle = "white";
-        ctx.font = "bold 13px Arial";
-        ctx.fillText(dealTag, badgeX + 16, badgeY + 26);
-        ctx.restore();
-      }
-
-      // Green Free Accessory Badge
-      if (accessory) {
-        ctx.save();
-        ctx.fillStyle = "#059669";
-        ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
-        ctx.shadowBlur = 10;
-        drawRoundedRect(ctx, badgeX + 185, badgeY, 210, 42, 10);
-        ctx.fill();
-        
-        ctx.fillStyle = "white";
-        ctx.font = "bold 13px Arial";
-        ctx.fillText(accessory, badgeX + 200, badgeY + 26);
-        ctx.restore();
-      }
-
-      // ----------------------------------------------------
-      // 9. MIDDLE TRUST POLICIES BAR
-      // ----------------------------------------------------
-      let trustY = footerY - 95;
-      let trustW = W - 80;
-
-      if (props.ratio === "9:16") {
-        trustY = 1530;
-      } else if (props.ratio === "16:9") {
-        trustY = footerY - 80;
-      }
-
-      // Draw middle horizontal policies card (only in square/portrait)
-      if (props.ratio !== "16:9" || W > 900) {
+        // Trust policies bar
+        const trustY = footerY - 95;
         ctx.save();
         ctx.fillStyle = cardFill;
         ctx.strokeStyle = cardOutline;
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, 40, trustY, trustW, 66, 14);
+        drawRoundedRect(ctx, 40, trustY, W - 80, 66, 14);
         ctx.fill();
         ctx.stroke();
-
         ctx.fillStyle = "#475569";
         ctx.font = "bold 13px Arial";
-        
-        if (props.ratio === "9:16") {
-          ctx.fillText("🛡️ 365-Day Warranty", 70, trustY + 38);
-          ctx.fillText("⚙️ 100% Genuine Parts", 420, trustY + 38);
-          ctx.fillText("🔌 Charger Included", 770, trustY + 38);
-        } else {
-          ctx.fillText("🛡️ 365-Day Warranty", 80, trustY + 38);
-          ctx.fillText("⚙️ 100% Genuine Spare Parts", 410, trustY + 38);
-          ctx.fillText("🔌 Charger & Box Included", 760, trustY + 38);
-        }
+        ctx.fillText("🛡️ 365-Day Warranty", 80, trustY + 38);
+        ctx.fillText("⚙️ 100% Genuine Spare Parts", 410, trustY + 38);
+        ctx.fillText("🔌 Charger & Box Included", 760, trustY + 38);
         ctx.restore();
-      }
 
-      // ----------------------------------------------------
-      // 10. PRICING & DISCOUNTS (Bottom Left)
-      // ----------------------------------------------------
-      let priceVal = String(props.product.price || "25000");
-      let originalVal = String(props.product.originalPrice || "");
-      // Format prices with commas
-      priceVal = formatRupee(priceVal);
-      if (originalVal) originalVal = formatRupee(originalVal);
+        // Pricing details
+        const priceY = footerY + 80;
+        const priceX = 60;
+        ctx.fillStyle = activeAccent;
+        ctx.font = "black 12px Arial, sans-serif";
+        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY - 24);
 
-      let priceY = footerY + 80;
-      let priceX = 60;
+        ctx.fillStyle = "white";
+        ctx.font = "bold 58px Arial, sans-serif";
+        ctx.fillText(`₹${priceVal}`, priceX, priceY + 24);
+        const priceValWidth = ctx.measureText(`₹${priceVal}`).width;
 
-      if (props.ratio === "9:16") {
-        priceY = footerY + 110;
-        priceX = 80;
-      }
+        if (originalVal) {
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 26px Arial";
+          const origX = priceX + priceValWidth + 24;
+          ctx.fillText(`₹${originalVal}`, origX, priceY + 16);
+          ctx.strokeStyle = "#ef4444";
+          ctx.lineWidth = 3.5;
+          const origWidth = ctx.measureText(`₹${originalVal}`).width;
+          ctx.beginPath();
+          ctx.moveTo(origX - 2, priceY + 7);
+          ctx.lineTo(origX + origWidth + 2, priceY + 7);
+          ctx.stroke();
 
-      ctx.fillStyle = activeAccent;
-      ctx.font = "black 12px Arial, sans-serif";
-      ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY - 24);
+          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
+          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
+          if (dealNum && origNum && origNum > dealNum) {
+            const savings = origNum - dealNum;
+            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
+            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+            ctx.fillStyle = "#f59e0b";
+            drawRoundedRect(ctx, priceX, priceY + 54, 300, 36, 6);
+            ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(savingsLabel, priceX + 16, priceY + 77);
+          }
+        }
 
-      // Render discounted price (Large Font)
-      ctx.fillStyle = "white";
-      ctx.font = "bold 58px Arial, Helvetica, sans-serif";
-      ctx.fillText(`₹${priceVal}`, priceX, priceY + 24);
-      
-      const priceValWidth = ctx.measureText(`₹${priceVal}`).width;
-
-      // Render original price (strikethrough)
-      if (originalVal) {
+        // Contact buttons
+        const contactX = W - 420;
+        const contactY = footerY + 45;
+        ctx.save();
+        ctx.fillStyle = "white";
+        drawRoundedRect(ctx, contactX, contactY, 360, 185, 24);
+        ctx.fill();
         ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 26px Arial";
-        const origX = priceX + priceValWidth + 24;
-        ctx.fillText(`₹${originalVal}`, origX, priceY + 16);
-        
-        // Draw Red strikethrough line
-        ctx.strokeStyle = "#ef4444";
-        ctx.lineWidth = 3.5;
-        const origWidth = ctx.measureText(`₹${originalVal}`).width;
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("GET THIS DEAL INSTANTLY", contactX + 30, contactY + 28);
+
+        // WhatsApp
+        ctx.fillStyle = "#f0fdf4";
+        ctx.strokeStyle = "#bbf7d0";
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, contactX + 25, contactY + 44, 310, 52, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#22c55e";
         ctx.beginPath();
-        ctx.moveTo(origX - 2, priceY + 7);
-        ctx.lineTo(origX + origWidth + 2, priceY + 7);
+        ctx.arc(contactX + 50, contactY + 70, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("WA", contactX + 41, iconCenterTextY(contactY + 70));
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("WhatsApp Chat", contactX + 78, contactY + 64);
+        ctx.fillStyle = "#15803d";
+        ctx.font = "bold 19px Arial";
+        ctx.fillText("+91 79041 08020", contactX + 78, contactY + 85);
+
+        // Phone call
+        ctx.fillStyle = "#fff7ed";
+        ctx.strokeStyle = "#fed7aa";
+        drawRoundedRect(ctx, contactX + 25, contactY + 110, 310, 52, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f97316";
+        ctx.beginPath();
+        ctx.arc(contactX + 50, contactY + 136, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("PH", contactX + 42, iconCenterTextY(contactY + 136));
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("Call Support", contactX + 78, contactY + 130);
+        ctx.fillStyle = "#c2410c";
+        ctx.font = "bold 19px Arial";
+        ctx.fillText("+91 87780 03397", contactX + 78, contactY + 151);
+        ctx.restore();
+
+        // Footer line & address
+        const footerLineY = H - 85;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(40, footerLineY);
+        ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        // Calculate and draw savings badge
-        const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
-        const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
-        if (dealNum && origNum && origNum > dealNum) {
-          const savings = origNum - dealNum;
-          const pct = Math.round(((origNum - dealNum) / origNum) * 100);
-          
-          const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
-          ctx.fillStyle = "#f59e0b"; // Yellow savings badge
-          drawRoundedRect(ctx, priceX, priceY + 54, 300, 36, 6);
-          ctx.fill();
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("✔ Quality Refurbished", 60, footerLineY + 25);
+        ctx.fillText("✔ Wholesale Prices", W * 0.32, footerLineY + 25);
+        ctx.fillText("✔ Lifetime Support", W * 0.58, footerLineY + 25);
+        ctx.fillText("✔ 100% Satisfaction", W * 0.82, footerLineY + 25);
 
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 12px Arial";
-          ctx.fillText(savingsLabel, priceX + 16, priceY + 77);
-        }
+        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
+        ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+        ctx.font = "bold 12px Arial, sans-serif";
+        const addrWidth = ctx.measureText(address).width;
+        ctx.fillText(address, W / 2 - addrWidth / 2, H - 25);
       }
 
       // ----------------------------------------------------
-      // 11. CONTACT BUTTONS (Bottom Right)
+      // Export canvas drawing as Data URL for the <img> tag
       // ----------------------------------------------------
-      let contactX = W - 420;
-      let contactY = footerY + 45;
-
-      if (props.ratio === "9:16") {
-        contactX = 80;
-        contactY = footerY + 250;
-      } else if (props.ratio === "16:9") {
-        contactX = W - 390;
-        contactY = footerY + 25;
-      }
-
-      // Contact card container
-      ctx.save();
-      ctx.fillStyle = "white";
-      drawRoundedRect(ctx, contactX, contactY, 360, 185, 24);
-      ctx.fill();
-
-      // Card Header
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "bold 11px Arial";
-      ctx.fillText("GET THIS DEAL INSTANTLY", contactX + 30, contactY + 28);
-
-      // WhatsApp Button Row
-      ctx.fillStyle = "#f0fdf4"; // Light green button bg
-      ctx.strokeStyle = "#bbf7d0";
-      ctx.lineWidth = 1;
-      drawRoundedRect(ctx, contactX + 25, contactY + 44, 310, 52, 10);
-      ctx.fill();
-      ctx.stroke();
-
-      // WhatsApp Symbol circle
-      ctx.fillStyle = "#22c55e"; // green
-      ctx.beginPath();
-      ctx.arc(contactX + 50, contactY + 70, 16, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "white";
-      ctx.font = "bold 11px Arial";
-      ctx.fillText("WA", contactX + 41, iconCenterTextY(contactY + 70));
-
-      ctx.fillStyle = "#64748b";
-      ctx.font = "bold 11px Arial";
-      ctx.fillText("WhatsApp Chat", contactX + 78, contactY + 64);
-      ctx.fillStyle = "#15803d";
-      ctx.font = "bold 19px Arial";
-      ctx.fillText("+91 79041 08020", contactX + 78, contactY + 85);
-
-      // Call Phone Button Row
-      ctx.fillStyle = "#fff7ed"; // Light orange bg
-      ctx.strokeStyle = "#fed7aa";
-      drawRoundedRect(ctx, contactX + 25, contactY + 110, 310, 52, 10);
-      ctx.fill();
-      ctx.stroke();
-
-      // Phone Symbol circle
-      ctx.fillStyle = "#f97316"; // orange
-      ctx.beginPath();
-      ctx.arc(contactX + 50, contactY + 136, 16, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "white";
-      ctx.font = "bold 11px Arial";
-      ctx.fillText("PH", contactX + 42, iconCenterTextY(contactY + 136));
-
-      ctx.fillStyle = "#64748b";
-      ctx.font = "bold 11px Arial";
-      ctx.fillText("Call Support", contactX + 78, contactY + 130);
-      ctx.fillStyle = "#c2410c";
-      ctx.font = "bold 19px Arial";
-      ctx.fillText("+91 87780 03397", contactX + 78, contactY + 151);
-      ctx.restore();
-
-      // ----------------------------------------------------
-      // 12. BOTTOM FOOTER & ADDRESS (Small letters)
-      // ----------------------------------------------------
-      let footerLineY = H - 85;
-      if (props.ratio === "9:16") {
-        footerLineY = H - 110;
-      }
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(40, footerLineY);
-      ctx.lineTo(W - 40, footerLineY);
-      ctx.stroke();
-
-      // RETAIL VALUE STATEMENTS
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "bold 12px Arial";
-      ctx.fillText("✔ Quality Refurbished", 60, footerLineY + 25);
-      ctx.fillText("✔ Wholesale Prices", W * 0.32, footerLineY + 25);
-      ctx.fillText("✔ Lifetime Support", W * 0.58, footerLineY + 25);
-      ctx.fillText("✔ 100% Satisfaction", W * 0.82, footerLineY + 25);
-
-      // Showroom address in small font
-      const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
-      ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
-      ctx.font = "bold 12px Arial, sans-serif";
-      
-      // Center-align address
-      const addrWidth = ctx.measureText(address).width;
-      ctx.fillText(address, W / 2 - addrWidth / 2, H - 25);
-      
-      // Export canvas drawing as Data URL for the <img> tag preview (enables mobile long-press share/copy)
       setImgSrc(canvas.toDataURL("image/png"));
     };
 
