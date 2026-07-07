@@ -62,7 +62,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     const [isTainted, setIsTainted] = useState(false);
     const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
 
-    // Custom helper to remove white/light studio backgrounds dynamically
+    // Custom helper to remove white/light studio backgrounds dynamically using queue-based flood-fill
     const removeImageBackground = (img: HTMLImageElement): HTMLCanvasElement => {
       const tempCanvas = document.createElement("canvas");
       const w = img.naturalWidth || img.width;
@@ -77,22 +77,59 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       try {
         const imgData = tempCtx.getImageData(0, 0, w, h);
         const data = imgData.data;
-
-        // Scan pixels and convert light/white colors to transparent
-        // Threshold: 235 is perfect for studio white/light backgrounds
+        
+        // Use flood-fill starting from the image borders to avoid stripping white/light colors inside the product itself
+        const visited = new Uint8Array(w * h);
+        const queue: number[] = [];
         const threshold = 235;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
 
+        const pushPixel = (x: number, y: number) => {
+          const idx = y * w + x;
+          if (visited[idx]) return;
+          visited[idx] = 1;
+          const offset = idx * 4;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
           if (r > threshold && g > threshold && b > threshold) {
-            // Apply soft feathering to edges based on proximity to pure white (255)
-            const avg = (r + g + b) / 3;
-            const alpha = Math.max(0, Math.min(255, (255 - avg) * (255 / (255 - threshold))));
-            data[i + 3] = Math.round(alpha);
+            queue.push(idx);
           }
+        };
+
+        // Push border pixels
+        for (let x = 0; x < w; x++) {
+          pushPixel(x, 0);
+          pushPixel(x, h - 1);
         }
+        for (let y = 1; y < h - 1; y++) {
+          pushPixel(0, y);
+          pushPixel(w - 1, y);
+        }
+
+        // BFS traversal
+        let head = 0;
+        while (head < queue.length) {
+          const idx = queue[head++];
+          const x = idx % w;
+          const y = Math.floor(idx / w);
+
+          const offset = idx * 4;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          
+          // Apply soft feathering to edges based on proximity to pure white (255)
+          const avg = (r + g + b) / 3;
+          const alpha = Math.max(0, Math.min(255, (255 - avg) * (255 / (255 - threshold))));
+          data[offset + 3] = Math.round(alpha);
+
+          // Check 4-way neighbors
+          if (x > 0) pushPixel(x - 1, y);
+          if (x < w - 1) pushPixel(x + 1, y);
+          if (y > 0) pushPixel(x, y - 1);
+          if (y < h - 1) pushPixel(x, y + 1);
+        }
+
         tempCtx.putImageData(imgData, 0, 0);
       } catch (e) {
         console.error("Failed to read image pixels (likely CORS limitation):", e);
@@ -179,22 +216,27 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
     // Pre-load QR Code for WhatsApp direct link
     useEffect(() => {
-      const waNumber = "917904108020";
-      const cleanTitle = props.product.title || "";
-      const text = `Hi Sai Systems! I am interested in your deal: ${cleanTitle}.`;
-      const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`)}`;
-      
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = qrDataUrl;
-      img.onload = () => {
-        setQrImg(img);
-      };
-      img.onerror = () => {
-        console.error("Failed to load QR code image");
-        setQrImg(null);
-      };
-    }, [props.product.title]);
+      const timer = setTimeout(() => {
+        const waNumber = (props.whatsappChat || "917904108020").replace(/\D/g, "");
+        const cleanTitle = props.product.title || "";
+        const brand = props.brandName || "Sai Systems";
+        const text = `Hi ${brand}! I am interested in your deal: ${cleanTitle}.`;
+        const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`)}`;
+        
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = qrDataUrl;
+        img.onload = () => {
+          setQrImg(img);
+        };
+        img.onerror = () => {
+          console.error("Failed to load QR code image");
+          setQrImg(null);
+        };
+      }, 350);
+
+      return () => clearTimeout(timer);
+    }, [props.product.title, props.whatsappChat, props.brandName]);
 
     // Triggers redraw whenever any property changes
     useEffect(() => {
@@ -939,7 +981,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const trustXCoords = [80, 420, 760];
         trustPolicies.forEach((policy: string, pIdx: number) => {
           if (trustXCoords[pIdx] !== undefined) {
-            const cleanPolicy = policy.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
+            const cleanPolicy = policy.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, "");
             drawCheckmarkBullet(ctx, trustXCoords[pIdx], trustY + 38, cleanPolicy, 13);
           }
         });
@@ -1072,6 +1114,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         drawLocationPin(ctx, textStartX - 10, H - 40);
         ctx.textAlign = "left";
         ctx.fillText(showroomAddress, textStartX, H - 40);
+
+        if (props.showEmi) {
+          ctx.font = "bold 9px Arial, sans-serif";
+          ctx.fillStyle = "rgba(148, 163, 184, 0.65)";
+          ctx.textAlign = "center";
+          ctx.fillText(props.isTamil ? "*நிபந்தனைகளுக்கு உட்பட்டது. EMI திட்டங்கள் நிதி நிறுவன ஒப்புதலுக்கு உட்பட்டது." : "*T&C Apply. EMI schemes subject to finance partner approval.", W / 2, H - 15);
+        }
       }
 
       // ----------------------------------------------------
@@ -1419,7 +1468,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        const cleanAddr = showroomAddress.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
+        const cleanAddr = showroomAddress.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, "");
         ctx.fillStyle = "rgba(148, 163, 184, 0.85)";
         ctx.font = "bold 8.5px Arial, sans-serif";
         ctx.textAlign = "right";
@@ -1427,6 +1476,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         
         const addrWidth = ctx.measureText(cleanAddr).width;
         drawLocationPin(ctx, W - 40 - addrWidth - 10, H - 12);
+
+        if (props.showEmi) {
+          ctx.textAlign = "left";
+          ctx.font = "bold 8.5px Arial, sans-serif";
+          ctx.fillStyle = "rgba(148, 163, 184, 0.65)";
+          ctx.fillText(props.isTamil ? "*நிபந்தனைகளுக்கு உட்பட்டது. EMI திட்டங்கள் நிதி நிறுவன ஒப்புதலுக்கு உட்பட்டது." : "*T&C Apply. EMI schemes subject to finance partner approval.", 40, H - 12);
+        }
         
         ctx.textAlign = "left"; // Reset to default
       }
@@ -1722,7 +1778,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const trustXCoords = [80, 410, 760];
         trustPolicies.forEach((policyText: string, idx: number) => {
           if (trustXCoords[idx] !== undefined) {
-            const cleanPolicy = policyText.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
+            const cleanPolicy = policyText.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, "");
             drawCheckmarkBullet(ctx, trustXCoords[idx], trustY + 38, cleanPolicy, 13);
           }
         });
@@ -1854,6 +1910,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         drawLocationPin(ctx, textStartX - 10, H - 25);
         ctx.textAlign = "left";
         ctx.fillText(showroomAddress, textStartX, H - 25);
+
+        if (props.showEmi) {
+          ctx.font = "bold 8.5px Arial, sans-serif";
+          ctx.fillStyle = "rgba(148, 163, 184, 0.65)";
+          ctx.textAlign = "center";
+          ctx.fillText(props.isTamil ? "*நிபந்தனைகளுக்கு உட்பட்டது. EMI திட்டங்கள் நிதி நிறுவன ஒப்புதலுக்கு உட்பட்டது." : "*T&C Apply. EMI schemes subject to finance partner approval.", W / 2, H - 8);
+        }
       }
 
       // ----------------------------------------------------
