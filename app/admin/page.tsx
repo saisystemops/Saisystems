@@ -581,6 +581,7 @@ export default function AdminPage() {
     "⚙️ 100% Genuine Parts",
     "🔌 Charger Included"
   ]);
+  const [removeBg, setRemoveBg] = useState(false);
 
   const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
 
@@ -1852,6 +1853,7 @@ export default function AdminPage() {
                     emiTenure={emiTenure}
                     customEmiText={customEmiText}
                     trustPolicies={trustPolicies}
+                    removeBg={removeBg}
                   />
 
                   {/* Design combinator selectors */}
@@ -1911,13 +1913,24 @@ export default function AdminPage() {
                           className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
                         />
                         {addLocalImageFile && (
-                          <button
-                            type="button"
-                            onClick={() => setAddLocalImageFile(null)}
-                            className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
-                          >
-                            × Clear Upload
-                          </button>
+                          <div className="mt-1 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => setAddLocalImageFile(null)}
+                              className="text-[9px] text-red-500 font-bold hover:underline"
+                            >
+                              × Clear Upload
+                            </button>
+                            <label className="flex items-center gap-1 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={removeBg}
+                                onChange={(e) => setRemoveBg(e.target.checked)}
+                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
+                              />
+                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
+                            </label>
+                          </div>
                         )}
                       </div>
 
@@ -2518,6 +2531,7 @@ export default function AdminPage() {
                                 emiTenure={emiTenure}
                                 customEmiText={customEmiText}
                                 trustPolicies={trustPolicies}
+                                removeBg={removeBg}
                               />
 
                               {/* Canvas style combinators */}
@@ -2577,13 +2591,24 @@ export default function AdminPage() {
                                       className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
                                     />
                                     {editLocalImageFile && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditLocalImageFile(null)}
-                                        className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
-                                      >
-                                        × Clear Custom Photo
-                                      </button>
+                                      <div className="mt-1 flex items-center justify-between">
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditLocalImageFile(null)}
+                                          className="text-[9px] text-red-500 font-bold hover:underline"
+                                        >
+                                          × Clear Custom Photo
+                                        </button>
+                                        <label className="flex items-center gap-1 cursor-pointer select-none">
+                                          <input
+                                            type="checkbox"
+                                            checked={removeBg}
+                                            onChange={(e) => setRemoveBg(e.target.checked)}
+                                            className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
+                                          />
+                                          <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
+                                        </label>
+                                      </div>
                                     )}
                                   </div>
 
@@ -3204,6 +3229,7 @@ export default function AdminPage() {
                     emiTenure={emiTenure}
                     customEmiText={customEmiText}
                     trustPolicies={trustPolicies}
+                    removeBg={removeBg}
                   />
 
                   {/* Canvas Style Combinators */}
@@ -3263,13 +3289,24 @@ export default function AdminPage() {
                           className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
                         />
                         {bannerLocalImageFile && (
-                          <button
-                            type="button"
-                            onClick={() => setBannerLocalImageFile(null)}
-                            className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
-                          >
-                            × Clear Custom Photo
-                          </button>
+                          <div className="mt-1 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => setBannerLocalImageFile(null)}
+                              className="text-[9px] text-red-500 font-bold hover:underline"
+                            >
+                              × Clear Custom Photo
+                            </button>
+                            <label className="flex items-center gap-1 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={removeBg}
+                                onChange={(e) => setRemoveBg(e.target.checked)}
+                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
+                              />
+                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
+                            </label>
+                          </div>
                         )}
                       </div>
 

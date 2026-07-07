@@ -37,6 +37,7 @@ export interface PromoBannerCanvasProps {
   showEmi?: boolean;
   emiTenure?: number;
   customEmiText?: string;
+  removeBg?: boolean;
 }
 
 export interface PromoBannerCanvasHandle {
@@ -55,10 +56,49 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     // Track loaded state of product image
     const [productImg, setProductImg] = useState<HTMLImageElement | null>(null);
     const [productImgSrc, setProductImgSrc] = useState<string | null>(null);
+    const [processedImg, setProcessedImg] = useState<HTMLCanvasElement | HTMLImageElement | null>(null);
     const [imageLoading, setImageLoading] = useState(false);
     const [imageLoadError, setImageLoadError] = useState(false);
     const [isTainted, setIsTainted] = useState(false);
     const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
+
+    // Custom helper to remove white/light studio backgrounds dynamically
+    const removeImageBackground = (img: HTMLImageElement): HTMLCanvasElement => {
+      const tempCanvas = document.createElement("canvas");
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      tempCanvas.width = w;
+      tempCanvas.height = h;
+      
+      const tempCtx = tempCanvas.getContext("2d");
+      if (!tempCtx) return tempCanvas;
+
+      tempCtx.drawImage(img, 0, 0);
+      try {
+        const imgData = tempCtx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        // Scan pixels and convert light/white colors to transparent
+        // Threshold: 235 is perfect for studio white/light backgrounds
+        const threshold = 235;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          if (r > threshold && g > threshold && b > threshold) {
+            // Apply soft feathering to edges based on proximity to pure white (255)
+            const avg = (r + g + b) / 3;
+            const alpha = Math.max(0, Math.min(255, (255 - avg) * (255 / (255 - threshold))));
+            data[i + 3] = Math.round(alpha);
+          }
+        }
+        tempCtx.putImageData(imgData, 0, 0);
+      } catch (e) {
+        console.error("Failed to read image pixels (likely CORS limitation):", e);
+      }
+      return tempCanvas;
+    };
 
     // Pre-load official logo-feather.png on mount
     useEffect(() => {
@@ -116,6 +156,26 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         }
       };
     }, [props.product.imageUrl, props.localImageFile]);
+
+    // Process image background removal dynamically
+    useEffect(() => {
+      if (!productImg) {
+        setProcessedImg(null);
+        return;
+      }
+
+      if (props.removeBg) {
+        try {
+          const processed = removeImageBackground(productImg);
+          setProcessedImg(processed);
+        } catch (e) {
+          console.error("Failed to run background remover, fallback to raw image:", e);
+          setProcessedImg(productImg);
+        }
+      } else {
+        setProcessedImg(productImg);
+      }
+    }, [productImg, props.removeBg]);
 
     // Pre-load QR Code for WhatsApp direct link
     useEffect(() => {
@@ -713,17 +773,17 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
         }
 
-        if (productImg) {
+        if (processedImg) {
           ctx.save();
-          const pWidth = productImg.width;
-          const pHeight = productImg.height;
+          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
           const baseScale = (pedestalW * 0.95) / pWidth;
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
           ctx.restore();
         } else {
           ctx.save();
@@ -1191,17 +1251,17 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
         }
 
-        if (productImg) {
+        if (processedImg) {
           ctx.save();
-          const pWidth = productImg.width;
-          const pHeight = productImg.height;
+          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
           const baseScale = (pedestalW * 0.85) / pWidth;
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
           ctx.restore();
         } else {
           ctx.save();
@@ -1585,17 +1645,17 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
         }
 
-        if (productImg) {
+        if (processedImg) {
           ctx.save();
-          const pWidth = productImg.width;
-          const pHeight = productImg.height;
+          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
           const baseScale = (pedestalW * 0.9) / pWidth;
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(productImg, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
           ctx.restore();
         } else {
           ctx.save();
