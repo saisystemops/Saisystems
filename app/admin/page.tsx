@@ -576,6 +576,11 @@ export default function AdminPage() {
   const [showroomAddress, setShowroomAddress] = useState("");
   const [emiTenure, setEmiTenure] = useState<number>(12);
   const [customEmiText, setCustomEmiText] = useState<string>("");
+  const [trustPolicies, setTrustPolicies] = useState<string[]>([
+    "🛡️ 365-Day Warranty",
+    "⚙️ 100% Genuine Parts",
+    "🔌 Charger Included"
+  ]);
 
   const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
 
@@ -1846,6 +1851,7 @@ export default function AdminPage() {
                     showEmi={showEmi}
                     emiTenure={emiTenure}
                     customEmiText={customEmiText}
+                    trustPolicies={trustPolicies}
                   />
 
                   {/* Design combinator selectors */}
@@ -2511,6 +2517,7 @@ export default function AdminPage() {
                                 showEmi={showEmi}
                                 emiTenure={emiTenure}
                                 customEmiText={customEmiText}
+                                trustPolicies={trustPolicies}
                               />
 
                               {/* Canvas style combinators */}
@@ -2926,18 +2933,6 @@ export default function AdminPage() {
                         />
                       </div>
 
-                      {/* Tagline */}
-                      <div className="col-span-2">
-                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Custom Tagline (Optional)</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. — Professional Performance. Business Ready. —"
-                          value={tagline}
-                          onChange={(e) => setTagline(e.target.value)}
-                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                        />
-                      </div>
-
                       {/* Phone Support */}
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
@@ -2969,6 +2964,58 @@ export default function AdminPage() {
                           placeholder="Leave blank for dynamic default address"
                           onChange={(e) => setShowroomAddress(e.target.value)}
                           className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  </details>
+
+                  {/* Trust Policies Customization Settings */}
+                  <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                    <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                      <span className="flex items-center gap-2">
+                        <span>🛡️</span>
+                        <span>Flyer Trust Badges (Horizontal Bar)</span>
+                      </span>
+                      <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                    </summary>
+                    <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 1 (Left)</label>
+                        <input
+                          type="text"
+                          value={trustPolicies[0] || ""}
+                          onChange={(e) => {
+                            const newPolicies = [...trustPolicies];
+                            newPolicies[0] = e.target.value;
+                            setTrustPolicies(newPolicies);
+                          }}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 2 (Center)</label>
+                        <input
+                          type="text"
+                          value={trustPolicies[1] || ""}
+                          onChange={(e) => {
+                            const newPolicies = [...trustPolicies];
+                            newPolicies[1] = e.target.value;
+                            setTrustPolicies(newPolicies);
+                          }}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 3 (Right)</label>
+                        <input
+                          type="text"
+                          value={trustPolicies[2] || ""}
+                          onChange={(e) => {
+                            const newPolicies = [...trustPolicies];
+                            newPolicies[2] = e.target.value;
+                            setTrustPolicies(newPolicies);
+                          }}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
                         />
                       </div>
                     </div>
@@ -3015,6 +3062,17 @@ export default function AdminPage() {
                         className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Tagline (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. — Professional Performance. Business Ready. —"
+                      value={tagline}
+                      onChange={(e) => setTagline(e.target.value)}
+                      className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
                   </div>
 
                   <div>
@@ -3145,6 +3203,7 @@ export default function AdminPage() {
                     showEmi={showEmi}
                     emiTenure={emiTenure}
                     customEmiText={customEmiText}
+                    trustPolicies={trustPolicies}
                   />
 
                   {/* Canvas Style Combinators */}
