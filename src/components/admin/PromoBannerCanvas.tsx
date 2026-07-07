@@ -569,9 +569,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       const dealTag = props.product.dealTag || "";
       const accessory = props.product.includedAccessory || "";
 
-      const specsList = props.product.specs && props.product.specs.length > 0
+      let specsList = props.product.specs && props.product.specs.length > 0
         ? props.product.specs
         : ["Intel Core i5 Processor", "8GB DDR4 RAM", "256GB SSD Storage", "Wi-Fi (Built-in)"];
+
+      if (accessory) {
+        const cleanAccessory = accessory.toLowerCase().replace(/[^a-z0-9]/g, "");
+        specsList = specsList.filter(spec => {
+          const cleanSpec = spec.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const isDup = cleanSpec.includes(cleanAccessory) || cleanAccessory.includes(cleanSpec) ||
+                        (cleanSpec.includes("bag") && cleanAccessory.includes("bag")) ||
+                        (cleanSpec.includes("charger") && cleanAccessory.includes("charger"));
+          return !isDup;
+        });
+      }
 
       // Price format and discount calculations are now globally destructured above.
 
