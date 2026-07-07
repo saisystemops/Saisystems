@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import PromoBannerCanvas, { PromoBannerCanvasHandle } from "@/components/admin/PromoBannerCanvas";
+import toast from "react-hot-toast";
 import {
   Laptop,
   Monitor,
@@ -19,14 +21,15 @@ import {
   Calculator,
   Star,
   Sun,
-  Moon
+  Moon,
+  Sparkles
 } from "lucide-react";
 import type { Product } from "@/lib/data/default-products";
 
 type DBStatus = {
-  productsTable: "ready" | "missing";
-  adminUsersTable: "ready" | "missing";
-  blogsTable: "ready" | "missing";
+  productsTable: "ready" | "missing" | "error";
+  adminUsersTable: "ready" | "missing" | "error";
+  blogsTable: "ready" | "missing" | "error";
 };
 
 type Ticket = {
@@ -65,7 +68,7 @@ type Estimate = {
   warranty: string;
 };
 
-type SidebarSection = "all" | "laptops" | "desktops" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews" | "admin-users" | "blogs";
+type SidebarSection = "all" | "laptops" | "desktops" | "spare-parts" | "accessories" | "tickets" | "estimator" | "reviews" | "admin-users" | "blogs" | "banners";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -460,6 +463,187 @@ export default function AdminPage() {
   });
   const [newSpecText, setNewSpecText] = useState("");
 
+  // Banner Canvas States for Add Product
+  const [addRatio, setAddRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
+  const [addThemeColor, setAddThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [addBgPattern, setAddBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
+  const [addPlatformStyle, setAddPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
+  const [addCardStyle, setAddCardStyle] = useState<"glass" | "light" | "dark">("glass");
+  const [addAccentColor, setAddAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [addZoom, setAddZoom] = useState(1);
+  const [addOffsetX, setAddOffsetX] = useState(0);
+  const [addOffsetY, setAddOffsetY] = useState(0);
+  const [addRotation, setAddRotation] = useState(0);
+  const [addLocalImageFile, setAddLocalImageFile] = useState<File | null>(null);
+  
+  // AI parser states
+  const [addAiPromptText, setAddAiPromptText] = useState("");
+  const [parsingAi, setParsingAi] = useState(false);
+
+  const addCanvasRef = useRef<PromoBannerCanvasHandle>(null);
+
+  // Banner Canvas States for Edit Product
+  const [editRatio, setEditRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
+  const [editThemeColor, setEditThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [editBgPattern, setEditBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
+  const [editPlatformStyle, setEditPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
+  const [editCardStyle, setEditCardStyle] = useState<"glass" | "light" | "dark">("glass");
+  const [editAccentColor, setEditAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [editZoom, setEditZoom] = useState(1);
+  const [editOffsetX, setEditOffsetX] = useState(0);
+  const [editOffsetY, setEditOffsetY] = useState(0);
+  const [editRotation, setEditRotation] = useState(0);
+  const [editLocalImageFile, setEditLocalImageFile] = useState<File | null>(null);
+
+  const editCanvasRef = useRef<PromoBannerCanvasHandle>(null);
+
+  // ── Standalone Banner Studio States ──────────────────────────────
+  const [bannerProduct, setBannerProduct] = useState<Product>({
+    id: "promo",
+    category: "laptops",
+    title: "Dell Latitude 7490 Business Class",
+    description: "Premium refurbished ultrabook with quad-core processor and blazing fast SSD storage.",
+    price: "18,500",
+    originalPrice: "65,000",
+    badge: "Refurbished Elite",
+    specs: [
+      "Intel Core i5 8th Gen CPU",
+      "8GB DDR4 RAM | 256GB SSD",
+      "14.1 Inch Full HD Anti-Glare Screen",
+      "Genuine Windows 11 Pro Active",
+      "Laptop Bag & Charger Included"
+    ],
+    inStock: true,
+    whatsappLink: "",
+    dealTag: "Limited Offer",
+    includedAccessory: "Laptop Bag & Charger"
+  });
+  const [bannerRatio, setBannerRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
+  const [bannerThemeColor, setBannerThemeColor] = useState<"orange" | "blue" | "gold" | "slate" | "green">("orange");
+  const [bannerBgPattern, setBannerBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
+  const [bannerPlatformStyle, setBannerPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
+  const [bannerCardStyle, setBannerCardStyle] = useState<"glass" | "light" | "dark">("glass");
+  const [bannerAccentColor, setBannerAccentColor] = useState<"orange" | "cyan" | "gold" | "green" | "purple">("orange");
+  const [bannerZoom, setBannerZoom] = useState(1);
+  const [bannerOffsetX, setBannerOffsetX] = useState(0);
+  const [bannerOffsetY, setBannerOffsetY] = useState(0);
+  const [bannerRotation, setBannerRotation] = useState(0);
+  const [bannerLocalImageFile, setBannerLocalImageFile] = useState<File | null>(null);
+  const [bannerAiPromptText, setBannerAiPromptText] = useState("");
+  const [bannerParsingAi, setBannerParsingAi] = useState(false);
+  const [bannerNewSpecText, setBannerNewSpecText] = useState("");
+
+  const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
+
+  const handleBannerAiParse = async () => {
+    if (!bannerAiPromptText.trim()) {
+      alert("Please paste some text specifications first.");
+      return;
+    }
+    setBannerParsingAi(true);
+    try {
+      const res = await fetch("/api/admin/parse-deal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: bannerAiPromptText })
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        setBannerProduct(prev => ({
+          ...prev,
+          title: d.title || prev.title,
+          price: d.price || prev.price,
+          originalPrice: d.originalPrice || prev.originalPrice,
+          dealTag: d.dealTag || prev.dealTag,
+          includedAccessory: d.includedAccessory || prev.includedAccessory,
+          badge: d.badge || prev.badge,
+          description: d.description || prev.description,
+          specs: d.specs || prev.specs
+        }));
+        toast.success("AI parsed banner specs!");
+      } else {
+        toast.error("AI parsing failed. Default template kept.");
+      }
+    } catch {
+      toast.error("AI parsing request failed.");
+    } finally {
+      setBannerParsingAi(false);
+    }
+  };
+
+  const handleAddBannerSpec = () => {
+    if (!bannerNewSpecText.trim()) return;
+    setBannerProduct(prev => ({
+      ...prev,
+      specs: [...(prev.specs || []), bannerNewSpecText.trim()]
+    }));
+    setBannerNewSpecText("");
+  };
+
+  const handleRemoveBannerSpec = (idx: number) => {
+    setBannerProduct(prev => ({
+      ...prev,
+      specs: (prev.specs || []).filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleAiParseDeal = async () => {
+    if (!addAiPromptText.trim()) {
+      alert("Please paste some text specifications first.");
+      return;
+    }
+    setParsingAi(true);
+    try {
+      const res = await fetch("/api/admin/parse-deal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: addAiPromptText })
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        setNewProduct(prev => ({
+          ...prev,
+          title: d.title || prev.title,
+          price: d.price || prev.price,
+          originalPrice: d.originalPrice || prev.originalPrice,
+          dealTag: d.dealTag || prev.dealTag,
+          includedAccessory: d.includedAccessory || prev.includedAccessory,
+          badge: d.badge || prev.badge,
+          specs: d.specs || prev.specs || []
+        }));
+        toast.success("AI parsed and auto-filled the form!");
+      } else {
+        toast.error(result.error || "Failed to parse text specifications.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error calling parse API.");
+    } finally {
+      setParsingAi(false);
+    }
+  };
+
+  const handleToggleAddForm = () => {
+    const nextVal = !showAddForm;
+    setShowAddForm(nextVal);
+    if (nextVal) {
+      setAddRatio("1:1");
+      setAddThemeColor("orange");
+      setAddBgPattern("circuit");
+      setAddPlatformStyle("pedestal");
+      setAddCardStyle("glass");
+      setAddAccentColor("orange");
+      setAddZoom(1);
+      setAddOffsetX(0);
+      setAddOffsetY(0);
+      setAddRotation(0);
+      setAddLocalImageFile(null);
+      setAddAiPromptText("");
+    }
+  };
+
   // Check auth cookie and theme on mount
   useEffect(() => {
     const sessionCookie = document.cookie.split(";").find((item) => item.trim().startsWith("admin_session="))?.split("=")[1];
@@ -558,6 +742,17 @@ export default function AdminPage() {
   const handleStartEdit = (product: Product) => {
     setEditingId(product.id);
     setEditProduct({ ...product });
+    setEditRatio("1:1");
+    setEditThemeColor("orange");
+    setEditBgPattern("circuit");
+    setEditPlatformStyle("pedestal");
+    setEditCardStyle("glass");
+    setEditAccentColor("orange");
+    setEditZoom(1);
+    setEditOffsetX(0);
+    setEditOffsetY(0);
+    setEditRotation(0);
+    setEditLocalImageFile(null);
   };
 
   const handleSaveEdit = async () => {
@@ -635,6 +830,17 @@ export default function AdminPage() {
           dealTag: "",
           includedAccessory: ""
         });
+        setAddLocalImageFile(null);
+        setAddRatio("1:1");
+        setAddThemeColor("orange");
+        setAddBgPattern("circuit");
+        setAddPlatformStyle("pedestal");
+        setAddCardStyle("glass");
+        setAddAccentColor("orange");
+        setAddZoom(1);
+        setAddOffsetX(0);
+        setAddOffsetY(0);
+        setAddRotation(0);
         fetchAdminData();
       } else {
         const data = await res.json();
@@ -1097,6 +1303,18 @@ export default function AdminPage() {
                 <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md font-mono text-[9px]">{estimates.length}</span>
               </button>
 
+              <button
+                onClick={() => setActiveSection("banners")}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-extrabold rounded-xl transition-all border ${
+                  activeSection === "banners"
+                    ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/5 border-transparent"
+                }`}
+              >
+                <span className="flex items-center gap-2"><Sparkles size={13} className="text-orange-500 animate-pulse" /> Promo Banners</span>
+                <span className="bg-orange-500/10 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider scale-[0.9] origin-right">STUDIO</span>
+              </button>
+
               <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2">Service Communications</p>
 
@@ -1160,9 +1378,6 @@ export default function AdminPage() {
 
           {/* Bottom Footer Section */}
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-
-
-
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer"
@@ -1173,7 +1388,7 @@ export default function AdminPage() {
         </aside>
 
         {/* ── Main Content Area (Right Column) ────────────────────────────── */}
-        <main className="flex-1 bg-white dark:bg-gray-950 p-6 md:p-10 overflow-y-auto transition-colors">
+        <main className="flex-1 bg-white dark:bg-gray-955 p-6 md:p-10 overflow-y-auto transition-colors">
           
           {/* Active section header block */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -1189,6 +1404,8 @@ export default function AdminPage() {
                   ? "Admin User Accounts"
                   : activeSection === "blogs"
                   ? "IT Tips & Blog Manager"
+                  : activeSection === "banners"
+                  ? "Promo Banner Designer Studio"
                   : `${activeSection} category`}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1200,6 +1417,8 @@ export default function AdminPage() {
                   ? "Create and delete admin manager accounts authorized to edit the database."
                   : activeSection === "blogs"
                   ? "Add, edit, or delete dynamic articles and guides shown on your public IT blog page."
+                  : activeSection === "banners"
+                  ? "Design professional flyers, post promotions, and copy social captions instantly."
                   : "Manage product cards, prices, and stock statuses displayed in the showroom."}
               </p>
             </div>
@@ -1229,7 +1448,7 @@ export default function AdminPage() {
             {activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "admin-users" && activeSection !== "blogs" && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowAddForm(!showAddForm)}
+                  onClick={handleToggleAddForm}
                   className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:opacity-95 shadow-md shadow-orange-950/20 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   + Add Deal
@@ -1261,129 +1480,171 @@ export default function AdminPage() {
           {/* Render Add Form */}
           {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "blogs" && (
             <div className="mb-8 bg-gray-100 dark:bg-gray-900 border border-gray-250 dark:border-gray-850 p-6 rounded-3xl transition-colors">
-              <form onSubmit={handleCreateProduct} className="space-y-4">
-                <h3 className="text-base font-black text-gray-950 dark:text-white">Create New Showroom Item</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {/* Product ID is auto-generated server-side with a timestamp suffix for guaranteed uniqueness */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
-                    <select
-                      value={newProduct.category}
-                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as Product["category"] })}
-                      className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                    >
-                      <option value="laptops">Refurbished Laptops</option>
-                      <option value="desktops">New Desktops</option>
-                      <option value="spare-parts">Spare Parts</option>
-                      <option value="accessories">Mobile Accessories</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Badge</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 30% OFF / New"
-                      value={newProduct.badge}
-                      onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Title</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. HP EliteBook 840 G6"
-                      value={newProduct.title}
-                      onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Price</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. ₹15,999"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. ₹48,000"
-                      value={newProduct.originalPrice}
-                      onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Image URL</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. /products/latitude-7490.png"
-                      value={newProduct.imageUrl || ""}
-                      onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">WhatsApp Catalog Link (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. https://wa.me/p/10032918260090500/182592162779309"
-                      value={newProduct.whatsappLink || ""}
-                      onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🏷️ Deal Tag / Promo Label</label>
-                    <select
-                      value={newProduct.dealTag || ""}
-                      onChange={(e) => setNewProduct({ ...newProduct, dealTag: e.target.value })}
-                      className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                    >
-                      <option value="">— No Deal Tag —</option>
-                      <option value="Festival Deal">🎉 Festival Deal</option>
-                      <option value="This Month Deal">📅 This Month Deal</option>
-                      <option value="Weekend Offer">⚡ Weekend Offer</option>
-                      <option value="Clearance Sale">🔥 Clearance Sale</option>
-                      <option value="Limited Stock">⏳ Limited Stock</option>
-                      <option value="New Arrival">✨ New Arrival</option>
-                      <option value="Flash Sale">💥 Flash Sale</option>
-                      <option value="Bulk Deal">📦 Bulk Deal</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Corporate business laptops, A++ showroom condition."
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      className="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                    />
+              <h3 className="text-base font-black text-gray-950 dark:text-white mb-4">Create New Showroom Item & Promo Banner</h3>
+              
+              {/* AI Parser Section */}
+              <div className="mb-6 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
+                <label className="block text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase mb-1.5 flex items-center gap-1">
+                  <span>🤖</span> AI Deal Autofill & Specs Parser
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <textarea
+                    rows={2}
+                    value={addAiPromptText}
+                    onChange={(e) => setAddAiPromptText(e.target.value)}
+                    placeholder="Paste raw specifications or deal description (e.g. 'Dell Latitude 7490 Core i7 8th Gen 16GB RAM 512GB SSD. Price 28500, was 38000. Free laptop bag.')"
+                    className="flex-1 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-2.5 rounded-xl text-xs text-gray-950 dark:text-white focus:outline-none focus:border-orange-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAiParseDeal}
+                    disabled={parsingAi}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    {parsingAi ? "Parsing Text..." : "🪄 AI Autofill Form"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* LEFT COLUMN: Catalog Item Fields (7 cols) */}
+                <form onSubmit={handleCreateProduct} className="lg:col-span-7 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
+                      <select
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as Product["category"] })}
+                        className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      >
+                        <option value="laptops">Refurbished Laptops</option>
+                        <option value="desktops">New Desktops</option>
+                        <option value="spare-parts">Spare Parts</option>
+                        <option value="accessories">Mobile Accessories</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Badge (e.g. 30% OFF)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 30% OFF / New"
+                        value={newProduct.badge}
+                        onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Title</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Dell Latitude 3410"
+                        value={newProduct.title}
+                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Price (Numeric)</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 28000"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 38000"
+                        value={newProduct.originalPrice}
+                        onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Image URL</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. /products/latitude-7490.png"
+                        value={newProduct.imageUrl || ""}
+                        onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                      {addLocalImageFile && !newProduct.imageUrl && (
+                        <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+                          ⚠️ Local file is active on banner, but empty website catalog URL. Remember to input an image link for the public showroom.
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">WhatsApp Catalog Link (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. https://wa.me/p/10032918260090500"
+                        value={newProduct.whatsappLink || ""}
+                        onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🏷️ Deal Tag / Promo Label</label>
+                      <select
+                        value={newProduct.dealTag || ""}
+                        onChange={(e) => setNewProduct({ ...newProduct, dealTag: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      >
+                        <option value="">— No Deal Tag —</option>
+                        <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
+                        <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
+                        <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
+                        <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
+                        <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
+                        <option value="💥 FLASH SALE">💥 FLASH SALE</option>
+                        <option value="📦 BULK DEAL">📦 BULK DEAL</option>
+                        <option value="Refurbished">Refurbished</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🎁 Included Free Accessory</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Free Laptop Bag & Mouse"
+                        value={newProduct.includedAccessory || ""}
+                        onChange={(e) => setNewProduct({ ...newProduct, includedAccessory: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Corporate business laptops, A++ showroom condition."
+                        value={newProduct.description}
+                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
                   </div>
 
                   {/* Specs adding list */}
-                  <div className="sm:col-span-2 md:col-span-3 border-t border-gray-200 dark:border-gray-800 pt-4">
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Add Hardware Specifications</label>
+                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Add Hardware Specifications (Up to 4-5)</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="e.g. Intel Core i5 8th Gen"
+                        placeholder="e.g. Intel Core i5 10th Gen"
                         value={newSpecText}
                         onChange={(e) => setNewSpecText(e.target.value)}
-                        className="flex-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                        className="flex-1 bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
                       />
                       <button
                         type="button"
                         onClick={handleAddSpecToNew}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-xs font-bold rounded-lg cursor-pointer"
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold rounded-lg cursor-pointer"
                       >
                         Add Spec
                       </button>
@@ -1395,7 +1656,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveSpecFromNew(sidx)}
-                            className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px]"
+                            className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px] cursor-pointer"
                           >
                             ×
                           </button>
@@ -1403,24 +1664,280 @@ export default function AdminPage() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm(false)}
+                      className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl cursor-pointer"
+                    >
+                      Save to Showroom
+                    </button>
+                  </div>
+                </form>
+
+                {/* RIGHT COLUMN: Live Banner Generator (5 cols) */}
+                <div className="lg:col-span-5 bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4">
+                  <PromoBannerCanvas
+                    ref={addCanvasRef}
+                    product={newProduct}
+                    ratio={addRatio}
+                    themeColor={addThemeColor}
+                    bgPattern={addBgPattern}
+                    platformStyle={addPlatformStyle}
+                    cardStyle={addCardStyle}
+                    accentColor={addAccentColor}
+                    zoom={addZoom}
+                    offsetX={addOffsetX}
+                    offsetY={addOffsetY}
+                    rotation={addRotation}
+                    localImageFile={addLocalImageFile}
+                  />
+
+                  {/* Design combinator selectors */}
+                  <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                        <select
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "orange") {
+                              setAddThemeColor("orange");
+                              setAddAccentColor("orange");
+                              setAddBgPattern("circuit");
+                              setAddPlatformStyle("pedestal");
+                              setAddCardStyle("glass");
+                            } else if (val === "blue") {
+                              setAddThemeColor("blue");
+                              setAddAccentColor("cyan");
+                              setAddBgPattern("grid");
+                              setAddPlatformStyle("pedestal");
+                              setAddCardStyle("light");
+                            } else if (val === "gold") {
+                              setAddThemeColor("gold");
+                              setAddAccentColor("gold");
+                              setAddBgPattern("fiber");
+                              setAddPlatformStyle("pedestal");
+                              setAddCardStyle("dark");
+                            } else if (val === "green") {
+                              setAddThemeColor("green");
+                              setAddAccentColor("green");
+                              setAddBgPattern("fiber");
+                              setAddPlatformStyle("shadow");
+                              setAddCardStyle("glass");
+                            }
+                          }}
+                          className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                        >
+                          <option value="orange">🍊 Sai Signature Orange</option>
+                          <option value="blue">💙 Midnight Grid Blue</option>
+                          <option value="gold">🏆 Luxury Black Gold</option>
+                          <option value="green">🍃 Refurb Eco Green</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
+                        <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setAddRatio("1:1")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            1:1 (Feed)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAddRatio("9:16")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            9:16 (Status)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAddRatio("16:9")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            16:9 (Cover)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[10px]">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Local Product Image File</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setAddLocalImageFile(file);
+                          }}
+                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
+                        />
+                        {addLocalImageFile && (
+                          <button
+                            type="button"
+                            onClick={() => setAddLocalImageFile(null)}
+                            className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
+                          >
+                            × Clear Upload
+                          </button>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
+                        <select
+                          value={addPlatformStyle}
+                          onChange={(e) => setAddPlatformStyle(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                        >
+                          <option value="pedestal">Perspective Pedestal</option>
+                          <option value="ring">Floating Neon Ring</option>
+                          <option value="shadow">Simple Shadow Base</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Sliders container */}
+                    <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
+                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-slate-800 pb-1 mb-1">
+                        📐 Image Transform Sliders
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="2.5"
+                          step="0.02"
+                          value={addZoom}
+                          onChange={(e) => setAddZoom(parseFloat(e.target.value))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addZoom.toFixed(2)}x</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={addOffsetX}
+                          onChange={(e) => setAddOffsetX(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addOffsetX}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={addOffsetY}
+                          onChange={(e) => setAddOffsetY(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addOffsetY}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
+                        <input
+                          type="range"
+                          min="-180"
+                          max="180"
+                          step="1"
+                          value={addRotation}
+                          onChange={(e) => setAddRotation(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addRotation}°</span>
+                      </div>
+                    </div>
+
+                    {/* Exporters and Social copy row */}
+                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (addCanvasRef.current) {
+                            await addCanvasRef.current.copyImageToClipboard();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📋 Copy Image
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (addCanvasRef.current) {
+                            addCanvasRef.current.downloadPNG();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📥 Download PNG
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (addCanvasRef.current) {
+                            const caption = addCanvasRef.current.getSocialCaption();
+                            navigator.clipboard.writeText(caption);
+                            toast.success("Social media post caption copied to clipboard!");
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📝 Copy Caption
+                      </button>
+                    </div>
+
+                    {/* Optional Cloud Integrations (Future) */}
+                    <div className="bg-gray-50/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
+                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                        <span>☁️</span> Optional Cloud Integrations
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          💬 Broadcast WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          📢 Share on Facebook
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddForm(false)}
-                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl"
-                  >
-                    Create Product
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           )}
 
@@ -1670,151 +2187,411 @@ export default function AdminPage() {
                     <div
                       key={product.id}
                       className={`bg-white dark:bg-gray-900 border rounded-3xl p-5 sm:p-6 transition-all ${
-                        editingId === product.id ? "border-orange-500 bg-orange-950/5 dark:bg-orange-950/5" : "border-gray-200 dark:border-gray-800/60"
+                        editingId === product.id ? "border-orange-500 bg-orange-950/5 dark:bg-orange-950/5" : "border-gray-200 dark:border-gray-850/60"
                       }`}
                     >
                       {editingId === product.id ? (
                         /* EDIT MODE */
                         <div className="space-y-4">
                           <div className="flex items-center justify-between border-b border-orange-950/20 pb-3 mb-2">
-                            <span className="text-xs font-black text-orange-500 uppercase">Editing Product: {product.id}</span>
+                            <span className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase">Editing Product: {product.id}</span>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1.5 text-gray-400 hover:text-white text-xs font-bold"
+                                className="px-3 py-1.5 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white text-xs font-bold cursor-pointer"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={handleSaveEdit}
                                 disabled={loading}
-                                className="flex items-center gap-1 px-3.5 py-2 bg-emerald-600 text-white text-xs font-black rounded-xl hover:bg-emerald-500 transition-colors"
+                                className="flex items-center gap-1 px-3.5 py-2 bg-emerald-600 text-white text-xs font-black rounded-xl hover:bg-emerald-500 transition-colors cursor-pointer"
                               >
                                 <Save size={14} /> Save Changes
                               </button>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Title</label>
-                              <input
-                                type="text"
-                                value={editProduct.title || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, title: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* LEFT COLUMN: Form Fields (7 cols) */}
+                            <div className="lg:col-span-7 space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Title</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.title || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, title: e.target.value })}
+                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.price || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
+                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.originalPrice || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, originalPrice: e.target.value })}
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge Text</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.badge || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, badge: e.target.value })}
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Image URL</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.imageUrl || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                  {editLocalImageFile && !editProduct.imageUrl && (
+                                    <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+                                      ⚠️ Local file is active on banner, but empty website catalog URL. Remember to input an image link for the public showroom.
+                                    </p>
+                                  )}
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Category</label>
+                                  <select
+                                    value={editProduct.category}
+                                    onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as Product["category"] })}
+                                    className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  >
+                                    <option value="laptops">Refurbished Laptops</option>
+                                    <option value="desktops">New Desktops</option>
+                                    <option value="spare-parts">Spare Parts</option>
+                                    <option value="accessories">Mobile Accessories</option>
+                                  </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.description || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Specifications (comma separated)</label>
+                                  <input
+                                    type="text"
+                                    value={(editProduct.specs || []).join(", ")}
+                                    onChange={(e) =>
+                                      setEditProduct({
+                                        ...editProduct,
+                                        specs: e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                                      })
+                                    }
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link</label>
+                                  <input
+                                    type="text"
+                                    value={editProduct.whatsappLink || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, whatsappLink: e.target.value })}
+                                    placeholder="e.g. https://wa.me/p/10032918260090500"
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🏷️ Deal Tag / Promo Label</label>
+                                  <select
+                                    value={editProduct.dealTag || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, dealTag: e.target.value })}
+                                    className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  >
+                                    <option value="">— No Deal Tag —</option>
+                                    <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
+                                    <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
+                                    <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
+                                    <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
+                                    <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
+                                    <option value="💥 FLASH SALE">💥 FLASH SALE</option>
+                                    <option value="📦 BULK DEAL">📦 BULK DEAL</option>
+                                    <option value="Refurbished">Refurbished</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🎁 Included Free Accessory</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Laptop Bag &amp; Charger"
+                                    value={editProduct.includedAccessory || ""}
+                                    onChange={(e) => setEditProduct({ ...editProduct, includedAccessory: e.target.value })}
+                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* RIGHT COLUMN: Edit Banner Canvas Preview (5 cols) */}
+                            <div className="lg:col-span-5 bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4">
+                              <PromoBannerCanvas
+                                ref={editCanvasRef}
+                                product={editProduct}
+                                ratio={editRatio}
+                                themeColor={editThemeColor}
+                                bgPattern={editBgPattern}
+                                platformStyle={editPlatformStyle}
+                                cardStyle={editCardStyle}
+                                accentColor={editAccentColor}
+                                zoom={editZoom}
+                                offsetX={editOffsetX}
+                                offsetY={editOffsetY}
+                                rotation={editRotation}
+                                localImageFile={editLocalImageFile}
                               />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price</label>
-                              <input
-                                type="text"
-                                value={editProduct.price || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price</label>
-                              <input
-                                type="text"
-                                value={editProduct.originalPrice || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, originalPrice: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge text</label>
-                              <input
-                                type="text"
-                                value={editProduct.badge || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, badge: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Image URL</label>
-                              <input
-                                type="text"
-                                value={editProduct.imageUrl || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                                placeholder="e.g. /products/latitude.png"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Category</label>
-                              <select
-                                value={editProduct.category}
-                                onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as Product["category"] })}
-                                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              >
-                                <option value="laptops">Refurbished Laptops</option>
-                                <option value="desktops">New Desktops</option>
-                                <option value="spare-parts">Spare Parts</option>
-                                <option value="accessories">Mobile Accessories</option>
-                              </select>
-                            </div>
-                            <div className="sm:col-span-2 md:col-span-3">
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
-                              <input
-                                type="text"
-                                value={editProduct.description || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
-                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 md:col-span-3">
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Specifications (comma separated)</label>
-                              <input
-                                type="text"
-                                value={(editProduct.specs || []).join(", ")}
-                                onChange={(e) =>
-                                  setEditProduct({
-                                    ...editProduct,
-                                    specs: e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                                  })
-                                }
-                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 md:col-span-3">
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link (Optional)</label>
-                              <input
-                                type="text"
-                                value={editProduct.whatsappLink || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, whatsappLink: e.target.value })}
-                                placeholder="e.g. https://wa.me/p/10032918260090500/182592162779309"
-                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🏷️ Deal Tag / Promo Label</label>
-                              <select
-                                value={editProduct.dealTag || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, dealTag: e.target.value })}
-                                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              >
-                                <option value="">— No Deal Tag —</option>
-                                <option value="Festival Deal">🎉 Festival Deal</option>
-                                <option value="This Month Deal">📅 This Month Deal</option>
-                                <option value="Weekend Offer">⚡ Weekend Offer</option>
-                                <option value="Clearance Sale">🔥 Clearance Sale</option>
-                                <option value="Limited Stock">⏳ Limited Stock</option>
-                                <option value="New Arrival">✨ New Arrival</option>
-                                <option value="Flash Sale">💥 Flash Sale</option>
-                                <option value="Bulk Deal">📦 Bulk Deal</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🎁 Included Free Accessory (Optional)</label>
-                              <input
-                                type="text"
-                                placeholder="e.g. Laptop Bag &amp; Charger"
-                                value={editProduct.includedAccessory || ""}
-                                onChange={(e) => setEditProduct({ ...editProduct, includedAccessory: e.target.value })}
-                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                              />
+
+                              {/* Canvas style combinators */}
+                              <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                                    <select
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "orange") {
+                                          setEditThemeColor("orange");
+                                          setEditAccentColor("orange");
+                                          setEditBgPattern("circuit");
+                                          setEditPlatformStyle("pedestal");
+                                          setEditCardStyle("glass");
+                                        } else if (val === "blue") {
+                                          setEditThemeColor("blue");
+                                          setEditAccentColor("cyan");
+                                          setEditBgPattern("grid");
+                                          setEditPlatformStyle("pedestal");
+                                          setEditCardStyle("light");
+                                        } else if (val === "gold") {
+                                          setEditThemeColor("gold");
+                                          setEditAccentColor("gold");
+                                          setEditBgPattern("fiber");
+                                          setEditPlatformStyle("pedestal");
+                                          setEditCardStyle("dark");
+                                        } else if (val === "green") {
+                                          setEditThemeColor("green");
+                                          setEditAccentColor("green");
+                                          setEditBgPattern("fiber");
+                                          setEditPlatformStyle("shadow");
+                                          setEditCardStyle("glass");
+                                        }
+                                      }}
+                                      className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                                    >
+                                      <option value="orange">🍊 Sai Signature Orange</option>
+                                      <option value="blue">💙 Midnight Grid Blue</option>
+                                      <option value="gold">🏆 Luxury Black Gold</option>
+                                      <option value="green">🍃 Refurb Eco Green</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
+                                    <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditRatio("1:1")}
+                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                                      >
+                                        1:1
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditRatio("9:16")}
+                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                                      >
+                                        9:16
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditRatio("16:9")}
+                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                                      >
+                                        16:9
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 text-[10px]">
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Upload Custom Photo</label>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) setEditLocalImageFile(file);
+                                      }}
+                                      className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
+                                    />
+                                    {editLocalImageFile && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditLocalImageFile(null)}
+                                        className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
+                                      >
+                                        × Clear Custom Photo
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
+                                    <select
+                                      value={editPlatformStyle}
+                                      onChange={(e) => setEditPlatformStyle(e.target.value as any)}
+                                      className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                                    >
+                                      <option value="pedestal">Perspective Pedestal</option>
+                                      <option value="ring">Floating Neon Ring</option>
+                                      <option value="shadow">Simple Shadow Base</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* Slider controls */}
+                                <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
+                                    <input
+                                      type="range"
+                                      min="0.2"
+                                      max="2.5"
+                                      step="0.02"
+                                      value={editZoom}
+                                      onChange={(e) => setEditZoom(parseFloat(e.target.value))}
+                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                                    />
+                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editZoom.toFixed(2)}x</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
+                                    <input
+                                      type="range"
+                                      min="-250"
+                                      max="250"
+                                      step="1"
+                                      value={editOffsetX}
+                                      onChange={(e) => setEditOffsetX(parseInt(e.target.value, 10))}
+                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                                    />
+                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editOffsetX}px</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
+                                    <input
+                                      type="range"
+                                      min="-250"
+                                      max="250"
+                                      step="1"
+                                      value={editOffsetY}
+                                      onChange={(e) => setEditOffsetY(parseInt(e.target.value, 10))}
+                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                                    />
+                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editOffsetY}px</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
+                                    <input
+                                      type="range"
+                                      min="-180"
+                                      max="180"
+                                      step="1"
+                                      value={editRotation}
+                                      onChange={(e) => setEditRotation(parseInt(e.target.value, 10))}
+                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                                    />
+                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editRotation}°</span>
+                                  </div>
+                                </div>
+
+                                {/* Exporters row */}
+                                <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (editCanvasRef.current) {
+                                        await editCanvasRef.current.copyImageToClipboard();
+                                      }
+                                    }}
+                                    className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                                  >
+                                    📋 Copy Image
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (editCanvasRef.current) {
+                                        editCanvasRef.current.downloadPNG();
+                                      }
+                                    }}
+                                    className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                                  >
+                                    📥 Download PNG
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (editCanvasRef.current) {
+                                        const caption = editCanvasRef.current.getSocialCaption();
+                                        navigator.clipboard.writeText(caption);
+                                        toast.success("Social media post caption copied!");
+                                      }
+                                    }}
+                                    className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                                  >
+                                    📝 Copy Caption
+                                  </button>
+                                </div>
+
+                                {/* Optional Cloud Integrations (Future) */}
+                                <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
+                                  <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                                    <span>☁️</span> Optional Cloud Integrations
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
+                                      className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                                    >
+                                      💬 Broadcast WhatsApp
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
+                                      className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                                    >
+                                      📢 Share on Facebook
+                                    </button>
+                                  </div>
+                                </div>
+
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1915,6 +2692,403 @@ export default function AdminPage() {
               </div>
             )
           }
+
+          {activeSection === "banners" && (
+            /* ── SECTION: Standalone Promo Banner Studio ─────────────────────── */
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                
+                {/* Left Column: Input Panel */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4">
+                  <div>
+                    <h3 className="text-base font-black text-gray-950 dark:text-white mb-1">Create Promotional Flyer</h3>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Design dynamic discount flyers and spec sheets. Safe from catalog database saves.</p>
+                  </div>
+
+                  {/* AI Specifications Paste Field */}
+                  <div className="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-white/5 space-y-2">
+                    <label className="block text-[9px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <span>⚡</span> AI Autofill Banner Specs
+                    </label>
+                    <textarea
+                      placeholder="Paste raw specifications or copy message here (e.g. Dell Core i5 8GB 256GB SSD, Original Price 65000, Offer Price 18500)..."
+                      value={bannerAiPromptText}
+                      onChange={(e) => setBannerAiPromptText(e.target.value)}
+                      rows={3}
+                      className="w-full bg-white dark:bg-white/5 border border-gray-250 dark:border-white/10 p-2.5 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-405 focus:outline-none focus:border-orange-500/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleBannerAiParse}
+                      disabled={bannerParsingAi}
+                      className="w-full py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-colors active:scale-[0.99]"
+                    >
+                      {bannerParsingAi ? "🔄 AI Parsing Specs..." : "🚀 Auto-Generate Banner Elements"}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Title / Name</label>
+                      <input
+                        type="text"
+                        value={bannerProduct.title}
+                        onChange={(e) => setBannerProduct({ ...bannerProduct, title: e.target.value })}
+                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge Text (e.g. Refurbished, Elite Deal)</label>
+                      <input
+                        type="text"
+                        value={bannerProduct.badge || ""}
+                        onChange={(e) => setBannerProduct({ ...bannerProduct, badge: e.target.value })}
+                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price (₹)</label>
+                      <input
+                        type="text"
+                        value={bannerProduct.originalPrice || ""}
+                        onChange={(e) => setBannerProduct({ ...bannerProduct, originalPrice: e.target.value })}
+                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price (₹)</label>
+                      <input
+                        type="text"
+                        value={bannerProduct.price}
+                        onChange={(e) => setBannerProduct({ ...bannerProduct, price: e.target.value })}
+                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Deal Tag (e.g. Save 70%)</label>
+                      <input
+                        type="text"
+                        value={bannerProduct.dealTag || ""}
+                        onChange={(e) => setBannerProduct({ ...bannerProduct, dealTag: e.target.value })}
+                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Included Accessories (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Laptop Bag & Charger"
+                      value={bannerProduct.includedAccessory || ""}
+                      onChange={(e) => setBannerProduct({ ...bannerProduct, includedAccessory: e.target.value })}
+                      className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Short Description (Promo Subtext)</label>
+                    <textarea
+                      value={bannerProduct.description}
+                      onChange={(e) => setBannerProduct({ ...bannerProduct, description: e.target.value })}
+                      rows={2}
+                      className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Hardware Specifications */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Specs List (Up to 5 specs)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. 16GB DDR4 RAM Memory"
+                        value={bannerNewSpecText}
+                        onChange={(e) => setBannerNewSpecText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddBannerSpec())}
+                        className="flex-1 bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddBannerSpec}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black rounded-lg cursor-pointer transition-colors"
+                      >
+                        + Add Spec
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {(bannerProduct.specs || []).map((spec, sidx) => (
+                        <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
+                          {spec}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBannerSpec(sidx)}
+                            className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px] cursor-pointer"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Dynamic Preview Panel */}
+                <div className="space-y-4 lg:sticky lg:top-6">
+                  <PromoBannerCanvas
+                    ref={bannerCanvasRef}
+                    product={bannerProduct}
+                    ratio={bannerRatio}
+                    themeColor={bannerThemeColor}
+                    bgPattern={bannerBgPattern}
+                    platformStyle={bannerPlatformStyle}
+                    cardStyle={bannerCardStyle}
+                    accentColor={bannerAccentColor}
+                    zoom={bannerZoom}
+                    offsetX={bannerOffsetX}
+                    offsetY={bannerOffsetY}
+                    rotation={bannerRotation}
+                    localImageFile={bannerLocalImageFile}
+                  />
+
+                  {/* Canvas Style Combinators */}
+                  <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme</label>
+                        <select
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "orange") {
+                              setBannerThemeColor("orange");
+                              setBannerAccentColor("orange");
+                              setBannerBgPattern("circuit");
+                              setBannerPlatformStyle("pedestal");
+                              setBannerCardStyle("glass");
+                            } else if (val === "blue") {
+                              setBannerThemeColor("blue");
+                              setBannerAccentColor("cyan");
+                              setBannerBgPattern("grid");
+                              setBannerPlatformStyle("pedestal");
+                              setBannerCardStyle("light");
+                            } else if (val === "gold") {
+                              setBannerThemeColor("gold");
+                              setBannerAccentColor("gold");
+                              setBannerBgPattern("fiber");
+                              setBannerPlatformStyle("pedestal");
+                              setBannerCardStyle("dark");
+                            } else if (val === "green") {
+                              setBannerThemeColor("green");
+                              setBannerAccentColor("green");
+                              setBannerBgPattern("fiber");
+                              setBannerPlatformStyle("shadow");
+                              setBannerCardStyle("glass");
+                            }
+                          }}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                        >
+                          <option value="orange">🍊 Sai Signature Orange</option>
+                          <option value="blue">💙 Midnight Grid Blue</option>
+                          <option value="gold">🏆 Luxury Black Gold</option>
+                          <option value="green">🍃 Refurb Eco Green</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
+                        <div className="flex bg-gray-100 dark:bg-gray-955 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("1:1")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            1:1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("9:16")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            9:16
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("16:9")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            16:9
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[10px]">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Upload Custom Photo</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setBannerLocalImageFile(file);
+                          }}
+                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
+                        />
+                        {bannerLocalImageFile && (
+                          <button
+                            type="button"
+                            onClick={() => setBannerLocalImageFile(null)}
+                            className="text-[9px] text-red-500 font-bold mt-1 block hover:underline"
+                          >
+                            × Clear Custom Photo
+                          </button>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
+                        <select
+                          value={bannerPlatformStyle}
+                          onChange={(e) => setBannerPlatformStyle(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                        >
+                          <option value="pedestal">Perspective Pedestal</option>
+                          <option value="ring">Floating Neon Ring</option>
+                          <option value="shadow">Simple Shadow Base</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Slider Controls */}
+                    <div className="bg-gray-50 dark:bg-gray-955 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="2.5"
+                          step="0.02"
+                          value={bannerZoom}
+                          onChange={(e) => setBannerZoom(parseFloat(e.target.value))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerZoom.toFixed(2)}x</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={bannerOffsetX}
+                          onChange={(e) => setBannerOffsetX(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerOffsetX}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={bannerOffsetY}
+                          onChange={(e) => setBannerOffsetY(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerOffsetY}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
+                        <input
+                          type="range"
+                          min="-180"
+                          max="180"
+                          step="1"
+                          value={bannerRotation}
+                          onChange={(e) => setBannerRotation(parseInt(e.target.value, 10))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerRotation}°</span>
+                      </div>
+                    </div>
+
+                    {/* Exporters Row */}
+                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (bannerCanvasRef.current) {
+                            await bannerCanvasRef.current.copyImageToClipboard();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📋 Copy Image
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (bannerCanvasRef.current) {
+                            bannerCanvasRef.current.downloadPNG();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📥 Download PNG
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (bannerCanvasRef.current) {
+                            const caption = bannerCanvasRef.current.getSocialCaption();
+                            navigator.clipboard.writeText(caption);
+                            toast.success("Promo caption copied to clipboard!");
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📝 Copy Caption
+                      </button>
+                    </div>
+
+                    {/* Optional Cloud Integrations (Future) */}
+                    <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
+                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                        <span>☁️</span> Optional Cloud Integrations
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          💬 Broadcast WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          📢 Share on Facebook
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
 
           {activeSection === "tickets" && (
             /* ── SECTION: Chatbot Tickets & Leads ────────────────────────────── */

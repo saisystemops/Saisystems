@@ -18,7 +18,7 @@ export default function Logo({
 }: LogoProps) {
   const logoImage = (
     <Image
-      src="/logo-v3.png"
+      src="/logo-feather.png"
       alt="Sai Systems Logo"
       width={80}
       height={80}

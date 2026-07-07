@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Ultimate Meta Ads &amp; Pixel Playbook — 50 Chapters</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-main: #040811;
+      --sidebar-bg: #090e1a;
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-hover: rgba(255, 255, 255, 0.04);
+      --border-color: rgba(255, 255, 255, 0.06);
+      
+      --accent-orange: #f97316;
+      --accent-orange-rgb: 249, 115, 22;
+      --accent-amber: #f59e0b;
+      --accent-blue: #38bdf8;
+      --accent-green: #10b981;
+      
+      --text-primary: #f8fafc;
+      --text-muted: #64748b;
+      --font-outfit: 'Outfit', sans-serif;
+      --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: var(--font-jakarta);
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+    }
+
+    /* Left Sidebar - Scrollable index of 50 chapters */
+    .sidebar {
+      width: 340px;
+      height: 100vh;
+      background-color: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .brand-section {
+      padding: 2rem 1.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-title {
+      font-family: var(--font-outfit);
+      font-size: 1.3rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, #64748b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-badge {
+      font-size: 0.6rem;
+      padding: 0.2rem 0.5rem;
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      color: var(--accent-orange);
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .sidebar-menu {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 1.5rem 1.25rem;
+    }
+
+    .menu-module {
+      margin-bottom: 1.5rem;
+    }
+
+    .module-title {
+      font-family: var(--font-outfit);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-orange);
+      margin-bottom: 0.5rem;
+      padding-left: 0.5rem;
+    }
+
+    .menu-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .menu-item a {
+      display: block;
+      padding: 0.4rem 0.75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-item a:hover {
+      color: #fff;
+      background-color: var(--card-bg);
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.75rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background-color: rgba(0,0,0,0.1);
+    }
+
+    /* Right Content Area */
+    .content-wrapper {
+      margin-left: 340px;
+      flex-grow: 1;
+      padding: 4rem 3.5rem;
+      max-width: 1050px;
+    }
+
+    /* Hero header */
+    .hero-header {
+      background: radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 40%);
+      border: 1px solid var(--border-color);
+      border-radius: 28px;
+      padding: 3rem;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .meta-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-header h1 {
+      font-family: var(--font-outfit);
+      font-size: 2.8rem;
+      font-weight: 900;
+      line-height: 1.15;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .hero-header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* Modules and Chapters */
+    .module-section {
+      margin-bottom: 4rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 2.5rem;
+    }
+
+    .module-header-title {
+      font-family: var(--font-outfit);
+      font-size: 1.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .module-header-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: linear-gradient(to bottom, var(--accent-orange), var(--accent-amber));
+      border-radius: 4px;
+    }
+
+    .chapter-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      scroll-margin-top: 2rem;
+      transition: all 0.2s ease;
+    }
+
+    .chapter-card:hover {
+      border-color: rgba(249, 115, 22, 0.15);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .chapter-meta {
+      font-family: var(--font-outfit);
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .chapter-title {
+      font-family: var(--font-outfit);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .chapter-body p {
+      color: #94a3b8;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .chapter-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Custom visual callout alerts */
+    .highlight-tip {
+      background: rgba(56, 189, 248, 0.03);
+      border-left: 3px solid var(--accent-blue);
+      padding: 1rem 1.25rem;
+      border-radius: 0 12px 12px 0;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      margin-top: 1rem;
+    }
+
+    .highlight-tip strong {
+      color: var(--accent-blue);
+      display: block;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Flow step visual diagrams */
+    .flow-line {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .flow-step {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .flow-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+      color: #fff;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+
+    .flow-text {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    /* Codebox and copy area */
+    .codebox {
+      background: #090f1d;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      color: #e2e8f0;
+    }
+
+    .codebox-header {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--accent-amber);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 0.25rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand-section">
+      <div class="brand-title">
+        Sai Systems <span class="brand-badge">50 Chs</span>
+      </div>
+    </div>
+
+    <div class="sidebar-menu">
+      
+      <!-- MODULE 1 -->
+      <div class="menu-module">
+        <div class="module-title">M1: Core Concepts</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch1">Ch 1: What is a Pixel?</a></li>
+          <li class="menu-item"><a href="#ch2">Ch 2: How Cookies Work</a></li>
+          <li class="menu-item"><a href="#ch3">Ch 3: Lifecycle of Click</a></li>
+          <li class="menu-item"><a href="#ch4">Ch 4: iOS 14.5 Impact</a></li>
+          <li class="menu-item"><a href="#ch5">Ch 5: Conversions API</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 2 -->
+      <div class="menu-module">
+        <div class="module-title">M2: Tracking Architecture</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch6">Ch 6: PageView Event</a></li>
+          <li class="menu-item"><a href="#ch7">Ch 7: WhatsAppClick Event</a></li>
+          <li class="menu-item"><a href="#ch8">Ch 8: CallClick Event</a></li>
+          <li class="menu-item"><a href="#ch9">Ch 9: Lead: Booking Form</a></li>
+          <li class="menu-item"><a href="#ch10">Ch 10: Lead: Quote System</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 3 -->
+      <div class="menu-module">
+        <div class="module-title">M3: Meta Suite Setup</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch11">Ch 11: Setup Account</a></li>
+          <li class="menu-item"><a href="#ch12">Ch 12: Create Pixel</a></li>
+          <li class="menu-item"><a href="#ch13">Ch 13: Events Manager</a></li>
+          <li class="menu-item"><a href="#ch14">Ch 14: Integrating Code</a></li>
+          <li class="menu-item"><a href="#ch15">Ch 15: Setup Webhooks</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 4 -->
+      <div class="menu-module">
+        <div class="module-title">M4: Dindigul Profiling</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch16">Ch 16: Targeting Students</a></li>
+          <li class="menu-item"><a href="#ch17">Ch 17: Targeting Businesses</a></li>
+          <li class="menu-item"><a href="#ch18">Ch 18: Targeting WFH</a></li>
+          <li class="menu-item"><a href="#ch19">Ch 19: Geo Targeting</a></li>
+          <li class="menu-item"><a href="#ch20">Ch 20: Excluding Buyers</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 5 -->
+      <div class="menu-module">
+        <div class="module-title">M5: Campaign Control</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch21">Ch 21: Objective Choice</a></li>
+          <li class="menu-item"><a href="#ch22">Ch 22: CBO Budgeting</a></li>
+          <li class="menu-item"><a href="#ch23">Ch 23: Placements Setup</a></li>
+          <li class="menu-item"><a href="#ch24">Ch 24: Bidding Strategy</a></li>
+          <li class="menu-item"><a href="#ch25">Ch 25: Delivery Speed</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 6 -->
+      <div class="menu-module">
+        <div class="module-title">M6: Creative Blueprints</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch26">Ch 26: Offers Design</a></li>
+          <li class="menu-item"><a href="#ch27">Ch 27: Photos Guidelines</a></li>
+          <li class="menu-item"><a href="#ch28">Ch 28: Copywriting Hooks</a></li>
+          <li class="menu-item"><a href="#ch29">Ch 29: Video Ad Scripts</a></li>
+          <li class="menu-item"><a href="#ch30">Ch 30: Carousels setups</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 7 -->
+      <div class="menu-module">
+        <div class="module-title">M7: Conversions API</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch31">Ch 31: Data Loss facts</a></li>
+          <li class="menu-item"><a href="#ch32">Ch 32: CAPI Mechanics</a></li>
+          <li class="menu-item"><a href="#ch33">Ch 33: Deduplication</a></li>
+          <li class="menu-item"><a href="#ch34">Ch 34: EMQ Scoring</a></li>
+          <li class="menu-item"><a href="#ch35">Ch 35: Supabase API Link</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 8 -->
+      <div class="menu-module">
+        <div class="module-title">M8: Audience Funnels</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch36">Ch 36: Site Visitors list</a></li>
+          <li class="menu-item"><a href="#ch37">Ch 37: WhatsApp click list</a></li>
+          <li class="menu-item"><a href="#ch38">Ch 38: Lookalikes scale</a></li>
+          <li class="menu-item"><a href="#ch39">Ch 39: Funnel Planning</a></li>
+          <li class="menu-item"><a href="#ch40">Ch 40: Creative Fatigue</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 9 -->
+      <div class="menu-module">
+        <div class="module-title">M9: Policy &amp; Safety</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch41">Ch 41: Banned Keywords</a></li>
+          <li class="menu-item"><a href="#ch42">Ch 42: Page Quality</a></li>
+          <li class="menu-item"><a href="#ch43">Ch 43: Disputed Ads</a></li>
+          <li class="menu-item"><a href="#ch44">Ch 44: Enable 2FA</a></li>
+          <li class="menu-item"><a href="#ch45">Ch 45: Restrictions fix</a></li>
+        </ul>
+      </div>
+
+      <!-- MODULE 10 -->
+      <div class="menu-module">
+        <div class="module-title">M10: Troubleshooting</div>
+        <ul class="menu-list">
+          <li class="menu-item"><a href="#ch46">Ch 46: Pixel Helper Extension</a></li>
+          <li class="menu-item"><a href="#ch47">Ch 47: Payload Check</a></li>
+          <li class="menu-item"><a href="#ch48">Ch 48: Diagnostic Logs</a></li>
+          <li class="menu-item"><a href="#ch49">Ch 49: 20% Budget Rule</a></li>
+          <li class="menu-item"><a href="#ch50">Ch 50: ROAS Analysis</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+      <p>© 2026 Sai Systems Dindigul</p>
+    </div>
+  </aside>
+
+  <!-- CONTENT MAIN AREA -->
+  <main class="content-wrapper">
+    
+    <div class="hero-header">
+      <div class="meta-status">● Complete 50-Chapter Playbook</div>
+      <h1>Sai Systems Meta Ads Manual</h1>
+      <p>An exhaustive, step-by-step master handbook written specifically for your showroom operations. Use this navigation sidebar to browse all modules in deep detail.</p>
+    </div>
+
+    <!-- MODULE 1 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 1: Foundational Core Concepts</div>
+
+      <div id="ch1" class="chapter-card">
+        <div class="chapter-meta">Chapter 1</div>
+        <div class="chapter-title">What is a Meta Pixel? (Detailed Showroom Metaphor)</div>
+        <div class="chapter-body">
+          <p>
+            The Meta Pixel is a tiny snippet of JavaScript code placed on your website. Think of it as a virtual showroom assistant. If a customer visits your physical store in Dindigul, a human assistant watches what they look at, notes down their interests, and guides them. The Meta Pixel does exactly this digitally: it logs what laptop models visitors browse and notes if they click WhatsApp to buy, passing this data back to Meta to make your ads smarter.
+          </p>
+          <div class="highlight-tip">
+            <strong>Key Benefit:</strong>
+            Instead of displaying ads blindly, the Pixel tells Facebook exactly which people clicked WhatsApp, letting Facebook's AI search Dindigul for identical profiles.
+          </div>
+        </div>
+      </div>
+
+      <div id="ch2" class="chapter-card">
+        <div class="chapter-meta">Chapter 2</div>
+        <div class="chapter-title">How Cookies, Browsers, and Web Trackers Work</div>
+        <div class="chapter-body">
+          <p>
+            Browsers use cookies (small text files) to remember visitor details. When a user lands on your site, the Meta Pixel assigns them a unique ID. If they visit the site again tomorrow, the browser recognizes their cookie ID, maintaining their session profile so they don't count as a completely new visitor.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch3" class="chapter-card">
+        <div class="chapter-meta">Chapter 3</div>
+        <div class="chapter-title">The Lifecycle of a Meta Ad Click</div>
+        <div class="chapter-body">
+          <p>Here is exactly how a customer click turns into data:</p>
+          <div class="flow-line">
+            <div class="flow-step">
+              <span class="flow-circle">1</span>
+              <span class="flow-text">User sees your laptop ad on Instagram Stories and clicks "Learn More".</span>
+            </div>
+            <div class="flow-step">
+              <span class="flow-circle">2</span>
+              <span class="flow-text">They land on your site carrying a Facebook Click ID (fbclid).</span>
+            </div>
+            <div class="flow-step">
+              <span class="flow-circle">3</span>
+              <span class="flow-text">The Pixel maps this fbclid to their personal Facebook profile.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ch4" class="chapter-card">
+        <div class="chapter-meta">Chapter 4</div>
+        <div class="chapter-title">Browser Privacy Controls &amp; iOS 14.5+ Impact</div>
+        <div class="chapter-body">
+          <p>
+            With Apple's iOS 14.5 update, users must give explicit permission to be tracked. If they opt out, browsers block third-party cookies. This makes client-side (browser) tracking alone unreliable, which is why server-to-server systems are now the industry standard.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch5" class="chapter-card">
+        <div class="chapter-meta">Chapter 5</div>
+        <div class="chapter-title">Client-Side vs Server-Side Tracking (Conversions API)</div>
+        <div class="chapter-body">
+          <p>
+            Client-side tracking runs on the visitor's browser (Safari, Chrome). If they use an ad blocker, the pixel script is blocked. Server-side tracking (Conversions API) runs directly from your web server, bypassing browser ad-blockers entirely to ensure 100% of your customer conversions are reported.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 2 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 2: Website Tracking Architecture</div>
+
+      <div id="ch6" class="chapter-card">
+        <div class="chapter-meta">Chapter 6</div>
+        <div class="chapter-title">PageView Event Implementation Details</div>
+        <div class="chapter-body">
+          <p>
+            Every page on your website has standard tracking code. In Next.js, this is placed in `app/layout.tsx`. It triggers automatically on route changes, telling Meta that a user has opened your home page, about page, or catalog list.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch7" class="chapter-card">
+        <div class="chapter-meta">Chapter 7</div>
+        <div class="chapter-title">Custom Event: WhatsAppClick (Product-specific tracking)</div>
+        <div class="chapter-body">
+          <p>
+            We track exactly which laptop or accessory a user is viewing when they click the WhatsApp button. This is done by passing the product title (e.g., `HP Probook 430 G6`) as a custom property.
+          </p>
+          <div class="codebox">
+            <div class="codebox-header">Meta Tracking Payload</div>
+            window.fbq('trackCustom', 'WhatsAppClick', { message: productTitle });
+          </div>
+        </div>
+      </div>
+
+      <div id="ch8" class="chapter-card">
+        <div class="chapter-meta">Chapter 8</div>
+        <div class="chapter-title">Custom Event: CallClick (Call button analytics)</div>
+        <div class="chapter-body">
+          <p>
+            For users who prefer speaking directly, clicking the showroom phone number triggers the `CallClick` event. It logs the action to help you determine if phone calls or WhatsApp messages are generating more sales.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch9" class="chapter-card">
+        <div class="chapter-meta">Chapter 9</div>
+        <div class="chapter-title">Standard Event: Lead (Service Booking form submission)</div>
+        <div class="chapter-body">
+          <p>
+            When a user fills out the doorstep laptop service form, they submit their name, phone number, and issue. Upon successful submission, the site triggers `window.fbq('track', 'Lead', { category: 'service' })`.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch10" class="chapter-card">
+        <div class="chapter-meta">Chapter 10</div>
+        <div class="chapter-title">Standard Event: Lead (Free Quote request system)</div>
+        <div class="chapter-body">
+          <p>
+            For larger installations (like corporate setups or CCTV networks), users submit a Quote Request. This fires a separate standard `Lead` event to help track premium business leads.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 3 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 3: Meta Business Suite Setup</div>
+
+      <div id="ch11" class="chapter-card">
+        <div class="chapter-meta">Chapter 11</div>
+        <div class="chapter-title">Setting up your Meta Business Account</div>
+        <div class="chapter-body">
+          <p>
+            Go to `business.facebook.com` and create a Business Manager account. Link your Facebook Page and Instagram Professional Account to this business dashboard.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch12" class="chapter-card">
+        <div class="chapter-meta">Chapter 12</div>
+        <div class="chapter-title">Creating and Naming a New Pixel (Data Source)</div>
+        <div class="chapter-body">
+          <p>
+            In Business settings, navigate to **Data Sources → Data Sets** (formerly Pixels). Click **Add**, name it "Sai Systems Website Pixel", and copy your unique 15-digit ID.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch13" class="chapter-card">
+        <div class="chapter-meta">Chapter 13</div>
+        <div class="chapter-title">Navigating Events Manager: Overview &amp; Diagnostics</div>
+        <div class="chapter-body">
+          <p>
+            Inside Events Manager, look at the **Overview** page. It displays a real-time event counter. Under the **Diagnostics** tab, Meta will alert you if any events are missing parameters or failing.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch14" class="chapter-card">
+        <div class="chapter-meta">Chapter 14</div>
+        <div class="chapter-title">Integrating Pixel Code to Next.js Headers</div>
+        <div class="chapter-body">
+          <p>
+            In your Next.js application, the Meta Pixel base script is injected dynamically into the document <code>&lt;head&gt;</code> using Next.js's native <code>Script</code> component inside the root layout file (<code>app/layout.tsx</code>).
+          </p>
+          <p>
+            Here is the exact code implementation. We wrap the raw Meta Pixel script inside Next.js's native Script loader, running with the <code>afterInteractive</code> strategy so your page load speed is not affected:
+          </p>
+          
+          <div class="codebox">
+            <div class="codebox-header">app/layout.tsx — Script Injection</div>
+            <pre><code>{/* Meta Pixel */}
+{metaPixelId && (
+  &lt;Script id="meta-pixel" strategy="afterInteractive"&gt;
+    {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${metaPixelId}');fbq('track','PageView');`}
+  &lt;/Script&gt;
+)}</code></pre>
+          </div>
+
+          <!-- Flow Connectivity SVG Diagram -->
+          <div style="margin: 2rem 0; text-align: center;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--accent-orange); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.05em;">🔗 Pixel Header Integration Flow</div>
+            <svg width="100%" height="220" viewBox="0 0 760 220" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem;">
+              <!-- Environment Config Source -->
+              <rect x="20" y="70" width="160" height="70" rx="12" fill="#0f172a" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+              <text x="100" y="105" fill="#f8fafc" font-size="12" font-family="monospace" font-weight="bold" text-anchor="middle">.env.local</text>
+              <text x="100" y="125" fill="#f97316" font-size="10" font-family="sans-serif" font-weight="bold" text-anchor="middle">PIXEL_ID = 15-Digits</text>
+
+              <!-- Arrow 1 -->
+              <path d="M180 105 H230" stroke="#f97316" stroke-width="2" stroke-dasharray="4 4"/>
+              <polygon points="230,105 222,100 222,110" fill="#f97316"/>
+
+              <!-- Next.js Server Rendering -->
+              <rect x="240" y="70" width="180" height="70" rx="12" fill="#0f172a" stroke="rgba(56, 189, 248, 0.3)" stroke-width="2"/>
+              <text x="330" y="100" fill="#38bdf8" font-size="12" font-family="sans-serif" font-weight="bold" text-anchor="middle">Next.js Header</text>
+              <text x="330" y="118" fill="#94a3b8" font-size="10" font-family="monospace" text-anchor="middle">app/layout.tsx</text>
+              <text x="330" y="132" fill="#10b981" font-size="9" font-family="monospace" text-anchor="middle">&lt;Script&gt; component</text>
+
+              <!-- Arrow 2 -->
+              <path d="M420 105 H470" stroke="#38bdf8" stroke-width="2"/>
+              <polygon points="470,105 462,100 462,110" fill="#38bdf8"/>
+
+              <!-- User Browser Client -->
+              <rect x="480" y="70" width="110" height="70" rx="12" fill="#0f172a" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+              <text x="535" y="105" fill="#f8fafc" font-size="11" font-family="sans-serif" font-weight="bold" text-anchor="middle">User Browser</text>
+              <text x="535" y="125" fill="#94a3b8" font-size="9" font-family="sans-serif" text-anchor="middle">fbq('track', 'PageView')</text>
+
+              <!-- Arrow 3 -->
+              <path d="M590 105 Q620 105 640 105" stroke="#10b981" stroke-width="2"/>
+              <polygon points="640,105 632,100 632,110" fill="#10b981"/>
+
+              <!-- Meta Events Manager Cloud -->
+              <rect x="650" y="60" width="90" height="90" rx="16" fill="#090d16" stroke="#10b981" stroke-width="2"/>
+              <text x="695" y="100" fill="#fff" font-size="11" font-family="sans-serif" font-weight="bold" text-anchor="middle">Meta Cloud</text>
+              <text x="695" y="118" fill="#10b981" font-size="10" font-family="sans-serif" font-weight="bold" text-anchor="middle">Conversions</text>
+              <text x="695" y="132" fill="#94a3b8" font-size="9" font-family="sans-serif" text-anchor="middle">Active ✓</text>
+            </svg>
+          </div>
+
+          <p>
+            <strong>How this works:</strong>
+            When a user requests a page, Next.js reads the <code>metaPixelId</code> from server variables. If it exists, it outputs the custom script directly into the <code>&lt;head&gt;</code> element. The browser then executes the script asynchronously, initializing the Pixel tracking and immediately reporting a standard <code>PageView</code> event to Meta.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch15" class="chapter-card">
+        <div class="chapter-meta">Chapter 15</div>
+        <div class="chapter-title">Setting up Webhook Notifications</div>
+        <div class="chapter-body">
+          <p>
+            You can link Meta's Conversion Leads system to receive instant notifications via email or WhatsApp whenever a customer submits a booking form on your website.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 4 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 4: Dindigul Local Audience Profiling</div>
+
+      <div id="ch16" class="chapter-card">
+        <div class="chapter-meta">Chapter 16</div>
+        <div class="chapter-title">Targeting College Students for Refurbished Laptops</div>
+        <div class="chapter-body">
+          <p>
+            Target young adults aged 18-24 within Dindigul. Add interests like *Higher Education*, *Computer Engineering*, and *Gaming Laptops*. Highlight budget-friendly options (under ₹15,000) with easy EMI/installment terms.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch17" class="chapter-card">
+        <div class="chapter-meta">Chapter 17</div>
+        <div class="chapter-title">Targeting Business/Shop Owners for CCTV Systems</div>
+        <div class="chapter-body">
+          <p>
+            Target business owners aged 25-50. Select interests such as *Small Business*, *Retail*, *Security System*, and *Property Management*. Use Palani, Oddanchatram, and Natham targeting.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch18" class="chapter-card">
+        <div class="chapter-meta">Chapter 18</div>
+        <div class="chapter-title">Targeting Office Workers &amp; Freelancers for Desktops</div>
+        <div class="chapter-body">
+          <p>
+            Select remote-work interests like *Freelancer*, *Writers*, *Developers*, and *Accounting*. Promote powerful, custom-built CPUs with double storage drives.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch19" class="chapter-card">
+        <div class="chapter-meta">Chapter 19</div>
+        <div class="chapter-title">Geographic Targeting: Dindigul, Palani, Oddanchatram</div>
+        <div class="chapter-body">
+          <p>
+            Create a geo-pin drop on your showroom location, setting a radius of 30-40km to cover surrounding towns without wasting budget on far-off districts.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch20" class="chapter-card">
+        <div class="chapter-meta">Chapter 20</div>
+        <div class="chapter-title">Excluding Past Buyers and Existing Customers</div>
+        <div class="chapter-body">
+          <p>
+            Create a custom audience of users who visited the booking success page or clicked WhatsApp in the last 60 days, and exclude them from your cold acquisition ads to save budget.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 5 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 5: Campaign Settings &amp; Optimization</div>
+
+      <div id="ch21" class="chapter-card">
+        <div class="chapter-meta">Chapter 21</div>
+        <div class="chapter-title">Setting up Campaign Objectives (Engagement vs Leads)</div>
+        <div class="chapter-body">
+          <p>
+            Use **Engagement** (with WhatsApp destination) for selling refurbished laptops. Use **Leads** (Website Conversions) for service repair bookings.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch22" class="chapter-card">
+        <div class="chapter-meta">Chapter 22</div>
+        <div class="chapter-title">Budget Control: Advantage Campaign Budget (CBO)</div>
+        <div class="chapter-body">
+          <p>
+            CBO distributes your budget dynamically across all ad sets. If one ad set is getting cheaper leads in Dindigul, Meta shifts funds to it automatically.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch23" class="chapter-card">
+        <div class="chapter-meta">Chapter 23</div>
+        <div class="chapter-title">Ad Set Level Settings: Device, Placements &amp; Schedule</div>
+        <div class="chapter-body">
+          <p>
+            Set placements to **Advantage+ Placements** so Meta can display ads across Instagram Stories, Facebook Reels, Feed, and Messenger for the lowest cost.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch24" class="chapter-card">
+        <div class="chapter-meta">Chapter 24</div>
+        <div class="chapter-title">Bidding Strategies: Lowest Cost vs Cost Cap</div>
+        <div class="chapter-body">
+          <p>
+            For beginners, use the **Highest Volume / Lowest Cost** bidding strategy. Only use Cost Cap if you have strict maximum cost rules per lead.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch25" class="chapter-card">
+        <div class="chapter-meta">Chapter 25</div>
+        <div class="chapter-title">Delivery Optimization: Click vs Impression vs Conversions</div>
+        <div class="chapter-body">
+          <p>
+            For WhatsApp campaigns, optimize for **Link Clicks** or **Conversions** to ensure Facebook targets active shoppers rather than passive scrollviewers.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 6 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 6: High-Converting Creative Blueprints</div>
+
+      <div id="ch26" class="chapter-card">
+        <div class="chapter-meta">Chapter 26</div>
+        <div class="chapter-title">Crafting the Perfect Offer</div>
+        <div class="chapter-body">
+          <p>
+            Always bundle your laptops with high-value freebies. Use the dynamic "Free Laptop Bag &amp; Charger" configuration built into your admin panel to show immediate value.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch27" class="chapter-card">
+        <div class="chapter-meta">Chapter 27</div>
+        <div class="chapter-title">Showroom Photography Guidelines</div>
+        <div class="chapter-body">
+          <p>
+            Never use stock photos. Clean your laptops, place them on a tidy counter in your showroom under bright lights, and shoot high-res close-ups of the keyboard, ports, and screen.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch28" class="chapter-card">
+        <div class="chapter-meta">Chapter 28</div>
+        <div class="chapter-title">Copywriting Blueprint: Emojis, Hook, and Call to Action</div>
+        <div class="chapter-body">
+          <p>
+            Start with a strong hook: *"💻 Premium Laptop Deals in Dindigul!"*, list hardware specs clearly with emojis, offer the price, and end with a clear instruction: *"Click Send Message to chat on WhatsApp!"*
+          </p>
+        </div>
+      </div>
+
+      <div id="ch29" class="chapter-card">
+        <div class="chapter-meta">Chapter 29</div>
+        <div class="chapter-title">Video Ad Script for Doorstep Repair Services</div>
+        <div class="chapter-body">
+          <p>
+            A 15-second local video triggers huge clicks. Show a technician fixing a laptop on-site in Dindigul with pricing clearly printed on screen.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch30" class="chapter-card">
+        <div class="chapter-meta">Chapter 30</div>
+        <div class="chapter-title">Carousel Ads Design for Desktop Custom Builds</div>
+        <div class="chapter-body">
+          <p>
+            Show a different desktop build (Office CPU vs Gaming Rig vs Editing Station) on each slide to attract different budget tiers.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 7 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 7: Conversions API &amp; Advanced Tracking</div>
+
+      <div id="ch31" class="chapter-card">
+        <div class="chapter-meta">Chapter 31</div>
+        <div class="chapter-title">Why Browser Tracking Alone Can Lose 30% of Data</div>
+        <div class="chapter-body">
+          <p>
+            Ad blockers, Safari tracking prevention, and network disconnects block standard pixel scripts from communicating, leading to missed conversion reports.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch32" class="chapter-card">
+        <div class="chapter-meta">Chapter 32</div>
+        <div class="chapter-title">Introduction to Meta Conversions API (CAPI)</div>
+        <div class="chapter-body">
+          <p>
+            CAPI links your database server (Supabase) directly to Meta. When a lead is saved in Supabase, the server sends a secure packet directly to Meta, bypass-testing all browser blockers.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch33" class="chapter-card">
+        <div class="chapter-meta">Chapter 33</div>
+        <div class="chapter-title">Deduplication of Events</div>
+        <div class="chapter-body">
+          <p>
+            To prevent double-counting (where both browser and server report the same WhatsApp click), you must send a unique `event_id` with both triggers. Meta matches these and discards the duplicate.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch34" class="chapter-card">
+        <div class="chapter-meta">Chapter 34</div>
+        <div class="chapter-title">Event Match Quality (EMQ) Score Optimization</div>
+        <div class="chapter-body">
+          <p>
+            To match web users to Facebook profiles accurately, pass hashed parameter values (first name, phone, email, city) when reporting events via server.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch35" class="chapter-card">
+        <div class="chapter-meta">Chapter 35</div>
+        <div class="chapter-title">Connecting Supabase directly to Meta CAPI</div>
+        <div class="chapter-body">
+          <p>
+            Configure Supabase Database Webhooks to trigger an edge function POST request to Meta's CAPI endpoint (`graph.facebook.com/v20.0/PIXEL_ID/events`) whenever a lead insert occurs.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 8 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 8: Audiences &amp; Retargeting Mastery</div>
+
+      <div id="ch36" class="chapter-card">
+        <div class="chapter-meta">Chapter 36</div>
+        <div class="chapter-title">Creating Custom Audiences from Website Visitors</div>
+        <div class="chapter-body">
+          <p>
+            In Audiences dashboard, click **Create Audience → Custom Audience → Website**. Set duration to 30 days. Name it "All Website Visitors (30d)".
+          </p>
+        </div>
+      </div>
+
+      <div id="ch37" class="chapter-card">
+        <div class="chapter-meta">Chapter 37</div>
+        <div class="chapter-title">Creating Custom Audiences from WhatsApp Clickers</div>
+        <div class="chapter-body">
+          <p>
+            Create a custom audience mapping users who triggered the `WhatsAppClick` event. This builds a warm customer database for special holiday offers.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch38" class="chapter-card">
+        <div class="chapter-meta">Chapter 38</div>
+        <div class="chapter-title">Creating Lookalike Audiences (1% vs 2% vs 5%)</div>
+        <div class="chapter-body">
+          <p>
+            Create a 1% Lookalike from your leads. Meta will analyze the common traits of your buyers and search Dindigul/Tamil Nadu for the top 1% match.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch39" class="chapter-card">
+        <div class="chapter-meta">Chapter 39</div>
+        <div class="chapter-title">Retargeting Funnels: Cold traffic vs Warm traffic</div>
+        <div class="chapter-body">
+          <p>
+            Target cold traffic (people who don't know you) with general deals. Target warm traffic (website visitors) with reviews and trust banners.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch40" class="chapter-card">
+        <div class="chapter-meta">Chapter 40</div>
+        <div class="chapter-title">Ad Fatigue and Changing Creatives Every 14 Days</div>
+        <div class="chapter-body">
+          <p>
+            Since Dindigul is a local market, targeting lists saturate quickly. Change your ad photos and copywriting styles every 14 days to prevent performance drops.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 9 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 9: Meta Ads Policies &amp; Safety</div>
+
+      <div id="ch41" class="chapter-card">
+        <div class="chapter-meta">Chapter 41</div>
+        <div class="chapter-title">Avoiding Banned Keywords</div>
+        <div class="chapter-body">
+          <p>
+            Avoid words like "100% guarantee", "income profit", or "cures slowness". Keep copies factual: *"Certified Refurbished Grade A++ with 365-day service warranty."*
+          </p>
+        </div>
+      </div>
+
+      <div id="ch42" class="chapter-card">
+        <div class="chapter-meta">Chapter 42</div>
+        <div class="chapter-title">Best Practices for Landing Page Quality</div>
+        <div class="chapter-body">
+          <p>
+            Ensure your website loads fast, has no broken links, and includes links to your Privacy Policy and Terms &amp; Conditions in the footer.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch43" class="chapter-card">
+        <div class="chapter-meta">Chapter 43</div>
+        <div class="chapter-title">Resolving Disputed / Rejected Ads</div>
+        <div class="chapter-body">
+          <p>
+            If an ad is rejected, click **Request Review** in Account Quality. State clearly: *"This ad promotes refurbished showroom computers in Dindigul and complies with all commerce guidelines."*
+          </p>
+        </div>
+      </div>
+
+      <div id="ch44" class="chapter-card">
+        <div class="chapter-meta">Chapter 44</div>
+        <div class="chapter-title">Two-Factor Authentication for Ad Account Safety</div>
+        <div class="chapter-body">
+          <p>
+            Ensure all admins on your Business Manager have Two-Factor Authentication (2FA) enabled on their personal Facebook profiles to prevent hacking.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch45" class="chapter-card">
+        <div class="chapter-meta">Chapter 45</div>
+        <div class="chapter-title">What to do if your Personal Ad Profile is Restricted</div>
+        <div class="chapter-body">
+          <p>
+            Do not panic. Upload a clear photo of your government ID (Aadhaar or Driving License) in the Account Quality tab to verify your identity.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE 10 -->
+    <div class="module-section">
+      <div class="module-header-title">Module 10: Troubleshooting &amp; Verification</div>
+
+      <div id="ch46" class="chapter-card">
+        <div class="chapter-meta">Chapter 46</div>
+        <div class="chapter-title">Installing and Using the Meta Pixel Helper</div>
+        <div class="chapter-body">
+          <p>
+            Download the Chrome Extension. Open your website and click it. It must list a green checkmark next to your Pixel ID and active events.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch47" class="chapter-card">
+        <div class="chapter-meta">Chapter 47</div>
+        <div class="chapter-title">Checking Real-time Event Payload Parameters</div>
+        <div class="chapter-body">
+          <p>
+            Inside Events Manager, use the **Test Events** tab. Keep the tab open while clicking buttons on your website. Clicks should appear in the feed instantly.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch48" class="chapter-card">
+        <div class="chapter-meta">Chapter 48</div>
+        <div class="chapter-title">Diagnostic Logs: Active vs Inactive state</div>
+        <div class="chapter-body">
+          <p>
+            If an event status says "Inactive", trigger it manually on your website. Once logged, the status will shift to "Active".
+          </p>
+        </div>
+      </div>
+
+      <div id="ch49" class="chapter-card">
+        <div class="chapter-meta">Chapter 49</div>
+        <div class="chapter-title">Scaling Budgets (The 20% Rule)</div>
+        <div class="chapter-body">
+          <p>
+            When increasing budgets, increase it by **20% every 72 hours**. Sudden jumps throw the campaign back into the learning phase, causing cost increases.
+          </p>
+        </div>
+      </div>
+
+      <div id="ch50" class="chapter-card">
+        <div class="chapter-meta">Chapter 50</div>
+        <div class="chapter-title">Reading Analytics: ROAS, CPA, CTR</div>
+        <div class="chapter-body">
+          <p>
+            Keep track of your Return on Ad Spend (ROAS). If your total sales revenue divided by ad cost is over 4x, your campaigns are highly profitable!
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</body>
+</html>
