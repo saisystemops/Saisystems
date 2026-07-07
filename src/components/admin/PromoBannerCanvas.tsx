@@ -222,6 +222,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.showEmi,
       logoLoaded,
       productImg,
+      processedImg,
+      props.removeBg,
       qrImg
     ]);
 
@@ -803,9 +805,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges (Shifted Up)
-        const badgeX = W / 2 - 180;
-        const badgeY = 370;
+        // Floating Badges (Shifted Up, dynamic tracking)
+        const zoomOffset = (props.zoom - 1) * 120;
+        const badgeX = W / 2 - 180 + props.offsetX;
+        const badgeY = 370 + props.offsetY - zoomOffset;
         if (dealTag) {
           ctx.save();
           ctx.fillStyle = "#dc2626";
@@ -1281,9 +1284,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges
-        const badgeX = showX - 120;
-        const badgeY = showY - 120;
+        // Floating Badges (Dynamic tracking)
+        const zoomOffset = (props.zoom - 1) * 80;
+        const badgeX = showX - 120 + props.offsetX;
+        const badgeY = showY - 120 + props.offsetY - zoomOffset;
         if (dealTag) {
           ctx.save();
           ctx.fillStyle = "#dc2626";
@@ -1675,9 +1679,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges
-        const badgeX = showX - 150;
-        const badgeY = showY - 160;
+        // Floating Badges (Dynamic tracking)
+        const zoomOffset = (props.zoom - 1) * 120;
+        const badgeX = showX - 150 + props.offsetX;
+        const badgeY = showY - 160 + props.offsetY - zoomOffset;
         if (dealTag) {
           ctx.save();
           ctx.fillStyle = "#dc2626";
