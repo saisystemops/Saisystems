@@ -603,32 +603,32 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         ctx.fillStyle = "#ea580c";
         ctx.font = "black 28px Arial, sans-serif";
-        ctx.fillText("SAI", headerX + 105, headerY + 50);
+        ctx.fillText(brandName, headerX + 105, headerY + 50);
 
         ctx.fillStyle = cardTextSub;
         ctx.font = "black 11px Arial, sans-serif";
-        const subText = "SYSTEMS";
+        const subText = brandSubtext;
         let textX = headerX + 105;
         for (let i = 0; i < subText.length; i++) {
           ctx.fillText(subText[i], textX, headerY + 76);
           textX += 13;
         }
 
-        // Category Tag
+        // Category Tag (Top Right)
         ctx.font = "bold 11px Arial, sans-serif";
         const catWidth = ctx.measureText(pCategory).width + 30;
         ctx.fillStyle = "rgba(254, 215, 170, 0.7)";
         ctx.strokeStyle = "rgba(251, 146, 60, 0.4)";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, W / 2 - catWidth / 2, 220, catWidth, 32, 6);
+        drawRoundedRect(ctx, W - 40 - catWidth, 114, catWidth, 32, 6);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = "#c2410c";
         ctx.textAlign = "center";
-        ctx.fillText(pCategory, W / 2, 240);
+        ctx.fillText(pCategory, W - 40 - catWidth / 2, 134);
         ctx.textAlign = "left";
 
-        // Title and Subtitle (Centered)
+        // Title and Subtitle (Centered - Shifted Up)
         ctx.textAlign = "center";
         ctx.fillStyle = "#0f172a";
         let titleFontSize = 46;
@@ -637,16 +637,16 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           titleFontSize -= 2;
           ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
         }
-        ctx.fillText(pTitle, W / 2, 310);
+        ctx.fillText(pTitle, W / 2, 230);
 
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 16px Arial, sans-serif";
-        ctx.fillText("— Professional Performance. Business Ready. —", W / 2, 355);
+        ctx.fillText(tagline, W / 2, 275);
         ctx.textAlign = "left";
 
-        // Pedestal & Showcase
+        // Pedestal & Showcase (Shifted Up)
         const showX = W / 2;
-        const showY = 560;
+        const showY = 490;
         const pedestalW = 600;
         const pedestalH = 100;
 
@@ -720,15 +720,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.fillRect(showX - 148, showY - 128, 296, 174);
           ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
           ctx.font = "bold 20px Arial";
-          ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
+          ctx.fillText(`${brandName} ${brandSubtext}`, showX - 70, showY - 30);
           ctx.fillStyle = "#1e293b";
           ctx.fillRect(showX - 200, showY + 70, 400, 15);
           ctx.restore();
         }
 
-        // Floating Badges
+        // Floating Badges (Shifted Up)
         const badgeX = W / 2 - 180;
-        const badgeY = 440;
+        const badgeY = 370;
         if (dealTag) {
           ctx.save();
           ctx.fillStyle = "#dc2626";
@@ -754,11 +754,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Specs List (Wide cards centered, lower Y starts at 800)
-        const specStartY = 800;
+        // Specs List (Wide cards centered, Y starts at 750)
+        const specStartY = 750;
         const specCardW = 980;
-        const specCardH = 70;
-        const specSpaceY = 82;
+        const specCardH = 76;
+        const specSpaceY = 88;
         specsList.forEach((specText, idx) => {
           const currentY = specStartY + idx * specSpaceY;
           ctx.save();
@@ -846,7 +846,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         });
 
         // Horizontal Policies Bar
-        const trustY = 1250;
+        const trustY = 1230;
         ctx.save();
         ctx.fillStyle = cardFill;
         ctx.strokeStyle = cardOutline;
@@ -866,7 +866,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         // Bottom Pricing
         const { priceVal, originalVal, savingsLabel, emiLabel } = getPricingInfo(props.product.price, props.product.originalPrice);
-        const priceY = 1480;
+        const priceY = 1560;
         const priceX = 80;
         ctx.fillStyle = activeAccent;
         ctx.font = "black 12px Arial, sans-serif";
@@ -908,7 +908,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         // Contact Box
         const contactX = W - 510;
-        const contactY = 1450;
+        const contactY = 1530;
         ctx.save();
         ctx.fillStyle = "white";
         drawRoundedRect(ctx, contactX, contactY, 470, 185, 24);
