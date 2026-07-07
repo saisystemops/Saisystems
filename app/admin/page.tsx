@@ -2708,10 +2708,9 @@ export default function AdminPage() {
                                   />
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Branding settings and Trust badges settings */}
-                            <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
+                              {/* Branding settings and Trust badges settings */}
+                              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
                               {/* Branding drawer */}
                               <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
                                 <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
@@ -2894,6 +2893,7 @@ export default function AdminPage() {
                                   </div>
                                 </div>
                               </details>
+                            </div>
                             </div>
 
                             {/* RIGHT COLUMN: Edit Banner Canvas Preview (5 cols) */}
