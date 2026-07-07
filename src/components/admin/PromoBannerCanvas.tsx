@@ -91,8 +91,6 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         return;
       }
 
-      if (srcUrl === productImgSrc) return;
-
       setImageLoading(true);
       setImageLoadError(false);
       const img = new Image();
@@ -113,11 +111,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       };
 
       return () => {
-        if (props.localImageFile && srcUrl) {
+        if (srcUrl && srcUrl.startsWith("blob:")) {
           URL.revokeObjectURL(srcUrl);
         }
       };
-    }, [props.product.imageUrl, props.localImageFile, productImgSrc]);
+    }, [props.product.imageUrl, props.localImageFile]);
 
     // Pre-load QR Code for WhatsApp direct link
     useEffect(() => {
