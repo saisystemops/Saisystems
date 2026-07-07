@@ -26,6 +26,15 @@ export interface PromoBannerCanvasProps {
   offsetY: number;
   rotation: number;
   localImageFile: File | null;
+  brandName?: string;
+  brandSubtext?: string;
+  tagline?: string;
+  phoneSupport?: string;
+  whatsappChat?: string;
+  showroomAddress?: string;
+  trustPolicies?: string[];
+  isTamil?: boolean;
+  showEmi?: boolean;
 }
 
 export interface PromoBannerCanvasHandle {
@@ -44,6 +53,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     // Track loaded state of product image
     const [productImg, setProductImg] = useState<HTMLImageElement | null>(null);
     const [productImgSrc, setProductImgSrc] = useState<string | null>(null);
+    const [imageLoading, setImageLoading] = useState(false);
+    const [imageLoadError, setImageLoadError] = useState(false);
+    const [isTainted, setIsTainted] = useState(false);
+    const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
 
     // Pre-load official logo-feather.png on mount
     useEffect(() => {
@@ -63,24 +76,24 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       let srcUrl = "";
       
       if (props.localImageFile) {
-        // Local file upload
         srcUrl = URL.createObjectURL(props.localImageFile);
       } else if (props.product.imageUrl) {
-        // Database URL
         srcUrl = props.product.imageUrl;
       }
 
       if (!srcUrl) {
         setProductImg(null);
         setProductImgSrc(null);
+        setImageLoading(false);
+        setImageLoadError(false);
         return;
       }
 
-      // Check if source changed to prevent infinite reloads
       if (srcUrl === productImgSrc) return;
 
+      setImageLoading(true);
+      setImageLoadError(false);
       const img = new Image();
-      // Allow cross-origin requests for safety if loading external URLs
       if (srcUrl.startsWith("http")) {
         img.crossOrigin = "anonymous";
       }
@@ -88,19 +101,40 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       img.onload = () => {
         setProductImg(img);
         setProductImgSrc(srcUrl);
+        setImageLoading(false);
       };
       img.onerror = () => {
         console.error("Failed to load product image:", srcUrl);
         setProductImg(null);
+        setImageLoading(false);
+        setImageLoadError(true);
       };
 
-      // Cleanup object URL if created
       return () => {
         if (props.localImageFile && srcUrl) {
           URL.revokeObjectURL(srcUrl);
         }
       };
     }, [props.product.imageUrl, props.localImageFile, productImgSrc]);
+
+    // Pre-load QR Code for WhatsApp direct link
+    useEffect(() => {
+      const waNumber = "917904108020";
+      const cleanTitle = props.product.title || "";
+      const text = `Hi Sai Systems! I am interested in your deal: ${cleanTitle}.`;
+      const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`)}`;
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = qrDataUrl;
+      img.onload = () => {
+        setQrImg(img);
+      };
+      img.onerror = () => {
+        console.error("Failed to load QR code image");
+        setQrImg(null);
+      };
+    }, [props.product.title]);
 
     // Triggers redraw whenever any property changes
     useEffect(() => {
@@ -117,8 +151,59 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.offsetX,
       props.offsetY,
       props.rotation,
+      props.brandName,
+      props.brandSubtext,
+      props.tagline,
+      props.phoneSupport,
+      props.whatsappChat,
+      props.showroomAddress,
+      props.trustPolicies,
+      props.isTamil,
+      props.showEmi,
       logoLoaded,
-      productImg
+      productImg,
+      qrImg
+    ]);
+
+    // Debounce toDataURL to prevent lagging during active drag interactions
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          try {
+            setImgSrc(canvas.toDataURL("image/png"));
+            setIsTainted(false);
+          } catch (e) {
+            console.error("Tainted canvas during base64 export:", e);
+            setIsTainted(true);
+          }
+        }
+      }, 250); // 250ms debounce
+      return () => clearTimeout(timer);
+    }, [
+      props.product,
+      props.ratio,
+      props.themeColor,
+      props.bgPattern,
+      props.platformStyle,
+      props.cardStyle,
+      props.accentColor,
+      props.zoom,
+      props.offsetX,
+      props.offsetY,
+      props.rotation,
+      props.brandName,
+      props.brandSubtext,
+      props.tagline,
+      props.phoneSupport,
+      props.whatsappChat,
+      props.showroomAddress,
+      props.trustPolicies,
+      props.isTamil,
+      props.showEmi,
+      logoLoaded,
+      productImg,
+      qrImg
     ]);
 
     const drawCanvas = () => {
@@ -127,9 +212,26 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // ----------------------------------------------------
-      // 1. DIMENSIONS SETTING BY ASPECT RATIO
-      // ----------------------------------------------------
+      // ── DESTRUCTURING PROPS WITH DEFAULTS ──────────────────────────────
+      const brandName = props.brandName || "SAI";
+      const brandSubtext = props.brandSubtext || "SYSTEMS";
+      const tagline = props.tagline || (props.isTamil 
+        ? "— சிறந்த தரம். மலிவு விலை. உன்னத சேவை. —"
+        : "— Professional Performance. Business Ready. —"
+      );
+      const phoneSupport = props.phoneSupport || "+91 87780 03397";
+      const whatsappChat = props.whatsappChat || "+91 79041 08020";
+      const showroomAddress = props.showroomAddress || (props.isTamil 
+        ? "ஷோரூம் முகவரி: பிஏஏ கட்டிடம், 8/25 பி, கடை எண்-ஏ3, ஒய்.எம்.ஆர் பட்டி (அடையாளம்: தலைமை தபால் நிலையம் அருகில்), திண்டுக்கல் - 624001"
+        : "showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001"
+      );
+      
+      const defaultPolicies = props.isTamil
+        ? ["🛡️ 365 நாட்கள் உத்தரவாதம்", "⚙️ 100% அசல் உதிரிபாகங்கள்", "🔌 சார்ஜர் இலவசம்"]
+        : ["🛡️ 365-Day Warranty", "⚙️ 100% Genuine Parts", "🔌 Charger Included"];
+      const trustPolicies = props.trustPolicies || defaultPolicies;
+
+      // ── DIMENSIONS SETTING BY ASPECT RATIO ──────────────────────────────
       let W = 1080;
       let H = 1080;
       if (props.ratio === "9:16") {
@@ -144,7 +246,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       canvas.height = H;
       ctx.clearRect(0, 0, W, H);
 
-      // Color Palette Configurations
+      // ── COLOR CONFIGURATIONS & HELPERS ─────────────────────────────────
       const accents: Record<string, string> = {
         orange: "#f97316",
         cyan: "#06b6d4",
@@ -153,6 +255,45 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         purple: "#a855f7"
       };
       const activeAccent = accents[props.accentColor] || props.accentColor || accents.orange;
+
+      const getRgbaColor = (color: string, alpha: number): string => {
+        const defaultColor = `rgba(249, 115, 22, ${alpha})`;
+        if (!color) return defaultColor;
+        if (color.startsWith("rgba")) return color;
+        if (color.startsWith("rgb")) {
+          return color.replace("rgb", "rgba").replace(")", `, ${alpha})`);
+        }
+        if (color.startsWith("#")) {
+          let hex = color.slice(1);
+          if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+          }
+          if (hex.length === 6) {
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+          }
+          if (hex.length === 8) {
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+          }
+        }
+        const standardAccents: Record<string, string> = {
+          orange: "249, 115, 22",
+          cyan: "6, 182, 212",
+          gold: "251, 191, 36",
+          green: "16, 185, 129",
+          purple: "168, 85, 247"
+        };
+        const normalized = color.toLowerCase();
+        if (standardAccents[normalized]) {
+          return `rgba(${standardAccents[normalized]}, ${alpha})`;
+        }
+        return defaultColor;
+      };
 
       const bgGradients: Record<string, string[]> = {
         orange: ["#fef8f6", "#fff1eb", "#f97316", "#2c1203", "#111827"],
@@ -177,6 +318,151 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         teal: ["#ecfeff", "#cffafe", "#06b6d4", "#164e63", "#082f49"]
       };
       const activeBgGrad = bgGradients[props.themeColor] || bgGradients.orange;
+
+      // ── VECTOR ICON DRAWING HELPERS ────────────────────────────────────
+      const drawCheckmarkBullet = (ctx: CanvasRenderingContext2D, x: number, y: number, text: string, fontSize = 12) => {
+        ctx.save();
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.arc(x, y - 4, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x - 3, y - 4);
+        ctx.lineTo(x - 1, y - 2);
+        ctx.lineTo(x + 3, y - 6);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = props.cardStyle === "dark" ? "#f8fafc" : "#1e293b";
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+        ctx.fillText(text, x + 12, y);
+      };
+
+      const drawLocationPin = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+        ctx.save();
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(x, y - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y - 5);
+        ctx.lineTo(x, y + 2);
+        ctx.lineTo(x + 4, y - 5);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(x, y - 5, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      };
+
+      const drawPhoneIcon = (ctx: CanvasRenderingContext2D, x: number, y: number, color = "#f97316") => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x + 16, y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("PH", x + 9, y + 3);
+        ctx.restore();
+      };
+
+      const drawWhatsAppIcon = (ctx: CanvasRenderingContext2D, x: number, y: number, color = "#22c55e") => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x + 16, y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("WA", x + 8, y + 3);
+        ctx.restore();
+      };
+
+      const drawShieldIcon = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+        ctx.save();
+        ctx.strokeStyle = activeAccent;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 8);
+        ctx.lineTo(x + 7, y - 5);
+        ctx.lineTo(x + 7, y + 1);
+        ctx.quadraticCurveTo(x + 7, y + 7, x, y + 10);
+        ctx.quadraticCurveTo(x - 7, y + 7, x - 7, y + 1);
+        ctx.lineTo(x - 7, y - 5);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      const drawGearIcon = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+        ctx.save();
+        ctx.strokeStyle = activeAccent;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4;
+          ctx.beginPath();
+          ctx.moveTo(x + Math.cos(angle) * 4, y + Math.sin(angle) * 4);
+          ctx.lineTo(x + Math.cos(angle) * 7, y + Math.sin(angle) * 7);
+          ctx.stroke();
+        }
+        ctx.restore();
+      };
+
+      const drawPlugIcon = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+        ctx.save();
+        ctx.strokeStyle = activeAccent;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x - 4, y - 4, 8, 7);
+        ctx.beginPath();
+        ctx.moveTo(x - 2, y - 4);
+        ctx.lineTo(x - 2, y - 8);
+        ctx.moveTo(x + 2, y - 4);
+        ctx.lineTo(x + 2, y - 8);
+        ctx.moveTo(x, y + 3);
+        ctx.lineTo(x, y + 8);
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      // ── SHARED PRICING INFO & EMI MATH ────────────────────────────────
+      const getPricingInfo = (price: string | number | undefined, originalPrice: string | number | undefined) => {
+        const priceVal = formatRupee(String(price || "25000"));
+        let originalVal = String(originalPrice || "");
+        if (originalVal) originalVal = formatRupee(originalVal);
+
+        const dealNum = parseFloat(String(price || "").replace(/,/g, ""));
+        const origNum = parseFloat(String(originalPrice || "").replace(/,/g, ""));
+        
+        let savingsLabel = "";
+        let emiLabel = "";
+        
+        if (dealNum) {
+          const emiVal = Math.round(dealNum / 12);
+          emiLabel = props.isTamil
+            ? `மாதாந்திர EMI: ₹${formatRupee(String(emiVal))} முதல்*`
+            : `Easy EMI starts at ₹${formatRupee(String(emiVal))}/mo*`;
+            
+          if (origNum && origNum > dealNum) {
+            const savings = origNum - dealNum;
+            const pct = Math.round((savings / origNum) * 100);
+            savingsLabel = props.isTamil
+              ? `சேமிப்பு ₹${formatRupee(String(savings))} (${pct}% தள்ளுபடி)`
+              : `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+          }
+        }
+
+        return { priceVal, originalVal, savingsLabel, emiLabel };
+      };
+
+      const { priceVal, originalVal, savingsLabel, emiLabel } = getPricingInfo(props.product.price, props.product.originalPrice);
 
       // Determine vertical limit where bottom blue section starts
       let footerY = H * 0.65; 
@@ -282,10 +568,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ? props.product.specs
         : ["Intel Core i5 Processor", "8GB DDR4 RAM", "256GB SSD Storage", "Wi-Fi (Built-in)"];
 
-      let priceVal = String(props.product.price || "25000");
-      let originalVal = String(props.product.originalPrice || "");
-      priceVal = formatRupee(priceVal);
-      if (originalVal) originalVal = formatRupee(originalVal);
+      // Price format and discount calculations are now globally destructured above.
 
       // ----------------------------------------------------
       // BRANCH: STORY LAYOUT (9:16, 1080x1920)
@@ -379,7 +662,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          ctx.fillStyle = activeAccent + "22";
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
           ctx.beginPath();
           ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
           ctx.fill();
@@ -492,14 +775,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
           const iconX = W / 2 - specCardW / 2 + 35;
           const iconCenterY = currentY + specCardH / 2;
-          ctx.fillStyle = activeAccent + "15";
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
           ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 2;
 
-          if (idx === 0) {
+          const specLabel = getSpecLabel(specText, idx);
+          if (specLabel === "PROCESSOR") {
             ctx.beginPath();
             ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
             ctx.stroke();
@@ -509,14 +793,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
               ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
               ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
             }
-          } else if (idx === 1) {
+          } else if (specLabel === "MEMORY") {
             ctx.beginPath();
             ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
             ctx.stroke();
             for (let i = -8; i <= 8; i += 4) {
               ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
             }
-          } else if (idx === 2) {
+          } else if (specLabel === "STORAGE") {
             ctx.beginPath();
             ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
             ctx.stroke();
@@ -524,6 +808,22 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
             ctx.stroke();
             ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
+          } else if (specLabel === "WARRANTY") {
+            drawShieldIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "INCLUDED") {
+            drawPlugIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "DISPLAY") {
+            // Draw a monitor box
+            ctx.beginPath();
+            ctx.rect(iconX - 12, iconCenterY - 8, 24, 14);
+            ctx.moveTo(iconX - 4, iconCenterY + 6);
+            ctx.lineTo(iconX - 6, iconCenterY + 10);
+            ctx.lineTo(iconX + 6, iconCenterY + 10);
+            ctx.lineTo(iconX + 4, iconCenterY + 6);
+            ctx.stroke();
+          } else if (specLabel === "GRAPHICS") {
+            // Draw dual gear / GPU fan symbol
+            drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
             ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
@@ -536,7 +836,6 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.stroke();
           }
 
-          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 10px Arial, sans-serif";
           ctx.fillText(specLabel, iconX + 35, currentY + 23);
@@ -555,19 +854,23 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         drawRoundedRect(ctx, 50, trustY, W - 100, 66, 14);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#475569";
-        ctx.font = "bold 13px Arial";
-        ctx.fillText("🛡️ 365-Day Warranty", 90, trustY + 38);
-        ctx.fillText("⚙️ 100% Genuine Parts", 430, trustY + 38);
-        ctx.fillText("🔌 Charger Included", 770, trustY + 38);
         ctx.restore();
 
+        const trustXCoords = [80, 420, 760];
+        trustPolicies.forEach((policy: string, pIdx: number) => {
+          if (trustXCoords[pIdx] !== undefined) {
+            const cleanPolicy = policy.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
+            drawCheckmarkBullet(ctx, trustXCoords[pIdx], trustY + 38, cleanPolicy, 13);
+          }
+        });
+
         // Bottom Pricing
+        const { priceVal, originalVal, savingsLabel, emiLabel } = getPricingInfo(props.product.price, props.product.originalPrice);
         const priceY = 1480;
         const priceX = 80;
         ctx.fillStyle = activeAccent;
         ctx.font = "black 12px Arial, sans-serif";
-        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY);
+        ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY);
 
         ctx.fillStyle = "white";
         ctx.font = "bold 58px Arial, sans-serif";
@@ -587,12 +890,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.lineTo(origX + origWidth + 2, priceY + 37);
           ctx.stroke();
 
-          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
-          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
-          if (dealNum && origNum && origNum > dealNum) {
-            const savings = origNum - dealNum;
-            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
-            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+          if (savingsLabel) {
             ctx.fillStyle = "#f59e0b";
             drawRoundedRect(ctx, priceX, priceY + 76, 320, 36, 6);
             ctx.fill();
@@ -602,57 +900,67 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           }
         }
 
+        if (props.showEmi && emiLabel) {
+          ctx.fillStyle = activeAccent;
+          ctx.font = "bold 14px Arial, sans-serif";
+          ctx.fillText(emiLabel, priceX, originalVal ? priceY + 132 : priceY + 95);
+        }
+
         // Contact Box
-        const contactX = W - 440;
+        const contactX = W - 510;
         const contactY = 1450;
         ctx.save();
         ctx.fillStyle = "white";
-        drawRoundedRect(ctx, contactX, contactY, 360, 185, 24);
+        drawRoundedRect(ctx, contactX, contactY, 470, 185, 24);
         ctx.fill();
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("GET THIS DEAL INSTANTLY", contactX + 30, contactY + 28);
+        ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
         // WhatsApp
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 25, contactY + 44, 310, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 44, 290, 52, 10);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#22c55e";
-        ctx.beginPath();
-        ctx.arc(contactX + 50, contactY + 70, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText("WA", contactX + 41, iconCenterTextY(contactY + 70));
+        
+        drawWhatsAppIcon(ctx, contactX + 25, contactY + 70);
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("WhatsApp Chat", contactX + 78, contactY + 64);
+        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", contactX + 68, contactY + 64);
         ctx.fillStyle = "#15803d";
-        ctx.font = "bold 19px Arial";
-        ctx.fillText("+91 79041 08020", contactX + 78, contactY + 85);
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(whatsappChat, contactX + 68, contactY + 85);
 
         // Phone Support
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
-        drawRoundedRect(ctx, contactX + 25, contactY + 110, 310, 52, 10);
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, contactX + 20, contactY + 110, 290, 52, 10);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#f97316";
-        ctx.beginPath();
-        ctx.arc(contactX + 50, contactY + 136, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText("PH", contactX + 42, iconCenterTextY(contactY + 136));
+        
+        drawPhoneIcon(ctx, contactX + 25, contactY + 136);
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("Call Support", contactX + 78, contactY + 130);
+        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", contactX + 68, contactY + 130);
         ctx.fillStyle = "#c2410c";
-        ctx.font = "bold 19px Arial";
-        ctx.fillText("+91 87780 03397", contactX + 78, contactY + 151);
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(phoneSupport, contactX + 68, contactY + 151);
+
+        // WhatsApp QR Code
+        if (qrImg) {
+          ctx.fillStyle = "#f1f5f9";
+          drawRoundedRect(ctx, contactX + 330, contactY + 36, 110, 110, 8);
+          ctx.fill();
+          ctx.drawImage(qrImg, contactX + 335, contactY + 41, 100, 100);
+          
+          ctx.fillStyle = "#64748b";
+          ctx.font = "bold 10px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(props.isTamil ? "ஸ்கேன் செய்ய" : "SCAN TO ORDER", contactX + 385, contactY + 165);
+        }
         ctx.restore();
 
         // Footer Address
@@ -664,18 +972,24 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText("✔ Quality Refurbished", 60, footerLineY + 25);
-        ctx.fillText("✔ Wholesale Prices", W * 0.32, footerLineY + 25);
-        ctx.fillText("✔ Lifetime Support", W * 0.58, footerLineY + 25);
-        ctx.fillText("✔ 100% Satisfaction", W * 0.82, footerLineY + 25);
+        const checkmarks = props.isTamil
+          ? ["தரம் வாய்ந்தவை", "மொத்த விலை", "வாழ்நாள் ஆதரவு", "100% திருப்தி"]
+          : ["Quality Refurbished", "Wholesale Prices", "Lifetime Support", "100% Satisfaction"];
+          
+        drawCheckmarkBullet(ctx, 50, footerLineY + 25, checkmarks[0]);
+        drawCheckmarkBullet(ctx, W * 0.30, footerLineY + 25, checkmarks[1]);
+        drawCheckmarkBullet(ctx, W * 0.55, footerLineY + 25, checkmarks[2]);
+        drawCheckmarkBullet(ctx, W * 0.80, footerLineY + 25, checkmarks[3]);
 
-        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
         ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
         ctx.font = "bold 12px Arial, sans-serif";
-        const addrWidth = ctx.measureText(address).width;
-        ctx.fillText(address, W / 2 - addrWidth / 2, H - 40);
+        ctx.textAlign = "center";
+        
+        const addrWidth = ctx.measureText(showroomAddress).width;
+        const textStartX = W / 2 - addrWidth / 2;
+        drawLocationPin(ctx, textStartX - 10, H - 40);
+        ctx.textAlign = "left";
+        ctx.fillText(showroomAddress, textStartX, H - 40);
       }
 
       // ----------------------------------------------------
@@ -762,28 +1076,41 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
           const iconX = 65;
           const iconCenterY = currentY + specCardH / 2;
-          ctx.fillStyle = activeAccent + "15";
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
           ctx.arc(iconX, iconCenterY, specsList.length > 4 ? 11 : 13, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 1.5;
 
-          if (idx === 0) {
+          const specLabel = getSpecLabel(specText, idx);
+          if (specLabel === "PROCESSOR") {
             ctx.beginPath();
             ctx.rect(iconX - 5, iconCenterY - 5, 10, 10);
             ctx.stroke();
-          } else if (idx === 1) {
+          } else if (specLabel === "MEMORY") {
             ctx.beginPath();
             ctx.rect(iconX - 7, iconCenterY - 3, 14, 6);
             ctx.stroke();
-          } else if (idx === 2) {
+          } else if (specLabel === "STORAGE") {
             ctx.beginPath();
             ctx.rect(iconX - 5, iconCenterY - 5, 10, 10);
             ctx.stroke();
             ctx.beginPath();
             ctx.arc(iconX, iconCenterY - 1, 2, 0, Math.PI * 2);
             ctx.stroke();
+          } else if (specLabel === "WARRANTY") {
+            drawShieldIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "INCLUDED") {
+            drawPlugIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "DISPLAY") {
+            ctx.beginPath();
+            ctx.rect(iconX - 7, iconCenterY - 5, 14, 9);
+            ctx.moveTo(iconX - 3, iconCenterY + 4);
+            ctx.lineTo(iconX + 3, iconCenterY + 4);
+            ctx.stroke();
+          } else if (specLabel === "GRAPHICS") {
+            drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
             ctx.arc(iconX, iconCenterY + 3, 1.5, 0, Math.PI * 2);
@@ -792,8 +1119,6 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.arc(iconX, iconCenterY + 3, 5, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
-
-          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 8px Arial, sans-serif";
           ctx.fillText(specLabel, iconX + 22, currentY + (specsList.length > 4 ? 13 : 16));
@@ -926,7 +1251,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const priceX = 50;
         ctx.fillStyle = activeAccent;
         ctx.font = "black 10px Arial, sans-serif";
-        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY - 20);
+        ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY - 20);
 
         ctx.fillStyle = "white";
         ctx.font = "bold 46px Arial, sans-serif";
@@ -946,12 +1271,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.lineTo(origX + origWidth + 2, priceY + 7);
           ctx.stroke();
 
-          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
-          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
-          if (dealNum && origNum && origNum > dealNum) {
-            const savings = origNum - dealNum;
-            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
-            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+          if (savingsLabel) {
             ctx.fillStyle = "#f59e0b";
             drawRoundedRect(ctx, priceX, priceY + 32, 250, 20, 4);
             ctx.fill();
@@ -961,42 +1281,49 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           }
         }
 
+        if (props.showEmi && emiLabel) {
+          ctx.fillStyle = activeAccent;
+          ctx.font = "bold 11px Arial, sans-serif";
+          ctx.fillText(emiLabel, priceX, originalVal ? priceY + 68 : priceY + 32);
+        }
+
         // Bottom contact rows (drawn horizontally next to price)
         const contactRowY = footerY + 75;
         const waRowX = 530;
-        const callRowX = 850;
+        const callRowX = 830;
 
         // WhatsApp Details
-        ctx.fillStyle = "#22c55e";
-        ctx.beginPath();
-        ctx.arc(waRowX + 16, contactRowY, 14, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 10px Arial";
-        ctx.fillText("WA", waRowX + 8, contactRowY + 4);
-
+        drawWhatsAppIcon(ctx, waRowX, contactRowY);
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 9px Arial";
-        ctx.fillText("WhatsApp Chat", waRowX + 42, contactRowY - 8);
+        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", waRowX + 42, contactRowY - 8);
         ctx.fillStyle = "#22c55e";
         ctx.font = "bold 17px Arial";
-        ctx.fillText("+91 79041 08020", waRowX + 42, contactRowY + 12);
+        ctx.fillText(whatsappChat, waRowX + 42, contactRowY + 12);
 
         // Call details
-        ctx.fillStyle = "#f97316";
-        ctx.beginPath();
-        ctx.arc(callRowX + 16, contactRowY, 14, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 10px Arial";
-        ctx.fillText("PH", callRowX + 9, contactRowY + 4);
-
+        drawPhoneIcon(ctx, callRowX, contactRowY);
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 9px Arial";
-        ctx.fillText("Call Support", callRowX + 42, contactRowY - 8);
+        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", callRowX + 42, contactRowY - 8);
         ctx.fillStyle = "#f97316";
         ctx.font = "bold 17px Arial";
-        ctx.fillText("+91 87780 03397", callRowX + 42, contactRowY + 12);
+        ctx.fillText(phoneSupport, callRowX + 42, contactRowY + 12);
+
+        // WhatsApp QR Code
+        if (qrImg) {
+          ctx.save();
+          ctx.fillStyle = "white";
+          drawRoundedRect(ctx, W - 145, footerY + 25, 95, 95, 8);
+          ctx.fill();
+          ctx.drawImage(qrImg, W - 140, footerY + 30, 85, 85);
+          
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 9px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(props.isTamil ? "வாட்ஸ்அப் செய்ய" : "SCAN TO ORDER", W - 97, footerY + 135);
+          ctx.restore();
+        }
 
         // Address Footer
         const footerLineY = H - 50;
@@ -1007,11 +1334,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
+        const cleanAddr = showroomAddress.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
         ctx.fillStyle = "rgba(148, 163, 184, 0.85)";
         ctx.font = "bold 8.5px Arial, sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText(address, W - 40, H - 12);
+        ctx.fillText(cleanAddr, W - 40, H - 12);
+        
+        const addrWidth = ctx.measureText(cleanAddr).width;
+        drawLocationPin(ctx, W - 40 - addrWidth - 10, H - 12);
+        
         ctx.textAlign = "left"; // Reset to default
       }
 
@@ -1048,11 +1379,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         ctx.fillStyle = "#ea580c";
         ctx.font = "black 28px Arial, sans-serif";
-        ctx.fillText("SAI", headerX + 105, headerY + 50);
+        ctx.fillText(brandName, headerX + 105, headerY + 50);
 
         ctx.fillStyle = cardTextSub;
         ctx.font = "black 11px Arial, sans-serif";
-        const subText = "SYSTEMS";
+        const subText = brandSubtext;
         let textX = headerX + 105;
         for (let i = 0; i < subText.length; i++) {
           ctx.fillText(subText[i], textX, headerY + 76);
@@ -1084,7 +1415,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 17px Arial, sans-serif";
-        ctx.fillText("— Professional Performance. Business Ready. —", W - 40, 225);
+        ctx.fillText(tagline, W - 40, 225);
         ctx.textAlign = "left"; // reset
 
         // Spec Cards (Left Column)
@@ -1108,14 +1439,15 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
           const iconX = 75;
           const iconCenterY = currentY + specCardH / 2;
-          ctx.fillStyle = activeAccent + "15";
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
           ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 2;
 
-          if (idx === 0) {
+          const specLabel = getSpecLabel(specText, idx);
+          if (specLabel === "PROCESSOR") {
             ctx.beginPath();
             ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
             ctx.stroke();
@@ -1125,14 +1457,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
               ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
               ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
             }
-          } else if (idx === 1) {
+          } else if (specLabel === "MEMORY") {
             ctx.beginPath();
             ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
             ctx.stroke();
             for (let i = -8; i <= 8; i += 4) {
               ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
             }
-          } else if (idx === 2) {
+          } else if (specLabel === "STORAGE") {
             ctx.beginPath();
             ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
             ctx.stroke();
@@ -1140,6 +1472,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
             ctx.stroke();
             ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
+          } else if (specLabel === "WARRANTY") {
+            drawShieldIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "INCLUDED") {
+            drawPlugIcon(ctx, iconX, iconCenterY);
+          } else if (specLabel === "DISPLAY") {
+            ctx.beginPath();
+            ctx.rect(iconX - 12, iconCenterY - 8, 24, 14);
+            ctx.moveTo(iconX - 4, iconCenterY + 6);
+            ctx.lineTo(iconX - 6, iconCenterY + 10);
+            ctx.lineTo(iconX + 6, iconCenterY + 10);
+            ctx.lineTo(iconX + 4, iconCenterY + 6);
+            ctx.stroke();
+          } else if (specLabel === "GRAPHICS") {
+            drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
             ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
@@ -1151,8 +1497,6 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
-
-          const specLabel = getSpecLabel(specText, idx);
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 11px Arial, sans-serif";
           ctx.fillText(specLabel, 120, currentY + 23);
@@ -1180,7 +1524,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          ctx.fillStyle = activeAccent + "22";
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
           ctx.beginPath();
           ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
           ctx.fill();
@@ -1281,19 +1625,22 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         drawRoundedRect(ctx, 40, trustY, W - 80, 66, 14);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#475569";
-        ctx.font = "bold 13px Arial";
-        ctx.fillText("🛡️ 365-Day Warranty", 80, trustY + 38);
-        ctx.fillText("⚙️ 100% Genuine Spare Parts", 410, trustY + 38);
-        ctx.fillText("🔌 Charger & Box Included", 760, trustY + 38);
         ctx.restore();
+
+        const trustXCoords = [80, 410, 760];
+        trustPolicies.forEach((policyText: string, idx: number) => {
+          if (trustXCoords[idx] !== undefined) {
+            const cleanPolicy = policyText.replace(/^[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]\s*/g, "");
+            drawCheckmarkBullet(ctx, trustXCoords[idx], trustY + 38, cleanPolicy, 13);
+          }
+        });
 
         // Pricing details
         const priceY = footerY + 80;
         const priceX = 60;
         ctx.fillStyle = activeAccent;
         ctx.font = "black 12px Arial, sans-serif";
-        ctx.fillText("SPECIAL DEAL PRICE", priceX, priceY - 24);
+        ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY - 24);
 
         ctx.fillStyle = "white";
         ctx.font = "bold 58px Arial, sans-serif";
@@ -1313,14 +1660,9 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.lineTo(origX + origWidth + 2, priceY + 7);
           ctx.stroke();
 
-          const dealNum = parseFloat(String(props.product.price).replace(/,/g, ""));
-          const origNum = parseFloat(String(props.product.originalPrice).replace(/,/g, ""));
-          if (dealNum && origNum && origNum > dealNum) {
-            const savings = origNum - dealNum;
-            const pct = Math.round(((origNum - dealNum) / origNum) * 100);
-            const savingsLabel = `SAVE ₹${formatRupee(String(savings))} (${pct}% OFF)`;
+          if (savingsLabel) {
             ctx.fillStyle = "#f59e0b";
-            drawRoundedRect(ctx, priceX, priceY + 54, 300, 36, 6);
+            drawRoundedRect(ctx, priceX, priceY + 54, 320, 36, 6);
             ctx.fill();
             ctx.fillStyle = "#0f172a";
             ctx.font = "bold 12px Arial";
@@ -1328,57 +1670,67 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           }
         }
 
-        // Contact buttons
-        const contactX = W - 420;
+        if (props.showEmi && emiLabel) {
+          ctx.fillStyle = activeAccent;
+          ctx.font = "bold 14px Arial, sans-serif";
+          ctx.fillText(emiLabel, priceX, originalVal ? priceY + 110 : priceY + 73);
+        }
+
+        // Contact Box
+        const contactX = W - 510;
         const contactY = footerY + 45;
         ctx.save();
         ctx.fillStyle = "white";
-        drawRoundedRect(ctx, contactX, contactY, 360, 185, 24);
+        drawRoundedRect(ctx, contactX, contactY, 470, 185, 24);
         ctx.fill();
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("GET THIS DEAL INSTANTLY", contactX + 30, contactY + 28);
+        ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
         // WhatsApp
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 25, contactY + 44, 310, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 44, 290, 52, 10);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#22c55e";
-        ctx.beginPath();
-        ctx.arc(contactX + 50, contactY + 70, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText("WA", contactX + 41, iconCenterTextY(contactY + 70));
+        
+        drawWhatsAppIcon(ctx, contactX + 25, contactY + 70);
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("WhatsApp Chat", contactX + 78, contactY + 64);
+        ctx.fillText(props.isTamil ? "வாட்ஸ்அப்" : "WhatsApp Chat", contactX + 68, contactY + 64);
         ctx.fillStyle = "#15803d";
-        ctx.font = "bold 19px Arial";
-        ctx.fillText("+91 79041 08020", contactX + 78, contactY + 85);
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(whatsappChat, contactX + 68, contactY + 85);
 
-        // Phone call
+        // Phone Support
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
-        drawRoundedRect(ctx, contactX + 25, contactY + 110, 310, 52, 10);
+        ctx.lineWidth = 1;
+        drawRoundedRect(ctx, contactX + 20, contactY + 110, 290, 52, 10);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#f97316";
-        ctx.beginPath();
-        ctx.arc(contactX + 50, contactY + 136, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "bold 11px Arial";
-        ctx.fillText("PH", contactX + 42, iconCenterTextY(contactY + 136));
+        
+        drawPhoneIcon(ctx, contactX + 25, contactY + 136);
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 11px Arial";
-        ctx.fillText("Call Support", contactX + 78, contactY + 130);
+        ctx.fillText(props.isTamil ? "அழைக்க" : "Call Support", contactX + 68, contactY + 130);
         ctx.fillStyle = "#c2410c";
-        ctx.font = "bold 19px Arial";
-        ctx.fillText("+91 87780 03397", contactX + 78, contactY + 151);
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(phoneSupport, contactX + 68, contactY + 151);
+
+        // WhatsApp QR Code
+        if (qrImg) {
+          ctx.fillStyle = "#f1f5f9";
+          drawRoundedRect(ctx, contactX + 330, contactY + 36, 110, 110, 8);
+          ctx.fill();
+          ctx.drawImage(qrImg, contactX + 335, contactY + 41, 100, 100);
+          
+          ctx.fillStyle = "#64748b";
+          ctx.font = "bold 10px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(props.isTamil ? "ஸ்கேன் செய்ய" : "SCAN TO ORDER", contactX + 385, contactY + 165);
+        }
         ctx.restore();
 
         // Footer line & address
@@ -1390,24 +1742,30 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText("✔ Quality Refurbished", 60, footerLineY + 25);
-        ctx.fillText("✔ Wholesale Prices", W * 0.32, footerLineY + 25);
-        ctx.fillText("✔ Lifetime Support", W * 0.58, footerLineY + 25);
-        ctx.fillText("✔ 100% Satisfaction", W * 0.82, footerLineY + 25);
+        const checkmarks = props.isTamil
+          ? ["தரம் வாய்ந்தவை", "மொத்த விலை", "வாழ்நாள் ஆதரவு", "100% திருப்தி"]
+          : ["Quality Refurbished", "Wholesale Prices", "Lifetime Support", "100% Satisfaction"];
+          
+        drawCheckmarkBullet(ctx, 50, footerLineY + 25, checkmarks[0]);
+        drawCheckmarkBullet(ctx, W * 0.30, footerLineY + 25, checkmarks[1]);
+        drawCheckmarkBullet(ctx, W * 0.55, footerLineY + 25, checkmarks[2]);
+        drawCheckmarkBullet(ctx, W * 0.80, footerLineY + 25, checkmarks[3]);
 
-        const address = "📍 showroom address: paa building, 8/25 b, shop no-a3, y.m.r patty (landmark: head post office), dindigul, tamil nadu - 624001";
         ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
         ctx.font = "bold 12px Arial, sans-serif";
-        const addrWidth = ctx.measureText(address).width;
-        ctx.fillText(address, W / 2 - addrWidth / 2, H - 25);
+        ctx.textAlign = "center";
+        
+        const addrWidth = ctx.measureText(showroomAddress).width;
+        const textStartX = W / 2 - addrWidth / 2;
+        drawLocationPin(ctx, textStartX - 10, H - 25);
+        ctx.textAlign = "left";
+        ctx.fillText(showroomAddress, textStartX, H - 25);
       }
 
       // ----------------------------------------------------
-      // Export canvas drawing as Data URL for the <img> tag
+      // Export canvas drawing is now debounced in a hook above
+      // to optimize drag slider performance.
       // ----------------------------------------------------
-      setImgSrc(canvas.toDataURL("image/png"));
     };
 
     // Helper: Rupee comma formatter
@@ -1533,27 +1891,46 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     // Draw loading overlay or preview screen container
     return (
       <div className="flex flex-col items-center justify-center bg-slate-950 dark:bg-slate-900 rounded-2xl p-4 shadow-inner border border-slate-800 w-full overflow-hidden">
-        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-          <span>📷</span> Live canvas preview ({props.ratio === "16:9" ? 1200 : 1080}x{props.ratio === "9:16" ? 1920 : props.ratio === "16:9" ? 630 : 1080}px)
+        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5 w-full justify-between">
+          <span>📷 Live canvas preview ({props.ratio === "16:9" ? 1200 : 1080}x{props.ratio === "9:16" ? 1920 : props.ratio === "16:9" ? 630 : 1080}px)</span>
+          {imageLoading && <span className="text-orange-500 animate-pulse text-[9px] font-black">Loading image...</span>}
         </div>
         <div className="relative border border-slate-700/80 rounded-xl overflow-hidden max-w-full bg-slate-900 shadow-2xl flex items-center justify-center min-h-[300px] w-full">
-          {/* Offscreen Canvas for drawing */}
+          {/* Main Canvas component shown directly in DOM for 60fps interaction */}
           <canvas
             ref={canvasRef}
-            style={{ display: "none" }}
+            className="max-h-[500px] max-w-full h-auto w-auto object-contain select-none rounded-xl"
+            style={{ display: "block" }}
           />
           {/* Real image overlay for mobile long-press copy and save support */}
-          {imgSrc ? (
+          {imgSrc && (
             <img
               src={imgSrc}
-              className="max-h-[500px] max-w-full h-auto w-auto object-contain cursor-pointer active:scale-[0.99] transition-transform select-none rounded-xl"
-              alt="Promo Banner Preview"
-              title="Long-press or right-click to copy/save"
+              className="absolute top-0 bottom-0 left-0 right-0 m-auto max-h-[500px] max-w-full h-auto w-auto object-contain cursor-pointer select-none opacity-0"
+              alt={`Promotional banner for ${props.product.title || "Product"}`}
+              title="Right-click or long-press to copy/save"
             />
-          ) : (
-            <div className="text-slate-500 text-xs py-20">Generating promotional graphics...</div>
+          )}
+          {/* Loading Indicator */}
+          {imageLoading && (
+            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-white text-xs">
+              <span className="animate-spin text-lg">⏳</span>
+              <span>Fetching remote product photo...</span>
+            </div>
           )}
         </div>
+        
+        {/* Error and Tainted Canvas warnings */}
+        {imageLoadError && (
+          <div className="mt-3 text-[11px] text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3.5 py-2 rounded-lg w-full text-center font-medium">
+            ⚠️ Failed to load product image. Check image URL or upload a local file.
+          </div>
+        )}
+        {isTainted && (
+          <div className="mt-3 text-[11px] text-amber-500 bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 rounded-lg w-full text-center font-medium">
+            ⚠️ Tainted Canvas detected: The image host does not allow direct saving. Please upload a local image file to enable PNG Download & Copy.
+          </div>
+        )}
       </div>
     );
   }
@@ -1561,15 +1938,23 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
 const getSpecLabel = (text: string, idx: number): string => {
   const t = text.toLowerCase();
+  
+  // Content check first
+  if (t.includes("i3") || t.includes("i5") || t.includes("i7") || t.includes("i9") || t.includes("ryzen") || t.includes("amd") || t.includes("intel") || t.includes("core") || t.includes("processor") || t.includes("cpu")) return "PROCESSOR";
+  if (t.includes("ram") || t.includes("ddr") || t.includes("gb memory") || t.includes("memory")) return "MEMORY";
+  if (t.includes("ssd") || t.includes("hdd") || t.includes("tb storage") || t.includes("storage") || t.includes("nvme") || t.includes("hard drive")) return "STORAGE";
+  if (t.includes("wifi") || t.includes("wi-fi") || t.includes("bluetooth") || t.includes("lan") || t.includes("connectivity") || t.includes("ports")) return "CONNECTIVITY";
+  if (t.includes("warranty") || t.includes("year") || t.includes("month")) return "WARRANTY";
+  if (t.includes("bag") || t.includes("mouse") || t.includes("charger") || t.includes("box") || t.includes("included")) return "INCLUDED";
+  if (t.includes("windows") || t.includes("os") || t.includes("mac") || t.includes("operating") || t.includes("ubuntu")) return "OS & SOFTWARE";
+  if (t.includes("graphic") || t.includes("nvidia") || t.includes("intel hd") || t.includes("gpu") || t.includes("geforce")) return "GRAPHICS";
+  if (t.includes("screen") || t.includes("display") || t.includes("inch") || t.includes("fhd") || t.includes("ips") || t.includes("panel")) return "DISPLAY";
+
+  // Position fallback
   if (idx === 0) return "PROCESSOR";
   if (idx === 1) return "MEMORY";
   if (idx === 2) return "STORAGE";
   if (idx === 3) return "CONNECTIVITY";
-  
-  if (t.includes("warranty") || t.includes("year") || t.includes("month")) return "WARRANTY";
-  if (t.includes("bag") || t.includes("mouse") || t.includes("charger") || t.includes("box") || t.includes("included")) return "INCLUDED";
-  if (t.includes("windows") || t.includes("os") || t.includes("mac") || t.includes("operating") || t.includes("ubuntu")) return "OS & SOFTWARE";
-  if (t.includes("graphic") || t.includes("nvidia") || t.includes("intel hd") || t.includes("gpu")) return "GRAPHICS";
   return "SPECIFICATION";
 };
 

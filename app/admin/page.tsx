@@ -566,6 +566,15 @@ export default function AdminPage() {
   const [bannerNewSpecText, setBannerNewSpecText] = useState("");
   const [editNewSpecText, setEditNewSpecText] = useState("");
 
+  const [isTamil, setIsTamil] = useState(false);
+  const [showEmi, setShowEmi] = useState(true);
+  const [brandName, setBrandName] = useState("SAI");
+  const [brandSubtext, setBrandSubtext] = useState("SYSTEMS");
+  const [tagline, setTagline] = useState("");
+  const [phoneSupport, setPhoneSupport] = useState("+91 87780 03397");
+  const [whatsappChat, setWhatsappChat] = useState("+91 79041 08020");
+  const [showroomAddress, setShowroomAddress] = useState("");
+
   const bannerCanvasRef = useRef<PromoBannerCanvasHandle>(null);
 
   const handleBannerAiParse = async () => {
@@ -1825,6 +1834,14 @@ export default function AdminPage() {
                     offsetY={addOffsetY}
                     rotation={addRotation}
                     localImageFile={addLocalImageFile}
+                    brandName={brandName}
+                    brandSubtext={brandSubtext}
+                    tagline={tagline}
+                    phoneSupport={phoneSupport}
+                    whatsappChat={whatsappChat}
+                    showroomAddress={showroomAddress}
+                    isTamil={isTamil}
+                    showEmi={showEmi}
                   />
 
                   {/* Design combinator selectors */}
@@ -2480,6 +2497,14 @@ export default function AdminPage() {
                                 offsetY={editOffsetY}
                                 rotation={editRotation}
                                 localImageFile={editLocalImageFile}
+                                brandName={brandName}
+                                brandSubtext={brandSubtext}
+                                tagline={tagline}
+                                phoneSupport={phoneSupport}
+                                whatsappChat={whatsappChat}
+                                showroomAddress={showroomAddress}
+                                isTamil={isTamil}
+                                showEmi={showEmi}
                               />
 
                               {/* Canvas style combinators */}
@@ -2800,6 +2825,120 @@ export default function AdminPage() {
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">Design dynamic discount flyers and spec sheets. Safe from catalog database saves.</p>
                   </div>
 
+                  {/* Branding and Localization Customization Settings */}
+                  <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                    <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                      <span className="flex items-center gap-2">
+                        <span>⚙️</span>
+                        <span>Branding & Localization settings</span>
+                      </span>
+                      <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                    </summary>
+                    <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Bilingual Tamil Toggle */}
+                      <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-gray-800 dark:text-white">Bilingual Tamil / English</span>
+                          <span className="text-[9px] text-gray-500">Translate flyer labels to Tamil/English</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isTamil}
+                            onChange={(e) => setIsTamil(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                        </label>
+                      </div>
+
+                      {/* EMI Badge Toggle */}
+                      <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-gray-800 dark:text-white">Show Easy EMI Badge</span>
+                          <span className="text-[9px] text-gray-500">Calculate and overlay EMI pricing</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={showEmi}
+                            onChange={(e) => setShowEmi(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                        </label>
+                      </div>
+
+                      {/* Brand Name */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
+                        <input
+                          type="text"
+                          value={brandName}
+                          onChange={(e) => setBrandName(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Brand Subtext */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Subtext</label>
+                        <input
+                          type="text"
+                          value={brandSubtext}
+                          onChange={(e) => setBrandSubtext(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Tagline */}
+                      <div className="col-span-2">
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Custom Tagline (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. — Professional Performance. Business Ready. —"
+                          value={tagline}
+                          onChange={(e) => setTagline(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Phone Support */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
+                        <input
+                          type="text"
+                          value={phoneSupport}
+                          onChange={(e) => setPhoneSupport(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* WhatsApp Chat */}
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">WhatsApp Chat</label>
+                        <input
+                          type="text"
+                          value={whatsappChat}
+                          onChange={(e) => setWhatsappChat(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Showroom Address */}
+                      <div className="col-span-2">
+                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Showroom Address (Optional)</label>
+                        <textarea
+                          rows={2}
+                          value={showroomAddress}
+                          placeholder="Leave blank for dynamic default address"
+                          onChange={(e) => setShowroomAddress(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  </details>
+
                   {/* AI Specifications Paste Field */}
                   <div className="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-white/5 space-y-2">
                     <label className="block text-[9px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -2961,6 +3100,14 @@ export default function AdminPage() {
                     offsetY={bannerOffsetY}
                     rotation={bannerRotation}
                     localImageFile={bannerLocalImageFile}
+                    brandName={brandName}
+                    brandSubtext={brandSubtext}
+                    tagline={tagline}
+                    phoneSupport={phoneSupport}
+                    whatsappChat={whatsappChat}
+                    showroomAddress={showroomAddress}
+                    isTamil={isTamil}
+                    showEmi={showEmi}
                   />
 
                   {/* Canvas Style Combinators */}
