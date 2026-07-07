@@ -551,6 +551,7 @@ export default function AdminPage() {
     includedAccessory: "Laptop Bag & Charger"
   });
   const [bannerRatio, setBannerRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
+  const [bannerLayoutStyle, setBannerLayoutStyle] = useState<"classic" | "hero-center" | "split-modern">("classic");
   const [bannerThemeColor, setBannerThemeColor] = useState<string>("orange");
   const [bannerBgPattern, setBannerBgPattern] = useState<"none" | "grid" | "circuit" | "fiber">("circuit");
   const [bannerPlatformStyle, setBannerPlatformStyle] = useState<"pedestal" | "ring" | "shadow">("pedestal");
@@ -560,6 +561,23 @@ export default function AdminPage() {
   const [bannerOffsetX, setBannerOffsetX] = useState(0);
   const [bannerOffsetY, setBannerOffsetY] = useState(0);
   const [bannerRotation, setBannerRotation] = useState(0);
+  const [bannerBgPatternOpacity, setBannerBgPatternOpacity] = useState(0.6);
+  const [bannerShowLogo, setBannerShowLogo] = useState(true);
+  const [bannerShowQrCode, setBannerShowQrCode] = useState(true);
+  const [bannerShowProductShadow, setBannerShowProductShadow] = useState(true);
+  const [bannerFontFamily, setBannerFontFamily] = useState("Arial");
+  const [bannerBadgePosition, setBannerBadgePosition] = useState<"center" | "left" | "right">("center");
+
+  const getAccentHex = (name: string): string => {
+    switch (name) {
+      case "orange": return "#f97316";
+      case "emerald": return "#10b981";
+      case "blue": return "#3b82f6";
+      case "indigo": return "#6366f1";
+      case "rose": return "#f43f5e";
+      default: return name.startsWith("#") ? name : "#f97316";
+    }
+  };
   const [bannerLocalImageFile, setBannerLocalImageFile] = useState<File | null>(null);
   const [bannerAiPromptText, setBannerAiPromptText] = useState("");
   const [bannerParsingAi, setBannerParsingAi] = useState(false);
@@ -567,6 +585,77 @@ export default function AdminPage() {
   const [editNewSpecText, setEditNewSpecText] = useState("");
 
   const [isTamil, setIsTamil] = useState(false);
+
+  // Load Banner Studio Configuration on Mount
+  useEffect(() => {
+    const saved = localStorage.getItem("sai_banner_studio_config");
+    if (saved) {
+      try {
+        const config = JSON.parse(saved);
+        if (config.bannerRatio) setBannerRatio(config.bannerRatio);
+        if (config.bannerThemeColor) setBannerThemeColor(config.bannerThemeColor);
+        if (config.bannerBgPattern) setBannerBgPattern(config.bannerBgPattern);
+        if (config.bannerPlatformStyle) setBannerPlatformStyle(config.bannerPlatformStyle);
+        if (config.bannerCardStyle) setBannerCardStyle(config.bannerCardStyle);
+        if (config.bannerAccentColor) setBannerAccentColor(config.bannerAccentColor);
+        if (config.bannerZoom !== undefined) setBannerZoom(config.bannerZoom);
+        if (config.bannerOffsetX !== undefined) setBannerOffsetX(config.bannerOffsetX);
+        if (config.bannerOffsetY !== undefined) setBannerOffsetY(config.bannerOffsetY);
+        if (config.bannerRotation !== undefined) setBannerRotation(config.bannerRotation);
+        if (config.bannerLayoutStyle) setBannerLayoutStyle(config.bannerLayoutStyle);
+        if (config.bannerBgPatternOpacity !== undefined) setBannerBgPatternOpacity(config.bannerBgPatternOpacity);
+        if (config.bannerShowLogo !== undefined) setBannerShowLogo(config.bannerShowLogo);
+        if (config.bannerShowQrCode !== undefined) setBannerShowQrCode(config.bannerShowQrCode);
+        if (config.bannerShowProductShadow !== undefined) setBannerShowProductShadow(config.bannerShowProductShadow);
+        if (config.bannerFontFamily) setBannerFontFamily(config.bannerFontFamily);
+        if (config.bannerBadgePosition) setBannerBadgePosition(config.bannerBadgePosition);
+      } catch (e) {
+        console.error("Failed to load saved banner studio config:", e);
+      }
+    }
+  }, []);
+
+  // Save Banner Studio Configuration dynamically on change
+  useEffect(() => {
+    const config = {
+      bannerRatio,
+      bannerThemeColor,
+      bannerBgPattern,
+      bannerPlatformStyle,
+      bannerCardStyle,
+      bannerAccentColor,
+      bannerZoom,
+      bannerOffsetX,
+      bannerOffsetY,
+      bannerRotation,
+      bannerLayoutStyle,
+      bannerBgPatternOpacity,
+      bannerShowLogo,
+      bannerShowQrCode,
+      bannerShowProductShadow,
+      bannerFontFamily,
+      bannerBadgePosition,
+    };
+    localStorage.setItem("sai_banner_studio_config", JSON.stringify(config));
+  }, [
+    bannerRatio,
+    bannerThemeColor,
+    bannerBgPattern,
+    bannerPlatformStyle,
+    bannerCardStyle,
+    bannerAccentColor,
+    bannerZoom,
+    bannerOffsetX,
+    bannerOffsetY,
+    bannerRotation,
+    bannerLayoutStyle,
+    bannerBgPatternOpacity,
+    bannerShowLogo,
+    bannerShowQrCode,
+    bannerShowProductShadow,
+    bannerFontFamily,
+    bannerBadgePosition,
+  ]);
   const [showEmi, setShowEmi] = useState(true);
   const [brandName, setBrandName] = useState("SAI");
   const [brandSubtext, setBrandSubtext] = useState("SYSTEMS");
@@ -1337,6 +1426,7 @@ export default function AdminPage() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark bg-gray-950 text-gray-200" : "bg-gray-50 text-gray-800"} flex flex-col transition-colors duration-300`}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Outfit:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
       
       {/* ── Main Layout Wrapper ────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col md:flex-row">
@@ -2717,16 +2807,27 @@ export default function AdminPage() {
                     customEmiText={customEmiText}
                     trustPolicies={trustPolicies}
                     removeBg={removeBg}
+                    layoutStyle={bannerLayoutStyle}
+                    bgPatternOpacity={bannerBgPatternOpacity}
+                    showLogo={bannerShowLogo}
+                    showQrCode={bannerShowQrCode}
+                    showProductShadow={bannerShowProductShadow}
+                    fontFamily={bannerFontFamily}
+                    badgePosition={bannerBadgePosition}
+                    onOffsetChange={(x, y) => {
+                      setBannerOffsetX(x);
+                      setBannerOffsetY(y);
+                    }}
                   />
 
                   {/* Canvas Style Combinators */}
                   <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+)</label>
                         <select
                           onChange={(e) => applyPreset(e.target.value, "banner")}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
                         >
                           {Object.entries(PRESETS).map(([key, config]) => (
                             <option key={key} value={key}>
@@ -2734,6 +2835,96 @@ export default function AdminPage() {
                             </option>
                           ))}
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Layout Style</label>
+                        <select
+                          value={bannerLayoutStyle}
+                          onChange={(e) => setBannerLayoutStyle(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="classic">Classic Banner</option>
+                          <option value="hero-center">Hero Center Product</option>
+                          <option value="split-modern">Modern 50/50 Split</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Typography Font</label>
+                        <select
+                          value={bannerFontFamily}
+                          onChange={(e) => setBannerFontFamily(e.target.value)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="Arial">Arial (System)</option>
+                          <option value="Outfit">Outfit (Sleek)</option>
+                          <option value="Inter">Inter (Premium)</option>
+                          <option value="Montserrat">Montserrat (Display)</option>
+                          <option value="Playfair Display">Playfair (Serif)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Brand Accent Color</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="color"
+                            value={getAccentHex(bannerAccentColor)}
+                            onChange={(e) => setBannerAccentColor(e.target.value)}
+                            className="w-7 h-7 rounded border border-gray-300 dark:border-white/10 p-0 cursor-pointer bg-transparent shrink-0"
+                            title="Choose color"
+                          />
+                          <input
+                            type="text"
+                            value={bannerAccentColor}
+                            onChange={(e) => setBannerAccentColor(e.target.value)}
+                            placeholder="#f97316"
+                            className="w-full min-w-0 bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Badge Position</label>
+                        <select
+                          value={bannerBadgePosition}
+                          onChange={(e) => setBannerBadgePosition(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="center">Center</option>
+                          <option value="left">Left Corner</option>
+                          <option value="right">Right Corner</option>
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 grid grid-cols-3 gap-2 pt-1.5">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowLogo}
+                            onChange={(e) => setBannerShowLogo(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Show Logo
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowQrCode}
+                            onChange={(e) => setBannerShowQrCode(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Show QR Code
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowProductShadow}
+                            onChange={(e) => setBannerShowProductShadow(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Backdrop Shadow
+                        </label>
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
@@ -2867,6 +3058,35 @@ export default function AdminPage() {
                           className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
                         />
                         <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerRotation}°</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">PATTERN:</span>
+                        <input
+                          type="range"
+                          min="0.0"
+                          max="1.0"
+                          step="0.05"
+                          value={bannerBgPatternOpacity}
+                          onChange={(e) => setBannerBgPatternOpacity(parseFloat(e.target.value))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{Math.round(bannerBgPatternOpacity * 100)}%</span>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBannerZoom(1.0);
+                            setBannerOffsetX(0);
+                            setBannerOffsetY(0);
+                            setBannerRotation(0);
+                          }}
+                          className="px-2 py-1 bg-gray-150 hover:bg-gray-250 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] rounded-md transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1"
+                        >
+                          🔄 Reset Photo Position
+                        </button>
                       </div>
                     </div>
 

@@ -38,6 +38,14 @@ export interface PromoBannerCanvasProps {
   emiTenure?: number;
   customEmiText?: string;
   removeBg?: boolean;
+  layoutStyle?: "classic" | "hero-center" | "split-modern";
+  bgPatternOpacity?: number;
+  showLogo?: boolean;
+  showQrCode?: boolean;
+  showProductShadow?: boolean;
+  fontFamily?: string;
+  onOffsetChange?: (x: number, y: number) => void;
+  badgePosition?: "center" | "left" | "right";
 }
 
 export interface PromoBannerCanvasHandle {
@@ -61,6 +69,71 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     const [imageLoadError, setImageLoadError] = useState(false);
     const [isTainted, setIsTainted] = useState(false);
     const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
+
+    // Mouse and Touch Drag-and-Drop Image repositioning refs/handlers
+    const isDraggingRef = useRef(false);
+    const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+      isDraggingRef.current = true;
+      dragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        offsetX: props.offsetX,
+        offsetY: props.offsetY
+      };
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      if (props.onOffsetChange) {
+        const canvasEl = canvasRef.current;
+        let scale = 1;
+        if (canvasEl) {
+          scale = canvasEl.width / canvasEl.clientWidth;
+        }
+        const nextX = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetX + dx * scale)));
+        const nextY = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetY + dy * scale)));
+        props.onOffsetChange(nextX, nextY);
+      }
+    };
+
+    const handleMouseUpOrLeave = () => {
+      isDraggingRef.current = false;
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      isDraggingRef.current = true;
+      dragStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        offsetX: props.offsetX,
+        offsetY: props.offsetY
+      };
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      if (!isDraggingRef.current || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - dragStartRef.current.x;
+      const dy = e.touches[0].clientY - dragStartRef.current.y;
+      if (props.onOffsetChange) {
+        const canvasEl = canvasRef.current;
+        let scale = 1;
+        if (canvasEl) {
+          scale = canvasEl.width / canvasEl.clientWidth;
+        }
+        const nextX = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetX + dx * scale)));
+        const nextY = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetY + dy * scale)));
+        props.onOffsetChange(nextX, nextY);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isDraggingRef.current = false;
+    };
 
     // Custom helper to remove white/light studio backgrounds dynamically using queue-based flood-fill
     const removeImageBackground = (img: HTMLImageElement): HTMLCanvasElement => {
@@ -158,6 +231,9 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         srcUrl = URL.createObjectURL(props.localImageFile);
       } else if (props.product.imageUrl) {
         srcUrl = props.product.imageUrl;
+        if (srcUrl.startsWith("http") && !srcUrl.includes("/api/admin/proxy-image")) {
+          srcUrl = `/api/admin/proxy-image?url=${encodeURIComponent(srcUrl)}`;
+        }
       }
 
       if (!srcUrl) {
@@ -217,7 +293,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     // Pre-load QR Code for WhatsApp direct link
     useEffect(() => {
       const timer = setTimeout(() => {
-        const waNumber = (props.whatsappChat || "917904108020").replace(/\D/g, "");
+        let waNumber = (props.whatsappChat || "917904108020").replace(/\D/g, "");
+        if (waNumber.length === 10) {
+          waNumber = "91" + waNumber;
+        }
         const cleanTitle = props.product.title || "";
         const brand = props.brandName || "Sai Systems";
         const text = `Hi ${brand}! I am interested in your deal: ${cleanTitle}.`;
@@ -266,7 +345,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       productImg,
       processedImg,
       props.removeBg,
-      qrImg
+      qrImg,
+      props.layoutStyle,
+      props.bgPatternOpacity,
+      props.showLogo,
+      props.showQrCode,
+      props.showProductShadow,
+      props.fontFamily
     ]);
 
     // Debounce toDataURL to prevent lagging during active drag interactions
@@ -307,7 +392,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.showEmi,
       logoLoaded,
       productImg,
-      qrImg
+      qrImg,
+      props.layoutStyle,
+      props.bgPatternOpacity,
+      props.showLogo,
+      props.showQrCode,
+      props.showProductShadow,
+      props.fontFamily
     ]);
 
     const drawCanvas = () => {
@@ -315,6 +406,21 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+
+      // Dynamically override context font to support custom font family selector
+      const activeFont = props.fontFamily || "Arial";
+      if (activeFont !== "Arial") {
+        const desc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "font");
+        if (desc && desc.set) {
+          Object.defineProperty(ctx, "font", {
+            get: () => desc.get?.call(ctx),
+            set: (val: string) => {
+              desc.set?.call(ctx, val.replace(/Arial/g, activeFont));
+            },
+            configurable: true
+          });
+        }
+      }
 
       // ── DESTRUCTURING PROPS WITH DEFAULTS ──────────────────────────────
       const brandName = props.brandName || "SAI";
@@ -334,11 +440,18 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ? ["🛡️ 365 நாட்கள் உத்தரவாதம்", "⚙️ 100% அசல் உதிரிபாகங்கள்", "🔌 சார்ஜர் இலவசம்"]
         : ["🛡️ 365-Day Warranty", "⚙️ 100% Genuine Parts", "🔌 Charger Included"];
       const trustPolicies = props.trustPolicies || defaultPolicies;
+      const layoutStyle = props.layoutStyle || "classic";
+      const bgPatternOpacity = props.bgPatternOpacity !== undefined ? props.bgPatternOpacity : 1.0;
 
       // ── DIMENSIONS SETTING BY ASPECT RATIO ──────────────────────────────
       let W = 1080;
       let H = 1080;
       if (props.ratio === "9:16") {
+        const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
+        let showX = W / 2;
+        let showY = isGridSpecs ? 720 : 490;
+        let pedestalW = isGridSpecs ? 680 : 600;
+        let pedestalH = isGridSpecs ? 120 : 100;
         W = 1080;
         H = 1920;
       } else if (props.ratio === "16:9") {
@@ -536,6 +649,29 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.restore();
       };
 
+      const drawQrCodeCenterLogo = (ctx: CanvasRenderingContext2D, cx: number, cy: number, radius = 12) => {
+        ctx.save();
+        // white backing circle
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius + 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // green whatsapp circle
+        ctx.fillStyle = "#22c55e";
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // draw simple "WA" letters inside green circle
+        ctx.fillStyle = "white";
+        ctx.font = "bold " + Math.round(radius * 0.75) + "px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("WA", cx, cy + 0.5);
+        ctx.restore();
+      };
+
       // ── SHARED PRICING INFO & EMI MATH ────────────────────────────────
       const getPricingInfo = (price: string | number | undefined, originalPrice: string | number | undefined) => {
         const priceVal = formatRupee(String(price || "25000"));
@@ -574,6 +710,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       // Determine vertical limit where bottom blue section starts
       let footerY = H * 0.65; 
       if (props.ratio === "9:16") {
+        const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
+        let showX = W / 2;
+        let showY = isGridSpecs ? 720 : 490;
+        let pedestalW = isGridSpecs ? 680 : 600;
+        let pedestalH = isGridSpecs ? 120 : 100;
         footerY = 1370; // Dedicated vertical split for Story
       } else if (props.ratio === "16:9") {
         footerY = 441;  // Dedicated vertical split for Landscape
@@ -601,7 +742,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       // 2. BACKGROUND PATTERNS
       // ----------------------------------------------------
       if (props.bgPattern === "grid") {
-        ctx.strokeStyle = "rgba(100, 116, 139, 0.04)";
+        ctx.strokeStyle = `rgba(100, 116, 139, ${0.04 * bgPatternOpacity})`;
         ctx.lineWidth = 1;
         const gridSpacing = 40;
         for (let x = 0; x < W; x += gridSpacing) {
@@ -617,7 +758,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
         }
       } else if (props.bgPattern === "circuit") {
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.06)";
+        ctx.strokeStyle = `rgba(148, 163, 184, ${0.06 * bgPatternOpacity})`;
         ctx.lineWidth = 2.5;
         // Top left circuit line
         ctx.beginPath();
@@ -644,7 +785,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.arc(W * 0.55, 200, 5, 0, Math.PI * 2);
         ctx.fill();
       } else if (props.bgPattern === "fiber") {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.02 * bgPatternOpacity})`;
         for (let y = 0; y < footerY; y += 4) {
           ctx.fillRect(0, y, W, 2);
         }
@@ -695,44 +836,51 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       // BRANCH: STORY LAYOUT (9:16, 1080x1920)
       // ----------------------------------------------------
       if (props.ratio === "9:16") {
+        const isGridSpecs = layoutStyle === "hero-center" || layoutStyle === "split-modern";
+        let showX = W / 2;
+        let showY = isGridSpecs ? 720 : 490;
+        let pedestalW = isGridSpecs ? 680 : 600;
+        let pedestalH = isGridSpecs ? 120 : 100;
         // Logo card
         const headerX = 40;
         const headerY = 80;
-        ctx.save();
-        ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 4;
-        drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
-        ctx.fillStyle = cardFill;
-        ctx.fill();
-        ctx.strokeStyle = cardOutline;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-
-        if (logoImgRef.current) {
-          ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
-        } else {
-          ctx.fillStyle = activeAccent;
-          ctx.beginPath();
-          ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+        if (props.showLogo !== false) {
+          ctx.save();
+          ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetY = 4;
+          drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
+          ctx.fillStyle = cardFill;
           ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 20px Arial";
-          ctx.fillText("S", headerX + 38, headerY + 57);
-        }
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.restore();
 
-        ctx.fillStyle = "#ea580c";
-        ctx.font = "black 28px Arial, sans-serif";
-        ctx.fillText(brandName, headerX + 105, headerY + 50);
+          if (logoImgRef.current) {
+            ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
+          } else {
+            ctx.fillStyle = activeAccent;
+            ctx.beginPath();
+            ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("S", headerX + 38, headerY + 57);
+          }
 
-        ctx.fillStyle = cardTextSub;
-        ctx.font = "black 11px Arial, sans-serif";
-        const subText = brandSubtext;
-        let textX = headerX + 105;
-        for (let i = 0; i < subText.length; i++) {
-          ctx.fillText(subText[i], textX, headerY + 76);
-          textX += 13;
+          ctx.fillStyle = "#ea580c";
+          ctx.font = "900 32px Arial, sans-serif";
+          ctx.fillText(brandName, headerX + 105, headerY + 50);
+
+          ctx.fillStyle = cardTextSub;
+          ctx.font = "900 12px Arial, sans-serif";
+          const subText = brandSubtext;
+          let textX = headerX + 105;
+          for (let i = 0; i < subText.length; i++) {
+            ctx.fillText(subText[i], textX, headerY + 76);
+            textX += 14.5;
+          }
         }
 
         // Category Tag (Top Right)
@@ -754,7 +902,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillStyle = "#0f172a";
         let titleFontSize = 46;
         ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
-        while (ctx.measureText(pTitle).width > W - 100 && titleFontSize > 28) {
+        while (ctx.measureText(pTitle).width > W - 100 && titleFontSize > 20) {
           titleFontSize -= 2;
           ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
         }
@@ -765,11 +913,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillText(tagline, W / 2, 275);
         ctx.textAlign = "left";
 
-        // Pedestal & Showcase (Shifted Up)
-        const showX = W / 2;
-        const showY = 490;
-        const pedestalW = 600;
-        const pedestalH = 100;
+        // Pedestal & Showcase coordinates (Responsive Layout Styles)
 
         if (props.platformStyle === "pedestal") {
           ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
@@ -825,6 +969,25 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
+
+          // Draw soft radial backdrop shadow
+          if (props.showProductShadow !== false) {
+            ctx.save();
+            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+            const shadowGrad = ctx.createRadialGradient(
+              showX + props.offsetX, showY + props.offsetY, 10,
+              showX + props.offsetX, showY + props.offsetY, shadowRadius
+            );
+            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
           ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -847,47 +1010,96 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges (Shifted Up, dynamic tracking)
-        const zoomOffset = (props.zoom - 1) * 120;
-        const badgeX = W / 2 - 165 + props.offsetX;
-        const badgeY = 305 + props.offsetY - zoomOffset;
-        if (dealTag) {
+        // Static badges with position selector (not affected by image panning/zoom)
+        const badgeY = 310;
+        const bPos = props.badgePosition || "center";
+        if (dealTag && accessory) {
+          let startX = W / 2 - 355 / 2;
+          if (bPos === "left") startX = 60;
+          else if (bPos === "right") startX = W - 60 - 355;
+          
+          // Deal Tag
           ctx.save();
           ctx.fillStyle = "#dc2626";
           ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX, badgeY, 150, 36, 8);
+          drawRoundedRect(ctx, startX, badgeY, 150, 36, 8);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 12px Arial";
-          ctx.fillText(dealTag, badgeX + 14, badgeY + 22);
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 75, badgeY + 22);
           ctx.restore();
-        }
-        if (accessory) {
+
+          // Accessory Tag
           ctx.save();
           ctx.fillStyle = "#059669";
           ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX + 165, badgeY, 190, 36, 8);
+          drawRoundedRect(ctx, startX + 165, badgeY, 190, 36, 8);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 12px Arial";
-          ctx.fillText(accessory, badgeX + 180, badgeY + 22);
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 165 + 95, badgeY + 22);
+          ctx.restore();
+        } else if (dealTag) {
+          let startX = W / 2 - 150 / 2;
+          if (bPos === "left") startX = 60;
+          else if (bPos === "right") startX = W - 60 - 150;
+          
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, startX, badgeY, 150, 36, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 12px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 75, badgeY + 22);
+          ctx.restore();
+        } else if (accessory) {
+          let startX = W / 2 - 190 / 2;
+          if (bPos === "left") startX = 60;
+          else if (bPos === "right") startX = W - 60 - 190;
+          
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, startX, badgeY, 190, 36, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 12px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 95, badgeY + 22);
           ctx.restore();
         }
 
-        // Specs List (Wide cards centered, Y starts at 750)
-        const specStartY = 750;
-        const specCardW = 980;
-        const specCardH = 76;
-        const specSpaceY = 88;
+        // Specs List (Wide cards centered or grid, Y starts at 750)
+        const specStartY = isGridSpecs ? 960 : 750;
+        const specCardW = isGridSpecs ? 470 : 980;
+        const specCardH = isGridSpecs ? 68 : 76;
+        const specSpaceY = isGridSpecs ? 80 : 88;
         specsList.forEach((specText, idx) => {
-          const currentY = specStartY + idx * specSpaceY;
+          let currentX = W / 2 - specCardW / 2;
+          let currentY = specStartY + idx * specSpaceY;
+          let currentW = specCardW;
+          let currentH = specCardH;
+
+          if (isGridSpecs) {
+            const col = idx % 2;
+            const row = Math.floor(idx / 2);
+            currentX = col === 0 ? 50 : 560;
+            currentY = specStartY + row * specSpaceY;
+          }
+
           ctx.save();
           ctx.shadowColor = "rgba(0,0,0,0.02)";
           ctx.shadowBlur = 6;
           ctx.shadowOffsetY = 2;
-          drawRoundedRect(ctx, W / 2 - specCardW / 2, currentY, specCardW, specCardH, 16);
+          drawRoundedRect(ctx, currentX, currentY, currentW, currentH, 16);
           ctx.fillStyle = cardFill;
           ctx.fill();
           ctx.strokeStyle = cardOutline;
@@ -895,80 +1107,82 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
           ctx.restore();
 
-          const iconX = W / 2 - specCardW / 2 + 35;
-          const iconCenterY = currentY + specCardH / 2;
+          const iconX = currentX + (isGridSpecs ? 25 : 35);
+          const iconCenterY = currentY + currentH / 2;
           ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
-          ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
+          ctx.arc(iconX, iconCenterY, isGridSpecs ? 15 : 20, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = isGridSpecs ? 1.5 : 2;
 
           const specLabel = getSpecLabel(specText, idx);
           if (specLabel === "PROCESSOR") {
             ctx.beginPath();
-            ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
+            ctx.rect(iconX - (isGridSpecs ? 7 : 9), iconCenterY - (isGridSpecs ? 7 : 9), isGridSpecs ? 14 : 18, isGridSpecs ? 14 : 18);
             ctx.stroke();
-            for (let i = -7; i <= 7; i += 4) {
-              ctx.fillRect(iconX + i - 1, iconCenterY - 12, 2, 3);
-              ctx.fillRect(iconX + i - 1, iconCenterY + 9, 2, 3);
-              ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
-              ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
+            const pinOffset = isGridSpecs ? 9 : 12;
+            const pinLen = isGridSpecs ? 2 : 3;
+            for (let i = (isGridSpecs ? -5 : -7); i <= (isGridSpecs ? 5 : 7); i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - pinOffset, 2, pinLen);
+              ctx.fillRect(iconX + i - 1, iconCenterY + pinOffset - pinLen, 2, pinLen);
+              ctx.fillRect(iconX - pinOffset, iconCenterY + i - 1, pinLen, 2);
+              ctx.fillRect(iconX + pinOffset - pinLen, iconCenterY + i - 1, pinLen, 2);
             }
           } else if (specLabel === "MEMORY") {
             ctx.beginPath();
-            ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
+            ctx.rect(iconX - (isGridSpecs ? 9 : 12), iconCenterY - 4, isGridSpecs ? 18 : 24, 8);
             ctx.stroke();
-            for (let i = -8; i <= 8; i += 4) {
-              ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
+            for (let i = (isGridSpecs ? -6 : -8); i <= (isGridSpecs ? 6 : 8); i += 4) {
+              ctx.fillRect(iconX + i - 1, iconCenterY - 2, 2, 4);
             }
           } else if (specLabel === "STORAGE") {
             ctx.beginPath();
-            ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
+            ctx.rect(iconX - 8, iconCenterY - 8, 16, 16);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY - 2, 4, 0, Math.PI * 2);
             ctx.stroke();
-            ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
+            ctx.fillRect(iconX - 5, iconCenterY + 4, 10, 1.5);
           } else if (specLabel === "WARRANTY") {
             drawShieldIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "INCLUDED") {
             drawPlugIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "DISPLAY") {
-            // Draw a monitor box
             ctx.beginPath();
-            ctx.rect(iconX - 12, iconCenterY - 8, 24, 14);
-            ctx.moveTo(iconX - 4, iconCenterY + 6);
-            ctx.lineTo(iconX - 6, iconCenterY + 10);
-            ctx.lineTo(iconX + 6, iconCenterY + 10);
-            ctx.lineTo(iconX + 4, iconCenterY + 6);
+            ctx.rect(iconX - 9, iconCenterY - 6, 18, 11);
+            ctx.moveTo(iconX - 3, iconCenterY + 5);
+            ctx.lineTo(iconX - 4, iconCenterY + 8);
+            ctx.lineTo(iconX + 4, iconCenterY + 8);
+            ctx.lineTo(iconX + 3, iconCenterY + 5);
             ctx.stroke();
           } else if (specLabel === "GRAPHICS") {
-            // Draw dual gear / GPU fan symbol
             drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 4, 2, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 10, Math.PI, Math.PI * 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 4, 8, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
 
+          const labelFontSize = isGridSpecs ? 8.5 : 10;
+          const textFontSize = isGridSpecs ? 13.5 : 18;
+          const labelYOffset = isGridSpecs ? 18 : 23;
+          const textYOffset = isGridSpecs ? 38 : 45;
+
           ctx.fillStyle = "#94a3b8";
-          ctx.font = "bold 10px Arial, sans-serif";
-          ctx.fillText(specLabel, iconX + 35, currentY + 23);
+          ctx.font = `bold ${labelFontSize}px Arial, sans-serif`;
+          ctx.fillText(specLabel, iconX + (isGridSpecs ? 22 : 35), currentY + labelYOffset);
 
           ctx.fillStyle = "#1e293b";
-          ctx.font = "bold 18px Arial, sans-serif";
-          ctx.fillText(specText, iconX + 35, currentY + 45);
+          ctx.font = `bold ${textFontSize}px Arial, sans-serif`;
+          ctx.fillText(specText, iconX + (isGridSpecs ? 22 : 35), currentY + textYOffset);
         });
 
         // Horizontal Policies Bar
-        const trustY = 1230;
+        const trustY = isGridSpecs ? 1160 : 1230;
         ctx.save();
         ctx.fillStyle = cardFill;
         ctx.strokeStyle = cardOutline;
@@ -991,7 +1205,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const priceY = 1560;
         const priceX = 80;
         ctx.fillStyle = activeAccent;
-        ctx.font = "black 12px Arial, sans-serif";
+        ctx.font = "900 12px Arial, sans-serif";
         ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY);
 
         ctx.fillStyle = "white";
@@ -1039,11 +1253,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.font = "bold 11px Arial";
         ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
+        const showQr = props.showQrCode !== false && qrImg;
+        const contactRowW = showQr ? 290 : 430;
+
         // Primary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 20, contactY + 44, 290, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 44, contactRowW, 52, 10);
         ctx.fill();
         ctx.stroke();
         
@@ -1060,7 +1277,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 20, contactY + 110, 290, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 110, contactRowW, 52, 10);
         ctx.fill();
         ctx.stroke();
         
@@ -1074,11 +1291,12 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillText(phoneSupport, contactX + 102, contactY + 151);
 
         // WhatsApp QR Code
-        if (qrImg) {
+        if (showQr) {
           ctx.fillStyle = "#f1f5f9";
           drawRoundedRect(ctx, contactX + 330, contactY + 36, 110, 110, 8);
           ctx.fill();
           ctx.drawImage(qrImg, contactX + 335, contactY + 41, 100, 100);
+          drawQrCodeCenterLogo(ctx, contactX + 385, contactY + 91, 12);
           
           ctx.fillStyle = "#64748b";
           ctx.font = "bold 10px Arial, sans-serif";
@@ -1127,40 +1345,47 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       // BRANCH: LANDSCAPE LAYOUT (16:9, 1200x630)
       // ----------------------------------------------------
       else if (props.ratio === "16:9") {
+        const isHorizontalSpecs = layoutStyle === "hero-center";
+        let showX = isHorizontalSpecs ? W / 2 : (W * 0.55);
+        let showY = isHorizontalSpecs ? 210 : 320;
+        let pedestalW = isHorizontalSpecs ? 500 : 340;
+        let pedestalH = isHorizontalSpecs ? 90 : 60;
         // Branding Box
         const headerX = 40;
         const headerY = 25;
-        ctx.save();
-        ctx.shadowColor = "rgba(15, 23, 42, 0.03)";
-        ctx.shadowBlur = 6;
-        drawRoundedRect(ctx, headerX, headerY, 220, 72, 12);
-        ctx.fillStyle = cardFill;
-        ctx.fill();
-        ctx.strokeStyle = cardOutline;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.restore();
-
-        if (logoImgRef.current) {
-          ctx.drawImage(logoImgRef.current, headerX + 10, headerY + 8, 56, 56);
-        } else {
-          ctx.fillStyle = activeAccent;
-          ctx.beginPath();
-          ctx.arc(headerX + 38, headerY + 36, 18, 0, Math.PI * 2);
+        if (props.showLogo !== false) {
+          ctx.save();
+          ctx.shadowColor = "rgba(15, 23, 42, 0.03)";
+          ctx.shadowBlur = 6;
+          drawRoundedRect(ctx, headerX, headerY, 220, 72, 12);
+          ctx.fillStyle = cardFill;
           ctx.fill();
-        }
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
 
-        ctx.fillStyle = "#ea580c";
-        ctx.font = "black 20px Arial, sans-serif";
-        ctx.fillText("SAI", headerX + 78, headerY + 34);
+          if (logoImgRef.current) {
+            ctx.drawImage(logoImgRef.current, headerX + 10, headerY + 8, 56, 56);
+          } else {
+            ctx.fillStyle = activeAccent;
+            ctx.beginPath();
+            ctx.arc(headerX + 38, headerY + 36, 18, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
-        ctx.fillStyle = cardTextSub;
-        ctx.font = "black 9px Arial, sans-serif";
-        const subText = "SYSTEMS";
-        let textX = headerX + 78;
-        for (let i = 0; i < subText.length; i++) {
-          ctx.fillText(subText[i], textX, headerY + 54);
-          textX += 10;
+          ctx.fillStyle = "#ea580c";
+          ctx.font = "900 24px Arial, sans-serif";
+          ctx.fillText("SAI", headerX + 78, headerY + 34);
+
+          ctx.fillStyle = cardTextSub;
+          ctx.font = "900 10px Arial, sans-serif";
+          const subText = "SYSTEMS";
+          let textX = headerX + 78;
+          for (let i = 0; i < subText.length; i++) {
+            ctx.fillText(subText[i], textX, headerY + 54);
+            textX += 10;
+          }
         }
 
         // Category Tag
@@ -1179,7 +1404,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillStyle = "#0f172a";
         let titleFontSize = 32;
         ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
-        while (ctx.measureText(pTitle).width > 480 && titleFontSize > 22) {
+        while (ctx.measureText(pTitle).width > 480 && titleFontSize > 16) {
           titleFontSize -= 2;
           ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
         }
@@ -1189,15 +1414,28 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.font = "bold 14px Arial, sans-serif";
         ctx.fillText(tagline || "— Professional Performance. Business Ready. —", 40, 170);
 
-        // Spec Cards (Left vertical stack, compact)
-        const specStartY = 205;
-        const specCardW = 400;
-        const specCardH = specsList.length > 4 ? 42 : 48;
-        const specSpaceY = specsList.length > 4 ? 46 : 56;
+        // Spec Cards (Left Column or Horizontal Row)
+        const specStartY = isHorizontalSpecs ? footerY - 58 : 205;
+        const specCardW = isHorizontalSpecs ? (W - 80) : 400;
+        const specCardH = isHorizontalSpecs ? 48 : (specsList.length > 4 ? 42 : 48);
+        const specSpaceY = isHorizontalSpecs ? 0 : (specsList.length > 4 ? 46 : 56);
         specsList.forEach((specText, idx) => {
-          const currentY = specStartY + idx * specSpaceY;
+          let currentX = 40;
+          let currentY = specStartY + idx * specSpaceY;
+          let currentW = specCardW;
+          let currentH = specCardH;
+
+          if (isHorizontalSpecs) {
+            const cardCount = specsList.length;
+            const gap = 12;
+            const totalWidth = W - 80;
+            currentW = (totalWidth - (cardCount - 1) * gap) / cardCount;
+            currentX = 40 + idx * (currentW + gap);
+            currentY = specStartY;
+          }
+
           ctx.save();
-          drawRoundedRect(ctx, 40, currentY, specCardW, specCardH, 10);
+          drawRoundedRect(ctx, currentX, currentY, currentW, currentH, 10);
           ctx.fillStyle = cardFill;
           ctx.fill();
           ctx.strokeStyle = cardOutline;
@@ -1205,11 +1443,11 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
           ctx.restore();
 
-          const iconX = 65;
-          const iconCenterY = currentY + specCardH / 2;
+          const iconX = currentX + (isHorizontalSpecs ? 20 : 25);
+          const iconCenterY = currentY + currentH / 2;
           ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
-          ctx.arc(iconX, iconCenterY, specsList.length > 4 ? 11 : 13, 0, Math.PI * 2);
+          ctx.arc(iconX, iconCenterY, isHorizontalSpecs ? 11 : (specsList.length > 4 ? 11 : 13), 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 1.5;
@@ -1227,43 +1465,37 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.beginPath();
             ctx.rect(iconX - 5, iconCenterY - 5, 10, 10);
             ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY - 1, 2, 0, Math.PI * 2);
-            ctx.stroke();
           } else if (specLabel === "WARRANTY") {
             drawShieldIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "INCLUDED") {
             drawPlugIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "DISPLAY") {
             ctx.beginPath();
-            ctx.rect(iconX - 7, iconCenterY - 5, 14, 9);
-            ctx.moveTo(iconX - 3, iconCenterY + 4);
-            ctx.lineTo(iconX + 3, iconCenterY + 4);
+            ctx.rect(iconX - 6, iconCenterY - 4, 12, 8);
             ctx.stroke();
           } else if (specLabel === "GRAPHICS") {
             drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 3, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 3, 5, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 2, 2, 0, Math.PI * 2);
             ctx.stroke();
           }
+
+          const labelFontSize = isHorizontalSpecs ? 8 : (specsList.length > 4 ? 8 : 8.5);
+          const textFontSize = isHorizontalSpecs ? 10.5 : (specsList.length > 4 ? 11.5 : 13.5);
+          const labelYOffset = isHorizontalSpecs ? 14 : (specsList.length > 4 ? 13 : 15);
+          const textYOffset = isHorizontalSpecs ? 28 : (specsList.length > 4 ? 26 : 32);
+
           ctx.fillStyle = "#94a3b8";
-          ctx.font = "bold 8px Arial, sans-serif";
-          ctx.fillText(specLabel, iconX + 22, currentY + (specsList.length > 4 ? 13 : 16));
+          ctx.font = `bold ${labelFontSize}px Arial, sans-serif`;
+          ctx.fillText(specLabel, iconX + 22, currentY + labelYOffset);
 
           ctx.fillStyle = "#1e293b";
-          ctx.font = "bold 13px Arial, sans-serif";
-          ctx.fillText(specText, iconX + 22, currentY + (specsList.length > 4 ? 28 : 34));
+          ctx.font = `bold ${textFontSize}px Arial, sans-serif`;
+          ctx.fillText(specText, iconX + 22, currentY + textYOffset);
         });
 
-        // Showcase & Pedestal (Middle Column)
-        const showX = W * 0.55;
-        const showY = 320;
-        const pedestalW = 340;
-        const pedestalH = 60;
+        // Pedestal & Showcase coordinates (Responsive Layout Styles)
 
         if (props.platformStyle === "pedestal") {
           ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
@@ -1311,6 +1543,25 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
+
+          // Draw soft radial backdrop shadow
+          if (props.showProductShadow !== false) {
+            ctx.save();
+            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+            const shadowGrad = ctx.createRadialGradient(
+              showX + props.offsetX, showY + props.offsetY, 10,
+              showX + props.offsetX, showY + props.offsetY, shadowRadius
+            );
+            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
           ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -1333,28 +1584,60 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges (Dynamic tracking)
-        const zoomOffset = (props.zoom - 1) * 80;
-        const badgeX = showX - 120 + props.offsetX;
-        const badgeY = showY - 120 + props.offsetY - zoomOffset;
-        if (dealTag) {
+        // Static badges with position selector above product showcase
+        const badgeY = showY - 120;
+        const bPos = props.badgePosition || "center";
+        if (dealTag && accessory) {
+          let startX = showX - 300 / 2;
+          if (bPos === "left") startX = showX - 230;
+          else if (bPos === "right") startX = showX + 230 - 300;
+          
           ctx.save();
           ctx.fillStyle = "#dc2626";
-          drawRoundedRect(ctx, badgeX, badgeY, 130, 32, 8);
+          drawRoundedRect(ctx, startX, badgeY, 130, 32, 8);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 11px Arial";
-          ctx.fillText(dealTag, badgeX + 10, badgeY + 20);
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 65, badgeY + 20);
           ctx.restore();
-        }
-        if (accessory) {
+
           ctx.save();
           ctx.fillStyle = "#059669";
-          drawRoundedRect(ctx, badgeX + 140, badgeY, 160, 32, 8);
+          drawRoundedRect(ctx, startX + 140, badgeY, 160, 32, 8);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 11px Arial";
-          ctx.fillText(accessory, badgeX + 150, badgeY + 20);
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 140 + 80, badgeY + 20);
+          ctx.restore();
+        } else if (dealTag) {
+          let startX = showX - 130 / 2;
+          if (bPos === "left") startX = showX - 230;
+          else if (bPos === "right") startX = showX + 230 - 130;
+          
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          drawRoundedRect(ctx, startX, badgeY, 130, 32, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 11px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 65, badgeY + 20);
+          ctx.restore();
+        } else if (accessory) {
+          let startX = showX - 160 / 2;
+          if (bPos === "left") startX = showX - 230;
+          else if (bPos === "right") startX = showX + 230 - 160;
+          
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          drawRoundedRect(ctx, startX, badgeY, 160, 32, 8);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 11px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 80, badgeY + 20);
           ctx.restore();
         }
 
@@ -1382,7 +1665,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const priceY = footerY + 70;
         const priceX = 50;
         ctx.fillStyle = activeAccent;
-        ctx.font = "black 10px Arial, sans-serif";
+        ctx.font = "900 10px Arial, sans-serif";
         ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY - 20);
 
         ctx.fillStyle = "white";
@@ -1445,12 +1728,13 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillText(phoneSupport, callRowX + 72, contactRowY + 12);
 
         // WhatsApp QR Code
-        if (qrImg) {
+        if (qrImg && props.showQrCode !== false) {
           ctx.save();
           ctx.fillStyle = "white";
           drawRoundedRect(ctx, W - 145, footerY + 25, 95, 95, 8);
           ctx.fill();
           ctx.drawImage(qrImg, W - 140, footerY + 30, 85, 85);
+          drawQrCodeCenterLogo(ctx, W - 140 + 42.5, footerY + 30 + 42.5, 11);
           
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 9px Arial, sans-serif";
@@ -1491,44 +1775,51 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       // BRANCH: SQUARE LAYOUT (1:1, 1080x1080) - DEFAULT FALLBACK
       // ----------------------------------------------------
       else {
+        const isHorizontalSpecs = layoutStyle === "hero-center";
+        let showX = isHorizontalSpecs ? W / 2 : 770;
+        let showY = isHorizontalSpecs ? 400 : 475;
+        let pedestalW = isHorizontalSpecs ? 500 : 420;
+        let pedestalH = isHorizontalSpecs ? 90 : 80;
         // Branding Logo
         const headerX = 40;
         const headerY = 40;
-        ctx.save();
-        ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 4;
-        drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
-        ctx.fillStyle = cardFill;
-        ctx.fill();
-        ctx.strokeStyle = cardOutline;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-
-        if (logoImgRef.current) {
-          ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
-        } else {
-          ctx.fillStyle = activeAccent;
-          ctx.beginPath();
-          ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+        if (props.showLogo !== false) {
+          ctx.save();
+          ctx.shadowColor = "rgba(15, 23, 42, 0.05)";
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetY = 4;
+          drawRoundedRect(ctx, headerX, headerY, 270, 100, 16);
+          ctx.fillStyle = cardFill;
           ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 20px Arial";
-          ctx.fillText("S", headerX + 38, headerY + 57);
-        }
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.restore();
 
-        ctx.fillStyle = "#ea580c";
-        ctx.font = "black 28px Arial, sans-serif";
-        ctx.fillText(brandName, headerX + 105, headerY + 50);
+          if (logoImgRef.current) {
+            ctx.drawImage(logoImgRef.current, headerX + 15, headerY + 12, 76, 76);
+          } else {
+            ctx.fillStyle = activeAccent;
+            ctx.beginPath();
+            ctx.arc(headerX + 45, headerY + 50, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("S", headerX + 38, headerY + 57);
+          }
 
-        ctx.fillStyle = cardTextSub;
-        ctx.font = "black 11px Arial, sans-serif";
-        const subText = brandSubtext;
-        let textX = headerX + 105;
-        for (let i = 0; i < subText.length; i++) {
-          ctx.fillText(subText[i], textX, headerY + 76);
-          textX += 13;
+          ctx.fillStyle = "#ea580c";
+          ctx.font = "900 32px Arial, sans-serif";
+          ctx.fillText(brandName, headerX + 105, headerY + 50);
+
+          ctx.fillStyle = cardTextSub;
+          ctx.font = "900 12px Arial, sans-serif";
+          const subText = brandSubtext;
+          let textX = headerX + 105;
+          for (let i = 0; i < subText.length; i++) {
+            ctx.fillText(subText[i], textX, headerY + 76);
+            textX += 14.5;
+          }
         }
 
         // Category Tag
@@ -1548,7 +1839,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillStyle = "#0f172a";
         let titleFontSize = 42;
         ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
-        while (ctx.measureText(pTitle).width > W - 380 && titleFontSize > 24) {
+        const titleMaxWidth = props.showLogo !== false ? W - 380 : W - 100;
+        while (ctx.measureText(pTitle).width > titleMaxWidth && titleFontSize > 18) {
           titleFontSize -= 2;
           ctx.font = "900 " + titleFontSize + "px Arial, sans-serif";
         }
@@ -1559,18 +1851,31 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillText(tagline, W - 40, 225);
         ctx.textAlign = "left"; // reset
 
-        // Spec Cards (Left Column)
-        const specStartY = 270;
-        const specCardW = 460;
-        const specCardH = specsList.length > 4 ? 54 : 74;
-        const specSpaceY = specsList.length > 4 ? 64 : 88;
+        // Spec Cards (Left Column or Horizontal Row)
+        const specStartY = isHorizontalSpecs ? footerY - 92 : 270;
+        const specCardW = isHorizontalSpecs ? (W - 80) : 460;
+        const specCardH = isHorizontalSpecs ? 68 : (specsList.length > 4 ? 54 : 74);
+        const specSpaceY = isHorizontalSpecs ? 0 : (specsList.length > 4 ? 64 : 88);
         specsList.forEach((specText, idx) => {
-          const currentY = specStartY + idx * specSpaceY;
+          let currentX = 40;
+          let currentY = specStartY + idx * specSpaceY;
+          let currentW = specCardW;
+          let currentH = specCardH;
+
+          if (isHorizontalSpecs) {
+            const cardCount = specsList.length;
+            const gap = 14;
+            const totalWidth = W - 80;
+            currentW = (totalWidth - (cardCount - 1) * gap) / cardCount;
+            currentX = 40 + idx * (currentW + gap);
+            currentY = specStartY;
+          }
+
           ctx.save();
           ctx.shadowColor = "rgba(0,0,0,0.02)";
           ctx.shadowBlur = 6;
           ctx.shadowOffsetY = 2;
-          drawRoundedRect(ctx, 40, currentY, specCardW, specCardH, 16);
+          drawRoundedRect(ctx, currentX, currentY, currentW, currentH, 16);
           ctx.fillStyle = cardFill;
           ctx.fill();
           ctx.strokeStyle = cardOutline;
@@ -1578,86 +1883,59 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.stroke();
           ctx.restore();
 
-          const iconX = 75;
-          const iconCenterY = currentY + specCardH / 2;
-          const iconRadius = specsList.length > 4 ? 15 : 20;
+          const iconX = currentX + (isHorizontalSpecs ? 20 : 35);
+          const iconCenterY = currentY + currentH / 2;
+          const iconRadius = isHorizontalSpecs ? 12 : (specsList.length > 4 ? 15 : 20);
           ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
           ctx.arc(iconX, iconCenterY, iconRadius, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.5;
 
           const specLabel = getSpecLabel(specText, idx);
           if (specLabel === "PROCESSOR") {
             ctx.beginPath();
-            ctx.rect(iconX - 9, iconCenterY - 9, 18, 18);
+            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
             ctx.stroke();
-            for (let i = -7; i <= 7; i += 4) {
-              ctx.fillRect(iconX + i - 1, iconCenterY - 12, 2, 3);
-              ctx.fillRect(iconX + i - 1, iconCenterY + 9, 2, 3);
-              ctx.fillRect(iconX - 12, iconCenterY + i - 1, 3, 2);
-              ctx.fillRect(iconX + 9, iconCenterY + i - 1, 3, 2);
-            }
           } else if (specLabel === "MEMORY") {
             ctx.beginPath();
-            ctx.rect(iconX - 12, iconCenterY - 6, 24, 12);
+            ctx.rect(iconX - 8, iconCenterY - 3, 16, 6);
             ctx.stroke();
-            for (let i = -8; i <= 8; i += 4) {
-              ctx.fillRect(iconX + i - 1, iconCenterY - 4, 2, 8);
-            }
           } else if (specLabel === "STORAGE") {
             ctx.beginPath();
-            ctx.rect(iconX - 10, iconCenterY - 10, 20, 20);
+            ctx.rect(iconX - 6, iconCenterY - 6, 12, 12);
             ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY - 3, 5, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.fillRect(iconX - 6, iconCenterY + 5, 12, 2);
           } else if (specLabel === "WARRANTY") {
             drawShieldIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "INCLUDED") {
             drawPlugIcon(ctx, iconX, iconCenterY);
           } else if (specLabel === "DISPLAY") {
             ctx.beginPath();
-            ctx.rect(iconX - 12, iconCenterY - 8, 24, 14);
-            ctx.moveTo(iconX - 4, iconCenterY + 6);
-            ctx.lineTo(iconX - 6, iconCenterY + 10);
-            ctx.lineTo(iconX + 6, iconCenterY + 10);
-            ctx.lineTo(iconX + 4, iconCenterY + 6);
+            ctx.rect(iconX - 8, iconCenterY - 5, 16, 10);
             ctx.stroke();
           } else if (specLabel === "GRAPHICS") {
             drawGearIcon(ctx, iconX, iconCenterY);
           } else {
             ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 10, Math.PI, Math.PI * 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
+            ctx.arc(iconX, iconCenterY + 3, 2, 0, Math.PI * 2);
             ctx.stroke();
           }
-          const labelFontSize = specsList.length > 4 ? 9.5 : 11;
-          const textFontSize = specsList.length > 4 ? 15 : 20;
-          const labelYOffset = specsList.length > 4 ? 18 : 23;
-          const textYOffset = specsList.length > 4 ? 38 : 47;
+          const labelFontSize = isHorizontalSpecs ? 8.5 : (specsList.length > 4 ? 9.5 : 11);
+          const textFontSize = isHorizontalSpecs ? 11.5 : (specsList.length > 4 ? 15 : 20);
+          const labelYOffset = isHorizontalSpecs ? 15 : (specsList.length > 4 ? 18 : 23);
+          const textYOffset = isHorizontalSpecs ? 32 : (specsList.length > 4 ? 38 : 47);
 
           ctx.fillStyle = "#94a3b8";
           ctx.font = `bold ${labelFontSize}px Arial, sans-serif`;
-          ctx.fillText(specLabel, 120, currentY + labelYOffset);
+          ctx.fillText(specLabel, iconX + 22, currentY + labelYOffset);
 
           ctx.fillStyle = "#1e293b";
           ctx.font = `bold ${textFontSize}px Arial, sans-serif`;
-          ctx.fillText(specText, 120, currentY + textYOffset);
+          ctx.fillText(specText, iconX + 22, currentY + textYOffset);
         });
 
-        // Pedestal & Showcase (Right Column)
-        const showX = 770;
-        const showY = 475;
-        const pedestalW = 420;
-        const pedestalH = 80;
+        // Pedestal & Showcase coordinates (Responsive Layout Styles)
 
         if (props.platformStyle === "pedestal") {
           ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
@@ -1713,6 +1991,25 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           const finalScale = baseScale * props.zoom;
           const drawW = pWidth * finalScale;
           const drawH = pHeight * finalScale;
+
+          // Draw soft radial backdrop shadow
+          if (props.showProductShadow !== false) {
+            ctx.save();
+            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+            const shadowGrad = ctx.createRadialGradient(
+              showX + props.offsetX, showY + props.offsetY, 10,
+              showX + props.offsetX, showY + props.offsetY, shadowRadius
+            );
+            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
           ctx.translate(showX + props.offsetX, showY + props.offsetY);
           ctx.rotate((props.rotation * Math.PI) / 180);
           ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -1735,59 +2032,97 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.restore();
         }
 
-        // Floating Badges (Dynamic tracking)
-        const zoomOffset = (props.zoom - 1) * 120;
-        const badgeX = showX - 150 + props.offsetX;
-        const badgeY = showY - 160 + props.offsetY - zoomOffset;
-        if (dealTag) {
+        // Static badges with position selector above product showcase
+        const badgeY = showY - 160;
+        const bPos = props.badgePosition || "center";
+        if (dealTag && accessory) {
+          let startX = showX - 395 / 2;
+          if (bPos === "left") startX = showX - 280;
+          else if (bPos === "right") startX = showX + 280 - 395;
+          
           ctx.save();
           ctx.fillStyle = "#dc2626";
           ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX, badgeY, 170, 42, 10);
+          drawRoundedRect(ctx, startX, badgeY, 170, 42, 10);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 13px Arial";
-          ctx.fillText(dealTag, badgeX + 16, badgeY + 26);
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 85, badgeY + 26);
           ctx.restore();
-        }
-        if (accessory) {
+
           ctx.save();
           ctx.fillStyle = "#059669";
           ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
           ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, badgeX + 185, badgeY, 210, 42, 10);
+          drawRoundedRect(ctx, startX + 185, badgeY, 210, 42, 10);
           ctx.fill();
           ctx.fillStyle = "white";
           ctx.font = "bold 13px Arial";
-          ctx.fillText(accessory, badgeX + 200, badgeY + 26);
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 185 + 105, badgeY + 26);
+          ctx.restore();
+        } else if (dealTag) {
+          let startX = showX - 170 / 2;
+          if (bPos === "left") startX = showX - 280;
+          else if (bPos === "right") startX = showX + 280 - 170;
+          
+          ctx.save();
+          ctx.fillStyle = "#dc2626";
+          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, startX, badgeY, 170, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(dealTag, startX + 85, badgeY + 26);
+          ctx.restore();
+        } else if (accessory) {
+          let startX = showX - 210 / 2;
+          if (bPos === "left") startX = showX - 280;
+          else if (bPos === "right") startX = showX + 280 - 210;
+          
+          ctx.save();
+          ctx.fillStyle = "#059669";
+          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
+          ctx.shadowBlur = 10;
+          drawRoundedRect(ctx, startX, badgeY, 210, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = "white";
+          ctx.font = "bold 13px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(accessory, startX + 105, badgeY + 26);
           ctx.restore();
         }
 
-        // Trust policies bar
-        const trustY = footerY - 95;
-        ctx.save();
-        ctx.fillStyle = cardFill;
-        ctx.strokeStyle = cardOutline;
-        ctx.lineWidth = 1;
-        drawRoundedRect(ctx, 40, trustY, W - 80, 66, 14);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
+        // Trust policies bar (Only shown in non-hero layouts to avoid horizontal card overlapping)
+        if (!isHorizontalSpecs) {
+          const trustY = footerY - 95;
+          ctx.save();
+          ctx.fillStyle = cardFill;
+          ctx.strokeStyle = cardOutline;
+          ctx.lineWidth = 1;
+          drawRoundedRect(ctx, 40, trustY, W - 80, 66, 14);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
 
-        const trustXCoords = [80, 410, 760];
-        trustPolicies.forEach((policyText: string, idx: number) => {
-          if (trustXCoords[idx] !== undefined) {
-            const cleanPolicy = policyText.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, "");
-            drawCheckmarkBullet(ctx, trustXCoords[idx], trustY + 38, cleanPolicy, 13);
-          }
-        });
+          const trustXCoords = [80, 410, 760];
+          trustPolicies.forEach((policyText: string, idx: number) => {
+            if (trustXCoords[idx] !== undefined) {
+              const cleanPolicy = policyText.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, "");
+              drawCheckmarkBullet(ctx, trustXCoords[idx], trustY + 38, cleanPolicy, 13);
+            }
+          });
+        }
 
         // Pricing details
         const priceY = footerY + 80;
         const priceX = 60;
         ctx.fillStyle = activeAccent;
-        ctx.font = "black 12px Arial, sans-serif";
+        ctx.font = "900 12px Arial, sans-serif";
         ctx.fillText(props.isTamil ? "சிறப்பு சலுகை விலை" : "SPECIAL DEAL PRICE", priceX, priceY - 24);
 
         ctx.fillStyle = "white";
@@ -1835,11 +2170,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.font = "bold 11px Arial";
         ctx.fillText(props.isTamil ? "உடனே ஆர்டர் செய்ய" : "GET THIS DEAL INSTANTLY", contactX + 25, contactY + 28);
 
+        const showQr = props.showQrCode !== false && qrImg;
+        const contactRowW = showQr ? 290 : 430;
+
         // Primary Contact (Both WhatsApp & Call)
         ctx.fillStyle = "#f0fdf4";
         ctx.strokeStyle = "#bbf7d0";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 20, contactY + 44, 290, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 44, contactRowW, 52, 10);
         ctx.fill();
         ctx.stroke();
         
@@ -1856,7 +2194,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillStyle = "#fff7ed";
         ctx.strokeStyle = "#fed7aa";
         ctx.lineWidth = 1;
-        drawRoundedRect(ctx, contactX + 20, contactY + 110, 290, 52, 10);
+        drawRoundedRect(ctx, contactX + 20, contactY + 110, contactRowW, 52, 10);
         ctx.fill();
         ctx.stroke();
         
@@ -1870,11 +2208,12 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.fillText(phoneSupport, contactX + 102, contactY + 151);
 
         // WhatsApp QR Code
-        if (qrImg) {
+        if (showQr) {
           ctx.fillStyle = "#f1f5f9";
           drawRoundedRect(ctx, contactX + 330, contactY + 36, 110, 110, 8);
           ctx.fill();
           ctx.drawImage(qrImg, contactX + 335, contactY + 41, 100, 100);
+          drawQrCodeCenterLogo(ctx, contactX + 385, contactY + 91, 12);
           
           ctx.fillStyle = "#64748b";
           ctx.font = "bold 10px Arial, sans-serif";
@@ -1892,14 +2231,21 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.lineTo(W - 40, footerLineY);
         ctx.stroke();
 
-        const checkmarks = props.isTamil
-          ? ["தரம் வாய்ந்தவை", "மொத்த விலை", "வாழ்நாள் ஆதரவு", "100% திருப்தி"]
-          : ["Quality Refurbished", "Wholesale Prices", "Lifetime Support", "100% Satisfaction"];
-          
-        drawCheckmarkBullet(ctx, 50, footerLineY + 25, checkmarks[0]);
-        drawCheckmarkBullet(ctx, W * 0.30, footerLineY + 25, checkmarks[1]);
-        drawCheckmarkBullet(ctx, W * 0.55, footerLineY + 25, checkmarks[2]);
-        drawCheckmarkBullet(ctx, W * 0.80, footerLineY + 25, checkmarks[3]);
+        if (isHorizontalSpecs) {
+          const cleanPolicies = trustPolicies.map((p: string) => p.replace(/^([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF])\s*/g, ""));
+          drawCheckmarkBullet(ctx, 60, footerLineY + 25, cleanPolicies[0] || "");
+          drawCheckmarkBullet(ctx, W * 0.38, footerLineY + 25, cleanPolicies[1] || "");
+          drawCheckmarkBullet(ctx, W * 0.70, footerLineY + 25, cleanPolicies[2] || "");
+        } else {
+          const checkmarks = props.isTamil
+            ? ["தரம் வாய்ந்தவை", "மொத்த விலை", "வாழ்நாள் ஆதரவு", "100% திருப்தி"]
+            : ["Quality Refurbished", "Wholesale Prices", "Lifetime Support", "100% Satisfaction"];
+            
+          drawCheckmarkBullet(ctx, 50, footerLineY + 25, checkmarks[0]);
+          drawCheckmarkBullet(ctx, W * 0.30, footerLineY + 25, checkmarks[1]);
+          drawCheckmarkBullet(ctx, W * 0.55, footerLineY + 25, checkmarks[2]);
+          drawCheckmarkBullet(ctx, W * 0.80, footerLineY + 25, checkmarks[3]);
+        }
 
         ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
         ctx.font = "bold 12px Arial, sans-serif";
@@ -1927,7 +2273,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
     // Helper: Rupee comma formatter
     const formatRupee = (val: string) => {
-      const num = val.replace(/\D/g, "");
+      const cleanVal = val.split(".")[0];
+      const num = cleanVal.replace(/\D/g, "");
       if (!num) return "";
       const lastThree = num.substring(num.length - 3);
       const otherBits = num.substring(0, num.length - 3);
@@ -2022,6 +2369,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         const dealTag = props.product.dealTag ? `\n🔥 ${props.product.dealTag.toUpperCase()}!` : "";
         const accessory = props.product.includedAccessory ? `\n🎁 FREE Accessories: ${props.product.includedAccessory}` : "";
         const specsList = props.product.specs || [];
+        const customPhone = props.phoneSupport || "+91 87780 03397";
+        const customWhatsApp = props.whatsappChat || "+91 79041 08020";
 
         let specsStr = "";
         specsList.forEach(s => {
@@ -2037,8 +2386,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 🛡️ 365-Day Warranty | 100% Genuine Spare Parts Included
 
 📍 Showroom: PAA Building, Y.M.R Patty, Dindigul (Near Head Post Office)
-📞 Call Support: +91 87780 03397
-💬 WhatsApp Order: +91 79041 08020
+📞 Call Support: ${customPhone}
+💬 WhatsApp Order: ${customWhatsApp}
 🌐 Browse catalog: saisystems.org.in
 
 #RefurbishedLaptops #DindigulDeals #SaiSystems #DellLatitude #LaptopsWholesale`;
@@ -2056,14 +2405,28 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           {/* Main Canvas component shown directly in DOM for 60fps interaction */}
           <canvas
             ref={canvasRef}
-            className="max-h-[500px] max-w-full h-auto w-auto object-contain select-none rounded-xl"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="max-h-[500px] max-w-full h-auto w-auto object-contain select-none rounded-xl cursor-grab active:cursor-grabbing"
             style={{ display: "block" }}
           />
           {/* Real image overlay for mobile long-press copy and save support */}
           {imgSrc && (
             <img
               src={imgSrc}
-              className="absolute top-0 bottom-0 left-0 right-0 m-auto max-h-[500px] max-w-full h-auto w-auto object-contain cursor-pointer select-none opacity-0"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUpOrLeave}
+              onMouseLeave={handleMouseUpOrLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="absolute top-0 bottom-0 left-0 right-0 m-auto max-h-[500px] max-w-full h-auto w-auto object-contain cursor-grab active:cursor-grabbing select-none opacity-0"
               alt={`Promotional banner for ${props.product.title || "Product"}`}
               title="Right-click or long-press to copy/save"
             />
