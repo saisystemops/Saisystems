@@ -1762,6 +1762,16 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Flyer Tagline (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. — Professional Performance. Business Ready. —"
+                        value={tagline}
+                        onChange={(e) => setTagline(e.target.value)}
+                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
                       <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
                       <input
                         type="text"
@@ -1807,6 +1817,192 @@ export default function AdminPage() {
                         </span>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Branding settings and Trust badges settings */}
+                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
+                    {/* Branding drawer */}
+                    <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                      <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                        <span className="flex items-center gap-2">
+                          <span>⚙️</span>
+                          <span>Branding & Localization settings</span>
+                        </span>
+                        <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                      </summary>
+                      <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Bilingual Tamil Toggle */}
+                        <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-gray-800 dark:text-white">Bilingual Tamil / English</span>
+                            <span className="text-[9px] text-gray-500">Translate flyer labels to Tamil/English</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isTamil}
+                              onChange={(e) => setIsTamil(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                          </label>
+                        </div>
+
+                        {/* Easy EMI Badge Toggle */}
+                        <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-gray-800 dark:text-white">Show Easy EMI Badge</span>
+                            <span className="text-[9px] text-gray-500">Calculate and overlay EMI pricing</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showEmi}
+                              onChange={(e) => setShowEmi(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                          </label>
+                        </div>
+
+                        {showEmi && (
+                          <div className="col-span-2 grid grid-cols-2 gap-3 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                            <div>
+                              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">EMI Tenure (Months)</label>
+                              <select
+                                value={emiTenure}
+                                onChange={(e) => setEmiTenure(Number(e.target.value))}
+                                className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none cursor-pointer"
+                              >
+                                <option value={6}>6 Months</option>
+                                <option value={9}>9 Months</option>
+                                <option value={12}>12 Months (Default)</option>
+                                <option value={18}>18 Months</option>
+                                <option value={24}>24 Months</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Manual EMI Text (Optional)</label>
+                              <input
+                                type="text"
+                                value={customEmiText}
+                                placeholder="e.g. Starts at ₹999/month*"
+                                onChange={(e) => setCustomEmiText(e.target.value)}
+                                className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Brand Name */}
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
+                          <input
+                            type="text"
+                            value={brandName}
+                            onChange={(e) => setBrandName(e.target.value)}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Brand Subtext */}
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Subtext</label>
+                          <input
+                            type="text"
+                            value={brandSubtext}
+                            onChange={(e) => setBrandSubtext(e.target.value)}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Phone Support */}
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
+                          <input
+                            type="text"
+                            value={phoneSupport}
+                            onChange={(e) => setPhoneSupport(e.target.value)}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        {/* WhatsApp Chat */}
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">WhatsApp Chat</label>
+                          <input
+                            type="text"
+                            value={whatsappChat}
+                            onChange={(e) => setWhatsappChat(e.target.value)}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Showroom Address */}
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Showroom Address (Optional)</label>
+                          <textarea
+                            rows={2}
+                            value={showroomAddress}
+                            placeholder="Leave blank for dynamic default address"
+                            onChange={(e) => setShowroomAddress(e.target.value)}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
+                          />
+                        </div>
+                      </div>
+                    </details>
+
+                    {/* Trust Badges Drawer */}
+                    <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                      <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                        <span className="flex items-center gap-2">
+                          <span>🛡️</span>
+                          <span>Flyer Trust Badges (Horizontal Bar)</span>
+                        </span>
+                        <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                      </summary>
+                      <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850">
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 1 (Left)</label>
+                          <input
+                            type="text"
+                            value={trustPolicies[0] || ""}
+                            onChange={(e) => {
+                              const newPolicies = [...trustPolicies];
+                              newPolicies[0] = e.target.value;
+                              setTrustPolicies(newPolicies);
+                            }}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 2 (Center)</label>
+                          <input
+                            type="text"
+                            value={trustPolicies[1] || ""}
+                            onChange={(e) => {
+                              const newPolicies = [...trustPolicies];
+                              newPolicies[1] = e.target.value;
+                              setTrustPolicies(newPolicies);
+                            }}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 3 (Right)</label>
+                          <input
+                            type="text"
+                            value={trustPolicies[2] || ""}
+                            onChange={(e) => {
+                              const newPolicies = [...trustPolicies];
+                              newPolicies[2] = e.target.value;
+                              setTrustPolicies(newPolicies);
+                            }}
+                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </details>
                   </div>
 
                   <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
@@ -2421,6 +2617,16 @@ export default function AdminPage() {
                                   </select>
                                 </div>
                                 <div className="sm:col-span-2">
+                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Tagline (Optional)</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. — Professional Performance. Business Ready. —"
+                                    value={tagline}
+                                    onChange={(e) => setTagline(e.target.value)}
+                                    className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
                                   <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
                                   <input
                                     type="text"
@@ -2502,6 +2708,192 @@ export default function AdminPage() {
                                   />
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Branding settings and Trust badges settings */}
+                            <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
+                              {/* Branding drawer */}
+                              <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                                <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                                  <span className="flex items-center gap-2">
+                                    <span>⚙️</span>
+                                    <span>Branding & Localization settings</span>
+                                  </span>
+                                  <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {/* Bilingual Tamil Toggle */}
+                                  <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-bold text-gray-800 dark:text-white">Bilingual Tamil / English</span>
+                                      <span className="text-[9px] text-gray-500">Translate flyer labels to Tamil/English</span>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={isTamil}
+                                        onChange={(e) => setIsTamil(e.target.checked)}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                                    </label>
+                                  </div>
+
+                                  {/* Easy EMI Badge Toggle */}
+                                  <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-bold text-gray-800 dark:text-white">Show Easy EMI Badge</span>
+                                      <span className="text-[9px] text-gray-500">Calculate and overlay EMI pricing</span>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={showEmi}
+                                        onChange={(e) => setShowEmi(e.target.checked)}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                                    </label>
+                                  </div>
+
+                                  {showEmi && (
+                                    <div className="col-span-2 grid grid-cols-2 gap-3 bg-white dark:bg-gray-955 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">EMI Tenure (Months)</label>
+                                        <select
+                                          value={emiTenure}
+                                          onChange={(e) => setEmiTenure(Number(e.target.value))}
+                                          className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none cursor-pointer"
+                                        >
+                                          <option value={6}>6 Months</option>
+                                          <option value={9}>9 Months</option>
+                                          <option value={12}>12 Months (Default)</option>
+                                          <option value={18}>18 Months</option>
+                                          <option value={24}>24 Months</option>
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Manual EMI Text (Optional)</label>
+                                        <input
+                                          type="text"
+                                          value={customEmiText}
+                                          placeholder="e.g. Starts at ₹999/month*"
+                                          onChange={(e) => setCustomEmiText(e.target.value)}
+                                          className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Brand Name */}
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
+                                    <input
+                                      type="text"
+                                      value={brandName}
+                                      onChange={(e) => setBrandName(e.target.value)}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+
+                                  {/* Brand Subtext */}
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Subtext</label>
+                                    <input
+                                      type="text"
+                                      value={brandSubtext}
+                                      onChange={(e) => setBrandSubtext(e.target.value)}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+
+                                  {/* Phone Support */}
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
+                                    <input
+                                      type="text"
+                                      value={phoneSupport}
+                                      onChange={(e) => setPhoneSupport(e.target.value)}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+
+                                  {/* WhatsApp Chat */}
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">WhatsApp Chat</label>
+                                    <input
+                                      type="text"
+                                      value={whatsappChat}
+                                      onChange={(e) => setWhatsappChat(e.target.value)}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+
+                                  {/* Showroom Address */}
+                                  <div className="col-span-2">
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Showroom Address (Optional)</label>
+                                    <textarea
+                                      rows={2}
+                                      value={showroomAddress}
+                                      placeholder="Leave blank for dynamic default address"
+                                      onChange={(e) => setShowroomAddress(e.target.value)}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
+                                    />
+                                  </div>
+                                </div>
+                              </details>
+
+                              {/* Trust Badges Drawer */}
+                              <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
+                                <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
+                                  <span className="flex items-center gap-2">
+                                    <span>🛡️</span>
+                                    <span>Flyer Trust Badges (Horizontal Bar)</span>
+                                  </span>
+                                  <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850">
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 1 (Left)</label>
+                                    <input
+                                      type="text"
+                                      value={trustPolicies[0] || ""}
+                                      onChange={(e) => {
+                                        const newPolicies = [...trustPolicies];
+                                        newPolicies[0] = e.target.value;
+                                        setTrustPolicies(newPolicies);
+                                      }}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 2 (Center)</label>
+                                    <input
+                                      type="text"
+                                      value={trustPolicies[1] || ""}
+                                      onChange={(e) => {
+                                        const newPolicies = [...trustPolicies];
+                                        newPolicies[1] = e.target.value;
+                                        setTrustPolicies(newPolicies);
+                                      }}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 3 (Right)</label>
+                                    <input
+                                      type="text"
+                                      value={trustPolicies[2] || ""}
+                                      onChange={(e) => {
+                                        const newPolicies = [...trustPolicies];
+                                        newPolicies[2] = e.target.value;
+                                        setTrustPolicies(newPolicies);
+                                      }}
+                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                  </div>
+                                </div>
+                              </details>
                             </div>
 
                             {/* RIGHT COLUMN: Edit Banner Canvas Preview (5 cols) */}
