@@ -1441,8 +1441,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         // Spec Cards (Left Column)
         const specStartY = 270;
         const specCardW = 460;
-        const specCardH = 74;
-        const specSpaceY = 88;
+        const specCardH = specsList.length > 4 ? 54 : 74;
+        const specSpaceY = specsList.length > 4 ? 64 : 88;
         specsList.forEach((specText, idx) => {
           const currentY = specStartY + idx * specSpaceY;
           ctx.save();
@@ -1459,9 +1459,10 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
           const iconX = 75;
           const iconCenterY = currentY + specCardH / 2;
+          const iconRadius = specsList.length > 4 ? 15 : 20;
           ctx.fillStyle = getRgbaColor(activeAccent, 0.08);
           ctx.beginPath();
-          ctx.arc(iconX, iconCenterY, 20, 0, Math.PI * 2);
+          ctx.arc(iconX, iconCenterY, iconRadius, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = activeAccent;
           ctx.lineWidth = 2;
@@ -1517,13 +1518,18 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             ctx.arc(iconX, iconCenterY + 6, 17, Math.PI, Math.PI * 2);
             ctx.stroke();
           }
+          const labelFontSize = specsList.length > 4 ? 9.5 : 11;
+          const textFontSize = specsList.length > 4 ? 15 : 20;
+          const labelYOffset = specsList.length > 4 ? 18 : 23;
+          const textYOffset = specsList.length > 4 ? 38 : 47;
+
           ctx.fillStyle = "#94a3b8";
-          ctx.font = "bold 11px Arial, sans-serif";
-          ctx.fillText(specLabel, 120, currentY + 23);
+          ctx.font = `bold ${labelFontSize}px Arial, sans-serif`;
+          ctx.fillText(specLabel, 120, currentY + labelYOffset);
 
           ctx.fillStyle = "#1e293b";
-          ctx.font = "bold 20px Arial, sans-serif";
-          ctx.fillText(specText, 120, currentY + 47);
+          ctx.font = `bold ${textFontSize}px Arial, sans-serif`;
+          ctx.fillText(specText, 120, currentY + textYOffset);
         });
 
         // Pedestal & Showcase (Right Column)
