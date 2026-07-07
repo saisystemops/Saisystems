@@ -1623,658 +1623,196 @@ export default function AdminPage() {
           {/* Render Add Form */}
           {showAddForm && activeSection !== "tickets" && activeSection !== "estimator" && activeSection !== "reviews" && activeSection !== "blogs" && (
             <div className="mb-8 bg-gray-100 dark:bg-gray-900 border border-gray-250 dark:border-gray-850 p-6 rounded-3xl transition-colors">
-              <h3 className="text-base font-black text-gray-950 dark:text-white mb-4">Create New Showroom Item & Promo Banner</h3>
-              
-              {/* AI Parser Section */}
-              <div className="mb-6 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
-                <label className="block text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase mb-1.5 flex items-center gap-1">
-                  <span>🤖</span> AI Deal Autofill & Specs Parser
-                </label>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <textarea
-                    rows={2}
-                    value={addAiPromptText}
-                    onChange={(e) => setAddAiPromptText(e.target.value)}
-                    placeholder="Paste raw specifications or deal description (e.g. 'Dell Latitude 7490 Core i7 8th Gen 16GB RAM 512GB SSD. Price 28500, was 38000. Free laptop bag.')"
-                    className="flex-1 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-2.5 rounded-xl text-xs text-gray-950 dark:text-white focus:outline-none focus:border-orange-500/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAiParseDeal}
-                    disabled={parsingAi}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
-                  >
-                    {parsingAi ? "Parsing Text..." : "🪄 AI Autofill Form"}
-                  </button>
+              <form onSubmit={handleCreateProduct} className="space-y-4">
+                <h3 className="text-base font-black text-gray-955 dark:text-white">Create New Showroom Item</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {/* Category */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
+                    <select
+                      value={newProduct.category}
+                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as Product["category"] })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    >
+                      <option value="laptops">Refurbished Laptops</option>
+                      <option value="desktops">New Desktops</option>
+                      <option value="spare-parts">Spare Parts</option>
+                      <option value="accessories">Mobile Accessories</option>
+                    </select>
+                  </div>
+
+                  {/* Offer Badge */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Badge (e.g. 30% OFF)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 30% OFF / New"
+                      value={newProduct.badge || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Product Title */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Title</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. HP EliteBook 840 G6"
+                      value={newProduct.title || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Offer Price */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Price (Numeric)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 28000"
+                      value={newProduct.price || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Original Price */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 38000"
+                      value={newProduct.originalPrice || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Product Image URL */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Image URL</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. /products/latitude-7490.png"
+                      value={newProduct.imageUrl || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* WhatsApp Catalog Link */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">WhatsApp Catalog Link (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://wa.me/p/10032918260090500"
+                      value={newProduct.whatsappLink || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Deal Tag */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🏷️ Deal Tag / Promo Label</label>
+                    <select
+                      value={newProduct.dealTag || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, dealTag: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    >
+                      <option value="">— No Deal Tag —</option>
+                      <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
+                      <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
+                      <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
+                      <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
+                      <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
+                      <option value="💥 FLASH SALE">💥 FLASH SALE</option>
+                      <option value="📦 BULK DEAL">📦 BULK DEAL</option>
+                      <option value="Refurbished">Refurbished</option>
+                    </select>
+                  </div>
+
+                  {/* Included Accessory */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🎁 Included Free Accessory</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Free Laptop Bag & Mouse"
+                      value={newProduct.includedAccessory || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, includedAccessory: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Short Description */}
+                  <div className="sm:col-span-2 md:col-span-3">
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Corporate business laptops, A++ showroom condition."
+                      value={newProduct.description || ""}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* LEFT COLUMN: Catalog Item Fields (7 cols) */}
-                <form onSubmit={handleCreateProduct} className="lg:col-span-7 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Category</label>
-                      <select
-                        value={newProduct.category}
-                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value as Product["category"] })}
-                        className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      >
-                        <option value="laptops">Refurbished Laptops</option>
-                        <option value="desktops">New Desktops</option>
-                        <option value="spare-parts">Spare Parts</option>
-                        <option value="accessories">Mobile Accessories</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Badge (e.g. 30% OFF)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 30% OFF / New"
-                        value={newProduct.badge}
-                        onChange={(e) => setNewProduct({ ...newProduct, badge: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Title</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Dell Latitude 3410"
-                        value={newProduct.title}
-                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Offer Price (Numeric)</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. 28000"
-                        value={newProduct.price}
-                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Original Price (Strikeout)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 38000"
-                        value={newProduct.originalPrice}
-                        onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Product Image URL</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. /products/latitude-7490.png"
-                        value={newProduct.imageUrl || ""}
-                        onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                      {addLocalImageFile && !newProduct.imageUrl && (
-                        <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1">
-                          ⚠️ Local file is active on banner, but empty website catalog URL. Remember to input an image link for the public showroom.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">WhatsApp Catalog Link (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. https://wa.me/p/10032918260090500"
-                        value={newProduct.whatsappLink || ""}
-                        onChange={(e) => setNewProduct({ ...newProduct, whatsappLink: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🏷️ Deal Tag / Promo Label</label>
-                      <select
-                        value={newProduct.dealTag || ""}
-                        onChange={(e) => setNewProduct({ ...newProduct, dealTag: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      >
-                        <option value="">— No Deal Tag —</option>
-                        <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
-                        <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
-                        <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
-                        <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
-                        <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
-                        <option value="💥 FLASH SALE">💥 FLASH SALE</option>
-                        <option value="📦 BULK DEAL">📦 BULK DEAL</option>
-                        <option value="Refurbished">Refurbished</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">🎁 Included Free Accessory</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Free Laptop Bag & Mouse"
-                        value={newProduct.includedAccessory || ""}
-                        onChange={(e) => setNewProduct({ ...newProduct, includedAccessory: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Flyer Tagline (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. — Professional Performance. Business Ready. —"
-                        value={tagline}
-                        onChange={(e) => setTagline(e.target.value)}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Short Description</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Corporate business laptops, A++ showroom condition."
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Specs adding list */}
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Add Hardware Specifications (Up to 4-5)</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. Intel Core i5 10th Gen"
-                        value={newSpecText}
-                        onChange={(e) => setNewSpecText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSpecToNew())}
-                        className="flex-1 bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddSpecToNew}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-850 dark:hover:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold rounded-lg cursor-pointer"
-                      >
-                        Add Spec
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {(newProduct.specs || []).map((spec, sidx) => (
-                        <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
-                          {spec}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSpecFromNew(sidx)}
-                            className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px] cursor-pointer"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Branding settings and Trust badges settings */}
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
-                    {/* Branding drawer */}
-                    <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
-                      <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
-                        <span className="flex items-center gap-2">
-                          <span>⚙️</span>
-                          <span>Branding & Localization settings</span>
-                        </span>
-                        <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
-                      </summary>
-                      <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Bilingual Tamil Toggle */}
-                        <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-gray-800 dark:text-white">Bilingual Tamil / English</span>
-                            <span className="text-[9px] text-gray-500">Translate flyer labels to Tamil/English</span>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isTamil}
-                              onChange={(e) => setIsTamil(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
-                          </label>
-                        </div>
-
-                        {/* Easy EMI Badge Toggle */}
-                        <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-gray-800 dark:text-white">Show Easy EMI Badge</span>
-                            <span className="text-[9px] text-gray-500">Calculate and overlay EMI pricing</span>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={showEmi}
-                              onChange={(e) => setShowEmi(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
-                          </label>
-                        </div>
-
-                        {showEmi && (
-                          <div className="col-span-2 grid grid-cols-2 gap-3 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                            <div>
-                              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">EMI Tenure (Months)</label>
-                              <select
-                                value={emiTenure}
-                                onChange={(e) => setEmiTenure(Number(e.target.value))}
-                                className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none cursor-pointer"
-                              >
-                                <option value={6}>6 Months</option>
-                                <option value={9}>9 Months</option>
-                                <option value={12}>12 Months (Default)</option>
-                                <option value={18}>18 Months</option>
-                                <option value={24}>24 Months</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Manual EMI Text (Optional)</label>
-                              <input
-                                type="text"
-                                value={customEmiText}
-                                placeholder="e.g. Starts at ₹999/month*"
-                                onChange={(e) => setCustomEmiText(e.target.value)}
-                                className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Brand Name */}
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
-                          <input
-                            type="text"
-                            value={brandName}
-                            onChange={(e) => setBrandName(e.target.value)}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Brand Subtext */}
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Subtext</label>
-                          <input
-                            type="text"
-                            value={brandSubtext}
-                            onChange={(e) => setBrandSubtext(e.target.value)}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Phone Support */}
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
-                          <input
-                            type="text"
-                            value={phoneSupport}
-                            onChange={(e) => setPhoneSupport(e.target.value)}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        {/* WhatsApp Chat */}
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">WhatsApp Chat</label>
-                          <input
-                            type="text"
-                            value={whatsappChat}
-                            onChange={(e) => setWhatsappChat(e.target.value)}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Showroom Address */}
-                        <div className="col-span-2">
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Showroom Address (Optional)</label>
-                          <textarea
-                            rows={2}
-                            value={showroomAddress}
-                            placeholder="Leave blank for dynamic default address"
-                            onChange={(e) => setShowroomAddress(e.target.value)}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
-                          />
-                        </div>
-                      </div>
-                    </details>
-
-                    {/* Trust Badges Drawer */}
-                    <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
-                      <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
-                        <span className="flex items-center gap-2">
-                          <span>🛡️</span>
-                          <span>Flyer Trust Badges (Horizontal Bar)</span>
-                        </span>
-                        <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
-                      </summary>
-                      <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850">
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 1 (Left)</label>
-                          <input
-                            type="text"
-                            value={trustPolicies[0] || ""}
-                            onChange={(e) => {
-                              const newPolicies = [...trustPolicies];
-                              newPolicies[0] = e.target.value;
-                              setTrustPolicies(newPolicies);
-                            }}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 2 (Center)</label>
-                          <input
-                            type="text"
-                            value={trustPolicies[1] || ""}
-                            onChange={(e) => {
-                              const newPolicies = [...trustPolicies];
-                              newPolicies[1] = e.target.value;
-                              setTrustPolicies(newPolicies);
-                            }}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 3 (Right)</label>
-                          <input
-                            type="text"
-                            value={trustPolicies[2] || ""}
-                            onChange={(e) => {
-                              const newPolicies = [...trustPolicies];
-                              newPolicies[2] = e.target.value;
-                              setTrustPolicies(newPolicies);
-                            }}
-                            className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    </details>
-                  </div>
-
-                  <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
+                {/* Hardware Specifications input list */}
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Add Hardware Specifications (Up to 4-5)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Intel Core i5 10th Gen"
+                      value={newSpecText}
+                      onChange={(e) => setNewSpecText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSpecToNew())}
+                      className="flex-1 bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                    />
                     <button
                       type="button"
-                      onClick={() => setShowAddForm(false)}
-                      className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white cursor-pointer"
+                      onClick={handleAddSpecToNew}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-855 dark:hover:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold rounded-lg cursor-pointer"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl cursor-pointer"
-                    >
-                      Save to Showroom
+                      Add Spec
                     </button>
                   </div>
-                </form>
-
-                {/* RIGHT COLUMN: Live Banner Generator (5 cols) */}
-                <div className="lg:col-span-5 bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4">
-                  <PromoBannerCanvas
-                    ref={addCanvasRef}
-                    product={newProduct}
-                    ratio={addRatio}
-                    themeColor={addThemeColor}
-                    bgPattern={addBgPattern}
-                    platformStyle={addPlatformStyle}
-                    cardStyle={addCardStyle}
-                    accentColor={addAccentColor}
-                    zoom={addZoom}
-                    offsetX={addOffsetX}
-                    offsetY={addOffsetY}
-                    rotation={addRotation}
-                    localImageFile={addLocalImageFile}
-                    brandName={brandName}
-                    brandSubtext={brandSubtext}
-                    tagline={tagline}
-                    phoneSupport={phoneSupport}
-                    whatsappChat={whatsappChat}
-                    showroomAddress={showroomAddress}
-                    isTamil={isTamil}
-                    showEmi={showEmi}
-                    emiTenure={emiTenure}
-                    customEmiText={customEmiText}
-                    trustPolicies={trustPolicies}
-                    removeBg={removeBg}
-                  />
-
-                  {/* Design combinator selectors */}
-                  <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
-                        <select
-                          onChange={(e) => applyPreset(e.target.value, "add")}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          {Object.entries(PRESETS).map(([key, config]) => (
-                            <option key={key} value={key}>
-                              {config.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
-                        <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => setAddRatio("1:1")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            1:1 (Feed)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAddRatio("9:16")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            9:16 (Status)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAddRatio("16:9")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${addRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            16:9 (Cover)
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-[10px]">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Local Product Image File</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setAddLocalImageFile(file);
-                          }}
-                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
-                        />
-                        {addLocalImageFile && (
-                          <div className="mt-1 flex items-center justify-between">
-                            <button
-                              type="button"
-                              onClick={() => setAddLocalImageFile(null)}
-                              className="text-[9px] text-red-500 font-bold hover:underline"
-                            >
-                              × Clear Upload
-                            </button>
-                            <label className="flex items-center gap-1 cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={removeBg}
-                                onChange={(e) => setRemoveBg(e.target.checked)}
-                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
-                              />
-                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
-                            </label>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
-                        <select
-                          value={addPlatformStyle}
-                          onChange={(e) => setAddPlatformStyle(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
-                        >
-                          <option value="pedestal">Perspective Pedestal</option>
-                          <option value="ring">Floating Neon Ring</option>
-                          <option value="shadow">Simple Shadow Base</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Sliders container */}
-                    <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
-                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-slate-800 pb-1 mb-1">
-                        📐 Image Transform Sliders
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
-                        <input
-                          type="range"
-                          min="0.2"
-                          max="2.5"
-                          step="0.02"
-                          value={addZoom}
-                          onChange={(e) => setAddZoom(parseFloat(e.target.value))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addZoom.toFixed(2)}x</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
-                        <input
-                          type="range"
-                          min="-250"
-                          max="250"
-                          step="1"
-                          value={addOffsetX}
-                          onChange={(e) => setAddOffsetX(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addOffsetX}px</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
-                        <input
-                          type="range"
-                          min="-250"
-                          max="250"
-                          step="1"
-                          value={addOffsetY}
-                          onChange={(e) => setAddOffsetY(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addOffsetY}px</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
-                        <input
-                          type="range"
-                          min="-180"
-                          max="180"
-                          step="1"
-                          value={addRotation}
-                          onChange={(e) => setAddRotation(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{addRotation}°</span>
-                      </div>
-                    </div>
-
-                    {/* Exporters and Social copy row */}
-                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (addCanvasRef.current) {
-                            await addCanvasRef.current.copyImageToClipboard();
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📋 Copy Image
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (addCanvasRef.current) {
-                            addCanvasRef.current.downloadPNG();
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📥 Download PNG
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (addCanvasRef.current) {
-                            const caption = addCanvasRef.current.getSocialCaption();
-                            navigator.clipboard.writeText(caption);
-                            toast.success("Social media post caption copied to clipboard!");
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📝 Copy Caption
-                      </button>
-                    </div>
-
-                    {/* Optional Cloud Integrations (Future) */}
-                    <div className="bg-gray-50/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
-                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                        <span>☁️</span> Optional Cloud Integrations
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {(newProduct.specs || []).map((spec, sidx) => (
+                      <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
+                        {spec}
                         <button
                           type="button"
-                          onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                          onClick={() => handleRemoveSpecFromNew(sidx)}
+                          className="text-orange-600 dark:text-orange-400 hover:text-orange-955 dark:hover:text-white font-bold text-[10px] cursor-pointer"
                         >
-                          💬 Broadcast WhatsApp
+                          ×
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-                        >
-                          📢 Share on Facebook
-                        </button>
-                      </div>
-                    </div>
-
+                      </span>
+                    ))}
                   </div>
                 </div>
 
-              </div>
+                <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddForm(false)}
+                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-955 dark:text-gray-400 dark:hover:text-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl cursor-pointer"
+                  >
+                    Create Product
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 
@@ -2531,11 +2069,11 @@ export default function AdminPage() {
                         /* EDIT MODE */
                         <div className="space-y-4">
                           <div className="flex items-center justify-between border-b border-orange-950/20 pb-3 mb-2">
-                            <span className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase">Editing Product: {product.id}</span>
+                            <span className="text-xs font-black text-orange-500 uppercase">Editing Product: {product.id}</span>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1.5 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white text-xs font-bold cursor-pointer"
+                                className="px-3 py-1.5 text-gray-500 hover:text-gray-955 dark:text-gray-400 dark:hover:text-white text-xs font-bold cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -2549,599 +2087,156 @@ export default function AdminPage() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            {/* LEFT COLUMN: Form Fields (7 cols) */}
-                            <div className="lg:col-span-7 space-y-4">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Title</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.title || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, title: e.target.value })}
-                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.price || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
-                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.originalPrice || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, originalPrice: e.target.value })}
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge Text</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.badge || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, badge: e.target.value })}
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Image URL</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.imageUrl || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                  {editLocalImageFile && !editProduct.imageUrl && (
-                                    <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1">
-                                      ⚠️ Local file is active on banner, but empty website catalog URL. Remember to input an image link for the public showroom.
-                                    </p>
-                                  )}
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Category</label>
-                                  <select
-                                    value={editProduct.category}
-                                    onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as Product["category"] })}
-                                    className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  >
-                                    <option value="laptops">Refurbished Laptops</option>
-                                    <option value="desktops">New Desktops</option>
-                                    <option value="spare-parts">Spare Parts</option>
-                                    <option value="accessories">Mobile Accessories</option>
-                                  </select>
-                                </div>
-                                <div className="sm:col-span-2">
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Tagline (Optional)</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. — Professional Performance. Business Ready. —"
-                                    value={tagline}
-                                    onChange={(e) => setTagline(e.target.value)}
-                                    className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div className="sm:col-span-2">
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.description || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div className="sm:col-span-2">
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Specifications (Up to 5 specs)</label>
-                                  <div className="flex gap-2">
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. 16GB DDR4 RAM Memory"
-                                      value={editNewSpecText}
-                                      onChange={(e) => setEditNewSpecText(e.target.value)}
-                                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEditSpec())}
-                                      className="flex-1 bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={handleAddEditSpec}
-                                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black rounded-lg cursor-pointer transition-colors"
-                                    >
-                                      + Add Spec
-                                    </button>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2 mt-3">
-                                    {(editProduct.specs || []).map((spec, sidx) => (
-                                      <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
-                                        {spec}
-                                        <button
-                                          type="button"
-                                          onClick={() => handleRemoveEditSpec(sidx)}
-                                          className="text-orange-600 dark:text-orange-400 hover:text-orange-950 dark:hover:text-white font-bold text-[10px] cursor-pointer"
-                                        >
-                                          ×
-                                        </button>
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link</label>
-                                  <input
-                                    type="text"
-                                    value={editProduct.whatsappLink || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, whatsappLink: e.target.value })}
-                                    placeholder="e.g. https://wa.me/p/10032918260090500"
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🏷️ Deal Tag / Promo Label</label>
-                                  <select
-                                    value={editProduct.dealTag || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, dealTag: e.target.value })}
-                                    className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  >
-                                    <option value="">— No Deal Tag —</option>
-                                    <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
-                                    <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
-                                    <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
-                                    <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
-                                    <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
-                                    <option value="💥 FLASH SALE">💥 FLASH SALE</option>
-                                    <option value="📦 BULK DEAL">📦 BULK DEAL</option>
-                                    <option value="Refurbished">Refurbished</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🎁 Included Free Accessory</label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Laptop Bag &amp; Charger"
-                                    value={editProduct.includedAccessory || ""}
-                                    onChange={(e) => setEditProduct({ ...editProduct, includedAccessory: e.target.value })}
-                                    className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Branding settings and Trust badges settings */}
-                              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-4">
-                              {/* Branding drawer */}
-                              <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
-                                <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
-                                  <span className="flex items-center gap-2">
-                                    <span>⚙️</span>
-                                    <span>Branding & Localization settings</span>
-                                  </span>
-                                  <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
-                                </summary>
-                                <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  {/* Bilingual Tamil Toggle */}
-                                  <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-gray-800 dark:text-white">Bilingual Tamil / English</span>
-                                      <span className="text-[9px] text-gray-500">Translate flyer labels to Tamil/English</span>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isTamil}
-                                        onChange={(e) => setIsTamil(e.target.checked)}
-                                        className="sr-only peer"
-                                      />
-                                      <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
-                                    </label>
-                                  </div>
-
-                                  {/* Easy EMI Badge Toggle */}
-                                  <div className="flex items-center justify-between col-span-2 bg-white dark:bg-gray-950 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-gray-800 dark:text-white">Show Easy EMI Badge</span>
-                                      <span className="text-[9px] text-gray-500">Calculate and overlay EMI pricing</span>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={showEmi}
-                                        onChange={(e) => setShowEmi(e.target.checked)}
-                                        className="sr-only peer"
-                                      />
-                                      <div className="w-8 h-4 bg-gray-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
-                                    </label>
-                                  </div>
-
-                                  {showEmi && (
-                                    <div className="col-span-2 grid grid-cols-2 gap-3 bg-white dark:bg-gray-955 border border-gray-100 dark:border-slate-900 p-2.5 rounded-xl">
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">EMI Tenure (Months)</label>
-                                        <select
-                                          value={emiTenure}
-                                          onChange={(e) => setEmiTenure(Number(e.target.value))}
-                                          className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none cursor-pointer"
-                                        >
-                                          <option value={6}>6 Months</option>
-                                          <option value={9}>9 Months</option>
-                                          <option value={12}>12 Months (Default)</option>
-                                          <option value={18}>18 Months</option>
-                                          <option value={24}>24 Months</option>
-                                        </select>
-                                      </div>
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Manual EMI Text (Optional)</label>
-                                        <input
-                                          type="text"
-                                          value={customEmiText}
-                                          placeholder="e.g. Starts at ₹999/month*"
-                                          onChange={(e) => setCustomEmiText(e.target.value)}
-                                          className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Brand Name */}
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Name</label>
-                                    <input
-                                      type="text"
-                                      value={brandName}
-                                      onChange={(e) => setBrandName(e.target.value)}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-
-                                  {/* Brand Subtext */}
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Brand Subtext</label>
-                                    <input
-                                      type="text"
-                                      value={brandSubtext}
-                                      onChange={(e) => setBrandSubtext(e.target.value)}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-
-                                  {/* Phone Support */}
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Call Support</label>
-                                    <input
-                                      type="text"
-                                      value={phoneSupport}
-                                      onChange={(e) => setPhoneSupport(e.target.value)}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-
-                                  {/* WhatsApp Chat */}
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">WhatsApp Chat</label>
-                                    <input
-                                      type="text"
-                                      value={whatsappChat}
-                                      onChange={(e) => setWhatsappChat(e.target.value)}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-
-                                  {/* Showroom Address */}
-                                  <div className="col-span-2">
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Showroom Address (Optional)</label>
-                                    <textarea
-                                      rows={2}
-                                      value={showroomAddress}
-                                      placeholder="Leave blank for dynamic default address"
-                                      onChange={(e) => setShowroomAddress(e.target.value)}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none resize-none"
-                                    />
-                                  </div>
-                                </div>
-                              </details>
-
-                              {/* Trust Badges Drawer */}
-                              <details className="group bg-slate-50 dark:bg-slate-900/50 border border-gray-250 dark:border-slate-800/80 rounded-2xl p-4 transition-all duration-300">
-                                <summary className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none">
-                                  <span className="flex items-center gap-2">
-                                    <span>🛡️</span>
-                                    <span>Flyer Trust Badges (Horizontal Bar)</span>
-                                  </span>
-                                  <span className="text-[10px] text-orange-500 group-open:rotate-180 transition-transform duration-200">▼</span>
-                                </summary>
-                                <div className="mt-3.5 space-y-3 pt-3 border-t border-gray-200 dark:border-slate-850">
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 1 (Left)</label>
-                                    <input
-                                      type="text"
-                                      value={trustPolicies[0] || ""}
-                                      onChange={(e) => {
-                                        const newPolicies = [...trustPolicies];
-                                        newPolicies[0] = e.target.value;
-                                        setTrustPolicies(newPolicies);
-                                      }}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 2 (Center)</label>
-                                    <input
-                                      type="text"
-                                      value={trustPolicies[1] || ""}
-                                      onChange={(e) => {
-                                        const newPolicies = [...trustPolicies];
-                                        newPolicies[1] = e.target.value;
-                                        setTrustPolicies(newPolicies);
-                                      }}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Badge 3 (Right)</label>
-                                    <input
-                                      type="text"
-                                      value={trustPolicies[2] || ""}
-                                      onChange={(e) => {
-                                        const newPolicies = [...trustPolicies];
-                                        newPolicies[2] = e.target.value;
-                                        setTrustPolicies(newPolicies);
-                                      }}
-                                      className="w-full bg-white dark:bg-gray-955 border border-gray-300 dark:border-white/10 px-2.5 py-1.5 rounded-lg text-[10px] text-gray-900 dark:text-white focus:outline-none"
-                                    />
-                                  </div>
-                                </div>
-                              </details>
-                            </div>
-                            </div>
-
-                            {/* RIGHT COLUMN: Edit Banner Canvas Preview (5 cols) */}
-                            <div className="lg:col-span-5 bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4">
-                              <PromoBannerCanvas
-                                ref={editCanvasRef}
-                                product={editProduct}
-                                ratio={editRatio}
-                                themeColor={editThemeColor}
-                                bgPattern={editBgPattern}
-                                platformStyle={editPlatformStyle}
-                                cardStyle={editCardStyle}
-                                accentColor={editAccentColor}
-                                zoom={editZoom}
-                                offsetX={editOffsetX}
-                                offsetY={editOffsetY}
-                                rotation={editRotation}
-                                localImageFile={editLocalImageFile}
-                                brandName={brandName}
-                                brandSubtext={brandSubtext}
-                                tagline={tagline}
-                                phoneSupport={phoneSupport}
-                                whatsappChat={whatsappChat}
-                                showroomAddress={showroomAddress}
-                                isTamil={isTamil}
-                                showEmi={showEmi}
-                                emiTenure={emiTenure}
-                                customEmiText={customEmiText}
-                                trustPolicies={trustPolicies}
-                                removeBg={removeBg}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {/* Title */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Title</label>
+                              <input
+                                type="text"
+                                value={editProduct.title || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, title: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
                               />
-
-                              {/* Canvas style combinators */}
-                              <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+ Designs)</label>
-                                    <select
-                                      onChange={(e) => applyPreset(e.target.value, "edit")}
-                                      className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                                    >
-                                      {Object.entries(PRESETS).map(([key, config]) => (
-                                        <option key={key} value={key}>
-                                          {config.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
-                                    <div className="flex bg-gray-100 dark:bg-gray-950 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditRatio("1:1")}
-                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                                      >
-                                        1:1
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditRatio("9:16")}
-                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                                      >
-                                        9:16
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditRatio("16:9")}
-                                        className={`flex-1 text-[9px] font-bold py-1 rounded ${editRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                                      >
-                                        16:9
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 text-[10px]">
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Upload Custom Photo</label>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setEditLocalImageFile(file);
-                                      }}
-                                      className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
-                                    />
-                                    {editLocalImageFile && (
-                                      <div className="mt-1 flex items-center justify-between">
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditLocalImageFile(null)}
-                                          className="text-[9px] text-red-500 font-bold hover:underline"
-                                        >
-                                          × Clear Custom Photo
-                                        </button>
-                                        <label className="flex items-center gap-1 cursor-pointer select-none">
-                                          <input
-                                            type="checkbox"
-                                            checked={removeBg}
-                                            onChange={(e) => setRemoveBg(e.target.checked)}
-                                            className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
-                                          />
-                                          <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
-                                        </label>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div>
-                                    <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
-                                    <select
-                                      value={editPlatformStyle}
-                                      onChange={(e) => setEditPlatformStyle(e.target.value as any)}
-                                      className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
-                                    >
-                                      <option value="pedestal">Perspective Pedestal</option>
-                                      <option value="ring">Floating Neon Ring</option>
-                                      <option value="shadow">Simple Shadow Base</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                {/* Slider controls */}
-                                <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
-                                    <input
-                                      type="range"
-                                      min="0.2"
-                                      max="2.5"
-                                      step="0.02"
-                                      value={editZoom}
-                                      onChange={(e) => setEditZoom(parseFloat(e.target.value))}
-                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                                    />
-                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editZoom.toFixed(2)}x</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
-                                    <input
-                                      type="range"
-                                      min="-250"
-                                      max="250"
-                                      step="1"
-                                      value={editOffsetX}
-                                      onChange={(e) => setEditOffsetX(parseInt(e.target.value, 10))}
-                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                                    />
-                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editOffsetX}px</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
-                                    <input
-                                      type="range"
-                                      min="-250"
-                                      max="250"
-                                      step="1"
-                                      value={editOffsetY}
-                                      onChange={(e) => setEditOffsetY(parseInt(e.target.value, 10))}
-                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                                    />
-                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editOffsetY}px</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
-                                    <input
-                                      type="range"
-                                      min="-180"
-                                      max="180"
-                                      step="1"
-                                      value={editRotation}
-                                      onChange={(e) => setEditRotation(parseInt(e.target.value, 10))}
-                                      className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                                    />
-                                    <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{editRotation}°</span>
-                                  </div>
-                                </div>
-
-                                {/* Exporters row */}
-                                <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      if (editCanvasRef.current) {
-                                        await editCanvasRef.current.copyImageToClipboard();
-                                      }
-                                    }}
-                                    className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                                  >
-                                    📋 Copy Image
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (editCanvasRef.current) {
-                                        editCanvasRef.current.downloadPNG();
-                                      }
-                                    }}
-                                    className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                                  >
-                                    📥 Download PNG
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (editCanvasRef.current) {
-                                        const caption = editCanvasRef.current.getSocialCaption();
-                                        navigator.clipboard.writeText(caption);
-                                        toast.success("Social media post caption copied!");
-                                      }
-                                    }}
-                                    className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                                  >
-                                    📝 Copy Caption
-                                  </button>
-                                </div>
-
-                                {/* Optional Cloud Integrations (Future) */}
-                                <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
-                                  <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                                    <span>☁️</span> Optional Cloud Integrations
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
-                                      className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-                                    >
-                                      💬 Broadcast WhatsApp
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
-                                      className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-                                    >
-                                      📢 Share on Facebook
-                                    </button>
-                                  </div>
-                                </div>
-
+                            </div>
+                            {/* Price */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price</label>
+                              <input
+                                type="text"
+                                value={editProduct.price || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            {/* Original Price */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price</label>
+                              <input
+                                type="text"
+                                value={editProduct.originalPrice || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, originalPrice: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            {/* Badge Text */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Badge Text</label>
+                              <input
+                                type="text"
+                                value={editProduct.badge || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, badge: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            {/* Product Image URL */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Image URL</label>
+                              <input
+                                type="text"
+                                value={editProduct.imageUrl || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            {/* Category */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Category</label>
+                              <select
+                                value={editProduct.category}
+                                onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value as Product["category"] })}
+                                className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              >
+                                <option value="laptops">Refurbished Laptops</option>
+                                <option value="desktops">New Desktops</option>
+                                <option value="spare-parts">Spare Parts</option>
+                                <option value="accessories">Mobile Accessories</option>
+                              </select>
+                            </div>
+                            {/* Description */}
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Description</label>
+                              <input
+                                type="text"
+                                value={editProduct.description || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                            {/* Specifications */}
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Product Specifications (Up to 5 specs)</label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 16GB DDR4 RAM Memory"
+                                  value={editNewSpecText}
+                                  onChange={(e) => setEditNewSpecText(e.target.value)}
+                                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEditSpec())}
+                                  className="flex-1 bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleAddEditSpec}
+                                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black rounded-lg cursor-pointer transition-colors"
+                                >
+                                  + Add Spec
+                                </button>
                               </div>
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                {(editProduct.specs || []).map((spec, sidx) => (
+                                  <span key={sidx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs rounded-md font-medium">
+                                    {spec}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveEditSpec(sidx)}
+                                      className="text-orange-600 dark:text-orange-400 hover:text-orange-955 dark:hover:text-white font-bold text-[10px] cursor-pointer"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            {/* WhatsApp catalogue link */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">WhatsApp Catalogue Link</label>
+                              <input
+                                type="text"
+                                value={editProduct.whatsappLink || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, whatsappLink: e.target.value })}
+                                placeholder="e.g. https://wa.me/p/10032918260090500"
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                              />
+                            </div>
+                            {/* Deal Tag */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🏷️ Deal Tag / Promo Label</label>
+                              <select
+                                value={editProduct.dealTag || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, dealTag: e.target.value })}
+                                className="w-full bg-white dark:bg-gray-950 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                              >
+                                <option value="">— No Deal Tag —</option>
+                                <option value="🔥 HOT DEAL">🔥 HOT DEAL</option>
+                                <option value="⚡ SPECIAL OFFER">⚡ SPECIAL OFFER</option>
+                                <option value="🎉 FESTIVAL DEAL">🎉 FESTIVAL DEAL</option>
+                                <option value="⏳ LIMITED STOCK">⏳ LIMITED STOCK</option>
+                                <option value="✨ NEW ARRIVAL">✨ NEW ARRIVAL</option>
+                                <option value="💥 FLASH SALE">💥 FLASH SALE</option>
+                                <option value="📦 BULK DEAL">📦 BULK DEAL</option>
+                                <option value="Refurbished">Refurbished</option>
+                              </select>
+                            </div>
+                            {/* Included Accessory */}
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">🎁 Included Free Accessory</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Laptop Bag &amp; Charger"
+                                value={editProduct.includedAccessory || ""}
+                                onChange={(e) => setEditProduct({ ...editProduct, includedAccessory: e.target.value })}
+                                className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
+                              />
                             </div>
                           </div>
                         </div>

@@ -1138,7 +1138,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 14px Arial, sans-serif";
-        ctx.fillText("— Professional Performance. Business Ready. —", 40, 170);
+        ctx.fillText(tagline || "— Professional Performance. Business Ready. —", 40, 170);
 
         // Spec Cards (Left vertical stack, compact)
         const specStartY = 205;
