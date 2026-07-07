@@ -606,35 +606,71 @@ export default function AdminPage() {
   };
 
   const handleAddBannerSpec = () => {
-    if (!bannerNewSpecText.trim()) return;
-    setBannerProduct(prev => ({
-      ...prev,
-      specs: [...(prev.specs || []), bannerNewSpecText.trim()]
-    }));
+    const text = bannerNewSpecText.trim();
+    if (!text) {
+      toast.error("Specification text cannot be empty.");
+      return;
+    }
+    setBannerProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      if (currentSpecs.includes(text)) {
+        toast.error("Specification already exists.");
+        return prev;
+      }
+      return {
+        ...prev,
+        specs: [...currentSpecs, text]
+      };
+    });
     setBannerNewSpecText("");
+    toast.success(`Spec added: "${text}"`);
   };
 
   const handleRemoveBannerSpec = (idx: number) => {
-    setBannerProduct(prev => ({
-      ...prev,
-      specs: (prev.specs || []).filter((_, i) => i !== idx)
-    }));
+    setBannerProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      const text = currentSpecs[idx];
+      const nextSpecs = currentSpecs.filter((_, i) => i !== idx);
+      toast.success(`Removed spec: "${text}"`);
+      return {
+        ...prev,
+        specs: nextSpecs
+      };
+    });
   };
 
   const handleAddEditSpec = () => {
-    if (!editNewSpecText.trim()) return;
-    setEditProduct(prev => ({
-      ...prev,
-      specs: [...(prev.specs || []), editNewSpecText.trim()]
-    }));
+    const text = editNewSpecText.trim();
+    if (!text) {
+      toast.error("Specification text cannot be empty.");
+      return;
+    }
+    setEditProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      if (currentSpecs.includes(text)) {
+        toast.error("Specification already exists.");
+        return prev;
+      }
+      return {
+        ...prev,
+        specs: [...currentSpecs, text]
+      };
+    });
     setEditNewSpecText("");
+    toast.success(`Spec added: "${text}"`);
   };
 
   const handleRemoveEditSpec = (idx: number) => {
-    setEditProduct(prev => ({
-      ...prev,
-      specs: (prev.specs || []).filter((_, i) => i !== idx)
-    }));
+    setEditProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      const text = currentSpecs[idx];
+      const nextSpecs = currentSpecs.filter((_, i) => i !== idx);
+      toast.success(`Removed spec: "${text}"`);
+      return {
+        ...prev,
+        specs: nextSpecs
+      };
+    });
   };
 
   const applyPreset = (presetKey: string, target: "add" | "edit" | "banner") => {
@@ -927,19 +963,36 @@ export default function AdminPage() {
   };
 
   const handleAddSpecToNew = () => {
-    if (newSpecText.trim()) {
-      setNewProduct({
-        ...newProduct,
-        specs: [...(newProduct.specs || []), newSpecText.trim()]
-      });
-      setNewSpecText("");
+    const text = newSpecText.trim();
+    if (!text) {
+      toast.error("Specification text cannot be empty.");
+      return;
     }
+    setNewProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      if (currentSpecs.includes(text)) {
+        toast.error("Specification already exists.");
+        return prev;
+      }
+      return {
+        ...prev,
+        specs: [...currentSpecs, text]
+      };
+    });
+    setNewSpecText("");
+    toast.success(`Spec added: "${text}"`);
   };
 
   const handleRemoveSpecFromNew = (idx: number) => {
-    setNewProduct({
-      ...newProduct,
-      specs: (newProduct.specs || []).filter((_, i) => i !== idx)
+    setNewProduct(prev => {
+      const currentSpecs = prev.specs || [];
+      const text = currentSpecs[idx];
+      const nextSpecs = currentSpecs.filter((_, i) => i !== idx);
+      toast.success(`Removed spec: "${text}"`);
+      return {
+        ...prev,
+        specs: nextSpecs
+      };
     });
   };
 
