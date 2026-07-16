@@ -58,7 +58,7 @@ function parseDealRegex(text: string): ParsedDeal {
 
   // Extract Connectivity/Screen/Camera
   const screenMatch = text.match(/(\d+(\.\d+)?)\s*(inch|")/i);
-  let display = screenMatch ? `${screenMatch[1]}-inch Display` : "14\" FHD Display";
+  const display = screenMatch ? `${screenMatch[1]}-inch Display` : "14\" FHD Display";
   
   let wifi = "Wi-Fi (Built-in)";
   if (t.includes("wifi 6") || t.includes("wifi-6")) {

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, Search, MapPin, Truck, ShieldAlert } from "lucide-react";
+import { Search, MapPin, Truck, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function CoveragePage() {

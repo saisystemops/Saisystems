@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { to, message, senderName = "Agent" } = body;
+    const { to, message, senderName: _senderName = "Agent" } = body;
 
     if (!to || !message) {
       return NextResponse.json({ error: "to and message required" }, { status: 400 });

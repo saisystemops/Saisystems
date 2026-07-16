@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       const tableResults: Record<string, { exists: boolean; count?: number; error?: string }> = {};
       
       for (const table of tablesToCheck) {
-        const { data, error, count } = await client
+        const { data: _data, error, count } = await client
           .from(table)
           .select("id", { count: "exact", head: true });
           

@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.10",
     "@hookform/resolvers": "^5.4.0",
+    "@imgly/background-removal": "^1.7.0",
     "@next-auth/supabase-adapter": "^0.2.1",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-progress": "^1.1.9",

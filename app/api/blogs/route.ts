@@ -3,7 +3,7 @@ import { blogPosts } from "@/lib/data/blog-posts";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const { createServerClient } = await import("@/lib/supabase");

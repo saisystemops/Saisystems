@@ -561,6 +561,19 @@ export default function AdminPage() {
   const [bannerOffsetX, setBannerOffsetX] = useState(0);
   const [bannerOffsetY, setBannerOffsetY] = useState(0);
   const [bannerRotation, setBannerRotation] = useState(0);
+  
+  const [bannerZoom2, setBannerZoom2] = useState(1);
+  const [bannerOffsetX2, setBannerOffsetX2] = useState(0);
+  const [bannerOffsetY2, setBannerOffsetY2] = useState(0);
+  const [bannerRotation2, setBannerRotation2] = useState(0);
+
+  const [bannerZoom3, setBannerZoom3] = useState(1);
+  const [bannerOffsetX3, setBannerOffsetX3] = useState(0);
+  const [bannerOffsetY3, setBannerOffsetY3] = useState(0);
+  const [bannerRotation3, setBannerRotation3] = useState(0);
+
+  const [bannerImageMode, setBannerImageMode] = useState<"single" | "grid3">("single");
+  const [activeImageTab, setActiveImageTab] = useState<1 | 2 | 3>(1);
   const [bannerBgPatternOpacity, setBannerBgPatternOpacity] = useState(0.6);
   const [bannerShowLogo, setBannerShowLogo] = useState(true);
   const [bannerShowQrCode, setBannerShowQrCode] = useState(true);
@@ -579,6 +592,10 @@ export default function AdminPage() {
     }
   };
   const [bannerLocalImageFile, setBannerLocalImageFile] = useState<File | null>(null);
+  const [bannerLocalImageFile2, setBannerLocalImageFile2] = useState<File | null>(null);
+  const [bannerLocalImageFile3, setBannerLocalImageFile3] = useState<File | null>(null);
+  const [removeBg2, setRemoveBg2] = useState(false);
+  const [removeBg3, setRemoveBg3] = useState(false);
   const [bannerAiPromptText, setBannerAiPromptText] = useState("");
   const [bannerParsingAi, setBannerParsingAi] = useState(false);
   const [bannerNewSpecText, setBannerNewSpecText] = useState("");
@@ -602,6 +619,20 @@ export default function AdminPage() {
         if (config.bannerOffsetX !== undefined) setBannerOffsetX(config.bannerOffsetX);
         if (config.bannerOffsetY !== undefined) setBannerOffsetY(config.bannerOffsetY);
         if (config.bannerRotation !== undefined) setBannerRotation(config.bannerRotation);
+        if (config.bannerZoom2 !== undefined) setBannerZoom2(config.bannerZoom2);
+        if (config.bannerOffsetX2 !== undefined) setBannerOffsetX2(config.bannerOffsetX2);
+        if (config.bannerOffsetY2 !== undefined) setBannerOffsetY2(config.bannerOffsetY2);
+        if (config.bannerRotation2 !== undefined) setBannerRotation2(config.bannerRotation2);
+
+        if (config.bannerZoom3 !== undefined) setBannerZoom3(config.bannerZoom3);
+        if (config.bannerOffsetX3 !== undefined) setBannerOffsetX3(config.bannerOffsetX3);
+        if (config.bannerOffsetY3 !== undefined) setBannerOffsetY3(config.bannerOffsetY3);
+        if (config.bannerRotation3 !== undefined) setBannerRotation3(config.bannerRotation3);
+
+        if (config.bannerImageMode) setBannerImageMode(config.bannerImageMode);
+        if (config.activeImageTab) setActiveImageTab(config.activeImageTab);
+        if (config.removeBg2 !== undefined) setRemoveBg2(config.removeBg2);
+        if (config.removeBg3 !== undefined) setRemoveBg3(config.removeBg3);
         if (config.bannerLayoutStyle) setBannerLayoutStyle(config.bannerLayoutStyle);
         if (config.bannerBgPatternOpacity !== undefined) setBannerBgPatternOpacity(config.bannerBgPatternOpacity);
         if (config.bannerShowLogo !== undefined) setBannerShowLogo(config.bannerShowLogo);
@@ -628,6 +659,18 @@ export default function AdminPage() {
       bannerOffsetX,
       bannerOffsetY,
       bannerRotation,
+      bannerZoom2,
+      bannerOffsetX2,
+      bannerOffsetY2,
+      bannerRotation2,
+      bannerZoom3,
+      bannerOffsetX3,
+      bannerOffsetY3,
+      bannerRotation3,
+      bannerImageMode,
+      activeImageTab,
+      removeBg2,
+      removeBg3,
       bannerLayoutStyle,
       bannerBgPatternOpacity,
       bannerShowLogo,
@@ -648,6 +691,18 @@ export default function AdminPage() {
     bannerOffsetX,
     bannerOffsetY,
     bannerRotation,
+    bannerZoom2,
+    bannerOffsetX2,
+    bannerOffsetY2,
+    bannerRotation2,
+    bannerZoom3,
+    bannerOffsetX3,
+    bannerOffsetY3,
+    bannerRotation3,
+    bannerImageMode,
+    activeImageTab,
+    removeBg2,
+    removeBg3,
     bannerLayoutStyle,
     bannerBgPatternOpacity,
     bannerShowLogo,
@@ -2434,8 +2489,548 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 
                 {/* Left Column: Input Panel */}
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4">
-                  <div>
+                                {/* Left Column: Visual Controls & Configuration */}
+                <div className="space-y-6">
+                  {/* Visual Style Combinators Card */}
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4">
+                    <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+)</label>
+                        <select
+                          onChange={(e) => applyPreset(e.target.value, "banner")}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          {Object.entries(PRESETS).map(([key, config]) => (
+                            <option key={key} value={key}>
+                              {config.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Layout Style</label>
+                        <select
+                          value={bannerLayoutStyle}
+                          onChange={(e) => setBannerLayoutStyle(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="classic">Classic Banner</option>
+                          <option value="hero-center">Hero Center Product</option>
+                          <option value="split-modern">Modern 50/50 Split</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Typography Font</label>
+                        <select
+                          value={bannerFontFamily}
+                          onChange={(e) => setBannerFontFamily(e.target.value)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="Arial">Arial (System)</option>
+                          <option value="Outfit">Outfit (Sleek)</option>
+                          <option value="Inter">Inter (Premium)</option>
+                          <option value="Montserrat">Montserrat (Display)</option>
+                          <option value="Playfair Display">Playfair (Serif)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Brand Accent Color</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="color"
+                            value={getAccentHex(bannerAccentColor)}
+                            onChange={(e) => setBannerAccentColor(e.target.value)}
+                            className="w-7 h-7 rounded border border-gray-300 dark:border-white/10 p-0 cursor-pointer bg-transparent shrink-0"
+                            title="Choose color"
+                          />
+                          <input
+                            type="text"
+                            value={bannerAccentColor}
+                            onChange={(e) => setBannerAccentColor(e.target.value)}
+                            placeholder="#f97316"
+                            className="w-full min-w-0 bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Badge Position</label>
+                        <select
+                          value={bannerBadgePosition}
+                          onChange={(e) => setBannerBadgePosition(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="center">Center</option>
+                          <option value="left">Left Corner</option>
+                          <option value="right">Right Corner</option>
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 grid grid-cols-3 gap-2 pt-1.5">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowLogo}
+                            onChange={(e) => setBannerShowLogo(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Show Logo
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowQrCode}
+                            onChange={(e) => setBannerShowQrCode(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Show QR Code
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={bannerShowProductShadow}
+                            onChange={(e) => setBannerShowProductShadow(e.target.checked)}
+                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                          />
+                          Backdrop Shadow
+                        </label>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
+                        <div className="flex bg-gray-100 dark:bg-gray-955 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("1:1")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            1:1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("9:16")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            9:16
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBannerRatio("16:9")}
+                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                          >
+                            16:9
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[10px]">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Image Layout Mode</label>
+                        <select
+                          value={bannerImageMode}
+                          onChange={(e) => setBannerImageMode(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="single">Single Product Image</option>
+                          <option value="grid3">3-Image Showcase Grid</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {bannerImageMode === "grid3" && (
+                      <div className="flex bg-slate-900/60 p-1 rounded-lg border border-slate-800 gap-1 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setActiveImageTab(1)}
+                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 1 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
+                        >
+                          Image 1 (Top)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveImageTab(2)}
+                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 2 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
+                        >
+                          Image 2 (Left)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveImageTab(3)}
+                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 3 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
+                        >
+                          Image 3 (Right)
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 text-[10px] mt-1">
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">
+                          {bannerImageMode === "grid3"
+                            ? `Upload Photo ${activeImageTab} (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})`
+                            : "Upload Custom Photo"
+                          }
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (bannerImageMode === "grid3") {
+                                if (activeImageTab === 1) setBannerLocalImageFile(file);
+                                else if (activeImageTab === 2) setBannerLocalImageFile2(file);
+                                else if (activeImageTab === 3) setBannerLocalImageFile3(file);
+                              } else {
+                                setBannerLocalImageFile(file);
+                              }
+                            }
+                          }}
+                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
+                        />
+                        {((bannerImageMode === "grid3" && activeImageTab === 1) || bannerImageMode !== "grid3" ? bannerLocalImageFile : activeImageTab === 2 ? bannerLocalImageFile2 : bannerLocalImageFile3) && (
+                          <div className="mt-1 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (bannerImageMode === "grid3") {
+                                  if (activeImageTab === 1) setBannerLocalImageFile(null);
+                                  else if (activeImageTab === 2) setBannerLocalImageFile2(null);
+                                  else if (activeImageTab === 3) setBannerLocalImageFile3(null);
+                                } else {
+                                  setBannerLocalImageFile(null);
+                                }
+                              }}
+                              className="text-[9px] text-red-500 font-bold hover:underline"
+                            >
+                              × Clear Custom Photo
+                            </button>
+                            <label className="flex items-center gap-1 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  bannerImageMode === "grid3"
+                                    ? activeImageTab === 1
+                                      ? removeBg
+                                      : activeImageTab === 2
+                                      ? removeBg2
+                                      : removeBg3
+                                    : removeBg
+                                }
+                                onChange={(e) => {
+                                  if (bannerImageMode === "grid3") {
+                                    if (activeImageTab === 1) setRemoveBg(e.target.checked);
+                                    else if (activeImageTab === 2) setRemoveBg2(e.target.checked);
+                                    else if (activeImageTab === 3) setRemoveBg3(e.target.checked);
+                                  } else {
+                                    setRemoveBg(e.target.checked);
+                                  }
+                                }}
+                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
+                              />
+                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
+                        <select
+                          value={bannerPlatformStyle}
+                          onChange={(e) => setBannerPlatformStyle(e.target.value as any)}
+                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
+                        >
+                          <option value="pedestal">Perspective Pedestal</option>
+                          <option value="ring">Floating Neon Ring</option>
+                          <option value="shadow">Simple Shadow Base</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Slider Controls */}
+                    <div className="bg-gray-50 dark:bg-gray-955 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
+                          {bannerImageMode === "grid3" ? `ZOOM (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "ZOOM:"}
+                        </span>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="2.5"
+                          step="0.02"
+                          value={
+                            bannerImageMode === "grid3"
+                              ? activeImageTab === 1
+                                ? bannerZoom
+                                : activeImageTab === 2
+                                ? bannerZoom2
+                                : bannerZoom3
+                              : bannerZoom
+                          }
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerZoom(val);
+                              else if (activeImageTab === 2) setBannerZoom2(val);
+                              else if (activeImageTab === 3) setBannerZoom3(val);
+                            } else {
+                              setBannerZoom(val);
+                            }
+                          }}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                            ? activeImageTab === 1
+                              ? bannerZoom
+                              : activeImageTab === 2
+                              ? bannerZoom2
+                              : bannerZoom3
+                            : bannerZoom
+                          ).toFixed(2)}x</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
+                          {bannerImageMode === "grid3" ? `MOVE X (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "MOVE X:"}
+                        </span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={
+                            bannerImageMode === "grid3"
+                              ? activeImageTab === 1
+                                ? bannerOffsetX
+                                : activeImageTab === 2
+                                ? bannerOffsetX2
+                                : bannerOffsetX3
+                              : bannerOffsetX
+                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetX(val);
+                              else if (activeImageTab === 2) setBannerOffsetX2(val);
+                              else if (activeImageTab === 3) setBannerOffsetX3(val);
+                            } else {
+                              setBannerOffsetX(val);
+                            }
+                          }}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                            ? activeImageTab === 1
+                              ? bannerOffsetX
+                              : activeImageTab === 2
+                              ? bannerOffsetX2
+                              : bannerOffsetX3
+                            : bannerOffsetX
+                          )}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
+                          {bannerImageMode === "grid3" ? `MOVE Y (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "MOVE Y:"}
+                        </span>
+                        <input
+                          type="range"
+                          min="-250"
+                          max="250"
+                          step="1"
+                          value={
+                            bannerImageMode === "grid3"
+                              ? activeImageTab === 1
+                                ? bannerOffsetY
+                                : activeImageTab === 2
+                                ? bannerOffsetY2
+                                : bannerOffsetY3
+                              : bannerOffsetY
+                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetY(val);
+                              else if (activeImageTab === 2) setBannerOffsetY2(val);
+                              else if (activeImageTab === 3) setBannerOffsetY3(val);
+                            } else {
+                              setBannerOffsetY(val);
+                            }
+                          }}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                            ? activeImageTab === 1
+                              ? bannerOffsetY
+                              : activeImageTab === 2
+                              ? bannerOffsetY2
+                              : bannerOffsetY3
+                            : bannerOffsetY
+                          )}px</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
+                          {bannerImageMode === "grid3" ? `ROTATE (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "ROTATE:"}
+                        </span>
+                        <input
+                          type="range"
+                          min="-180"
+                          max="180"
+                          step="1"
+                          value={
+                            bannerImageMode === "grid3"
+                              ? activeImageTab === 1
+                                ? bannerRotation
+                                : activeImageTab === 2
+                                ? bannerRotation2
+                                : bannerRotation3
+                              : bannerRotation
+                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerRotation(val);
+                              else if (activeImageTab === 2) setBannerRotation2(val);
+                              else if (activeImageTab === 3) setBannerRotation3(val);
+                            } else {
+                              setBannerRotation(val);
+                            }
+                          }}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                            ? activeImageTab === 1
+                              ? bannerRotation
+                              : activeImageTab === 2
+                              ? bannerRotation2
+                              : bannerRotation3
+                            : bannerRotation
+                          )}°</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">PATTERN:</span>
+                        <input
+                          type="range"
+                          min="0.0"
+                          max="1.0"
+                          step="0.05"
+                          value={bannerBgPatternOpacity}
+                          onChange={(e) => setBannerBgPatternOpacity(parseFloat(e.target.value))}
+                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{Math.round(bannerBgPatternOpacity * 100)}%</span>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) {
+                                setBannerZoom(1.0);
+                                setBannerOffsetX(0);
+                                setBannerOffsetY(0);
+                                setBannerRotation(0);
+                              } else if (activeImageTab === 2) {
+                                setBannerZoom2(1.0);
+                                setBannerOffsetX2(0);
+                                setBannerOffsetY2(0);
+                                setBannerRotation2(0);
+                              } else if (activeImageTab === 3) {
+                                setBannerZoom3(1.0);
+                                setBannerOffsetX3(0);
+                                setBannerOffsetY3(0);
+                                setBannerRotation3(0);
+                              }
+                            } else {
+                              setBannerZoom(1.0);
+                              setBannerOffsetX(0);
+                              setBannerOffsetY(0);
+                              setBannerRotation(0);
+                            }
+                          }}
+                          className="px-2 py-1 bg-gray-150 hover:bg-gray-250 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] rounded-md transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1"
+                        >
+                          🔄 Reset Photo Position
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Exporters Row */}
+                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (bannerCanvasRef.current) {
+                            await bannerCanvasRef.current.copyImageToClipboard();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📋 Copy Image
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (bannerCanvasRef.current) {
+                            bannerCanvasRef.current.downloadPNG();
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📥 Download PNG
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (bannerCanvasRef.current) {
+                            const caption = bannerCanvasRef.current.getSocialCaption();
+                            navigator.clipboard.writeText(caption);
+                            toast.success("Promo caption copied to clipboard!");
+                          }
+                        }}
+                        className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        📝 Copy Caption
+                      </button>
+                    </div>
+
+                    {/* Optional Cloud Integrations (Future) */}
+                    <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
+                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                        <span>☁️</span> Optional Cloud Integrations
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          💬 Broadcast WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                        >
+                          📢 Share on Facebook
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+
+                  {/* Flyer Configuration & AI Autofill Card */}
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4 pt-6 border-t border-gray-200 dark:border-slate-800">
+                    <div>
                     <h3 className="text-base font-black text-gray-950 dark:text-white mb-1">Create Promotional Flyer</h3>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">Design dynamic discount flyers and spec sheets. Safe from catalog database saves.</p>
                   </div>
@@ -2644,8 +3239,78 @@ export default function AdminPage() {
                       {bannerParsingAi ? "🔄 AI Parsing Specs..." : "🚀 Auto-Generate Banner Elements"}
                     </button>
                   </div>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                {/* Right Column: Dynamic Preview Panel + Flyer Text details */}
+                <div className="space-y-6">
+                  {/* Canvas Preview Container */}
+                  <div>
+                    <PromoBannerCanvas
+                    ref={bannerCanvasRef}
+                    product={bannerProduct}
+                    ratio={bannerRatio}
+                    themeColor={bannerThemeColor}
+                    bgPattern={bannerBgPattern}
+                    platformStyle={bannerPlatformStyle}
+                    cardStyle={bannerCardStyle}
+                    accentColor={bannerAccentColor}
+                    zoom={bannerZoom}
+                    offsetX={bannerOffsetX}
+                    offsetY={bannerOffsetY}
+                    rotation={bannerRotation}
+                    localImageFile={bannerLocalImageFile}
+                    zoom2={bannerZoom2}
+                    offsetX2={bannerOffsetX2}
+                    offsetY2={bannerOffsetY2}
+                    rotation2={bannerRotation2}
+                    localImageFile2={bannerLocalImageFile2}
+                    zoom3={bannerZoom3}
+                    offsetX3={bannerOffsetX3}
+                    offsetY3={bannerOffsetY3}
+                    rotation3={bannerRotation3}
+                    localImageFile3={bannerLocalImageFile3}
+                    removeBg2={removeBg2}
+                    removeBg3={removeBg3}
+                    imageMode={bannerImageMode}
+                    activeImageTab={activeImageTab}
+                    brandName={brandName}
+                    brandSubtext={brandSubtext}
+                    tagline={tagline}
+                    phoneSupport={phoneSupport}
+                    whatsappChat={whatsappChat}
+                    showroomAddress={showroomAddress}
+                    isTamil={isTamil}
+                    showEmi={showEmi}
+                    emiTenure={emiTenure}
+                    customEmiText={customEmiText}
+                    trustPolicies={trustPolicies}
+                    removeBg={removeBg}
+                    layoutStyle={bannerLayoutStyle}
+                    bgPatternOpacity={bannerBgPatternOpacity}
+                    showLogo={bannerShowLogo}
+                    showQrCode={bannerShowQrCode}
+                    showProductShadow={bannerShowProductShadow}
+                    fontFamily={bannerFontFamily}
+                    badgePosition={bannerBadgePosition}
+                    onOffsetChange={(x, y, index) => {
+                      if (index === 1) {
+                        setBannerOffsetX(x);
+                        setBannerOffsetY(y);
+                      } else if (index === 2) {
+                        setBannerOffsetX2(x);
+                        setBannerOffsetY2(y);
+                      } else if (index === 3) {
+                        setBannerOffsetX3(x);
+                        setBannerOffsetY3(y);
+                      }
+                    }}
+                  />
+                  </div>
+
+                  {/* Flyer Text & Spec Details Card */}
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Flyer Title / Name</label>
                       <input
@@ -2777,382 +3442,6 @@ export default function AdminPage() {
                       ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Right Column: Dynamic Preview Panel */}
-                <div className="space-y-4 lg:sticky lg:top-6">
-                  <PromoBannerCanvas
-                    ref={bannerCanvasRef}
-                    product={bannerProduct}
-                    ratio={bannerRatio}
-                    themeColor={bannerThemeColor}
-                    bgPattern={bannerBgPattern}
-                    platformStyle={bannerPlatformStyle}
-                    cardStyle={bannerCardStyle}
-                    accentColor={bannerAccentColor}
-                    zoom={bannerZoom}
-                    offsetX={bannerOffsetX}
-                    offsetY={bannerOffsetY}
-                    rotation={bannerRotation}
-                    localImageFile={bannerLocalImageFile}
-                    brandName={brandName}
-                    brandSubtext={brandSubtext}
-                    tagline={tagline}
-                    phoneSupport={phoneSupport}
-                    whatsappChat={whatsappChat}
-                    showroomAddress={showroomAddress}
-                    isTamil={isTamil}
-                    showEmi={showEmi}
-                    emiTenure={emiTenure}
-                    customEmiText={customEmiText}
-                    trustPolicies={trustPolicies}
-                    removeBg={removeBg}
-                    layoutStyle={bannerLayoutStyle}
-                    bgPatternOpacity={bannerBgPatternOpacity}
-                    showLogo={bannerShowLogo}
-                    showQrCode={bannerShowQrCode}
-                    showProductShadow={bannerShowProductShadow}
-                    fontFamily={bannerFontFamily}
-                    badgePosition={bannerBadgePosition}
-                    onOffsetChange={(x, y) => {
-                      setBannerOffsetX(x);
-                      setBannerOffsetY(y);
-                    }}
-                  />
-
-                  {/* Canvas Style Combinators */}
-                  <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+)</label>
-                        <select
-                          onChange={(e) => applyPreset(e.target.value, "banner")}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          {Object.entries(PRESETS).map(([key, config]) => (
-                            <option key={key} value={key}>
-                              {config.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Layout Style</label>
-                        <select
-                          value={bannerLayoutStyle}
-                          onChange={(e) => setBannerLayoutStyle(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="classic">Classic Banner</option>
-                          <option value="hero-center">Hero Center Product</option>
-                          <option value="split-modern">Modern 50/50 Split</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Typography Font</label>
-                        <select
-                          value={bannerFontFamily}
-                          onChange={(e) => setBannerFontFamily(e.target.value)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="Arial">Arial (System)</option>
-                          <option value="Outfit">Outfit (Sleek)</option>
-                          <option value="Inter">Inter (Premium)</option>
-                          <option value="Montserrat">Montserrat (Display)</option>
-                          <option value="Playfair Display">Playfair (Serif)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Brand Accent Color</label>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="color"
-                            value={getAccentHex(bannerAccentColor)}
-                            onChange={(e) => setBannerAccentColor(e.target.value)}
-                            className="w-7 h-7 rounded border border-gray-300 dark:border-white/10 p-0 cursor-pointer bg-transparent shrink-0"
-                            title="Choose color"
-                          />
-                          <input
-                            type="text"
-                            value={bannerAccentColor}
-                            onChange={(e) => setBannerAccentColor(e.target.value)}
-                            placeholder="#f97316"
-                            className="w-full min-w-0 bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none font-mono"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Badge Position</label>
-                        <select
-                          value={bannerBadgePosition}
-                          onChange={(e) => setBannerBadgePosition(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="center">Center</option>
-                          <option value="left">Left Corner</option>
-                          <option value="right">Right Corner</option>
-                        </select>
-                      </div>
-
-                      <div className="col-span-2 grid grid-cols-3 gap-2 pt-1.5">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
-                          <input
-                            type="checkbox"
-                            checked={bannerShowLogo}
-                            onChange={(e) => setBannerShowLogo(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
-                          />
-                          Show Logo
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
-                          <input
-                            type="checkbox"
-                            checked={bannerShowQrCode}
-                            onChange={(e) => setBannerShowQrCode(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
-                          />
-                          Show QR Code
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
-                          <input
-                            type="checkbox"
-                            checked={bannerShowProductShadow}
-                            onChange={(e) => setBannerShowProductShadow(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
-                          />
-                          Backdrop Shadow
-                        </label>
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
-                        <div className="flex bg-gray-100 dark:bg-gray-955 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("1:1")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            1:1
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("9:16")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            9:16
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("16:9")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            16:9
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-[10px]">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Upload Custom Photo</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setBannerLocalImageFile(file);
-                          }}
-                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
-                        />
-                        {bannerLocalImageFile && (
-                          <div className="mt-1 flex items-center justify-between">
-                            <button
-                              type="button"
-                              onClick={() => setBannerLocalImageFile(null)}
-                              className="text-[9px] text-red-500 font-bold hover:underline"
-                            >
-                              × Clear Custom Photo
-                            </button>
-                            <label className="flex items-center gap-1 cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={removeBg}
-                                onChange={(e) => setRemoveBg(e.target.checked)}
-                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
-                              />
-                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
-                            </label>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
-                        <select
-                          value={bannerPlatformStyle}
-                          onChange={(e) => setBannerPlatformStyle(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
-                        >
-                          <option value="pedestal">Perspective Pedestal</option>
-                          <option value="ring">Floating Neon Ring</option>
-                          <option value="shadow">Simple Shadow Base</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Slider Controls */}
-                    <div className="bg-gray-50 dark:bg-gray-955 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ZOOM:</span>
-                        <input
-                          type="range"
-                          min="0.2"
-                          max="2.5"
-                          step="0.02"
-                          value={bannerZoom}
-                          onChange={(e) => setBannerZoom(parseFloat(e.target.value))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerZoom.toFixed(2)}x</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE X:</span>
-                        <input
-                          type="range"
-                          min="-250"
-                          max="250"
-                          step="1"
-                          value={bannerOffsetX}
-                          onChange={(e) => setBannerOffsetX(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerOffsetX}px</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">MOVE Y:</span>
-                        <input
-                          type="range"
-                          min="-250"
-                          max="250"
-                          step="1"
-                          value={bannerOffsetY}
-                          onChange={(e) => setBannerOffsetY(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerOffsetY}px</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">ROTATE:</span>
-                        <input
-                          type="range"
-                          min="-180"
-                          max="180"
-                          step="1"
-                          value={bannerRotation}
-                          onChange={(e) => setBannerRotation(parseInt(e.target.value, 10))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{bannerRotation}°</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">PATTERN:</span>
-                        <input
-                          type="range"
-                          min="0.0"
-                          max="1.0"
-                          step="0.05"
-                          value={bannerBgPatternOpacity}
-                          onChange={(e) => setBannerBgPatternOpacity(parseFloat(e.target.value))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
-                        />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{Math.round(bannerBgPatternOpacity * 100)}%</span>
-                      </div>
-
-                      <div className="flex items-center justify-end pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBannerZoom(1.0);
-                            setBannerOffsetX(0);
-                            setBannerOffsetY(0);
-                            setBannerRotation(0);
-                          }}
-                          className="px-2 py-1 bg-gray-150 hover:bg-gray-250 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] rounded-md transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1"
-                        >
-                          🔄 Reset Photo Position
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Exporters Row */}
-                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (bannerCanvasRef.current) {
-                            await bannerCanvasRef.current.copyImageToClipboard();
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📋 Copy Image
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (bannerCanvasRef.current) {
-                            bannerCanvasRef.current.downloadPNG();
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📥 Download PNG
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (bannerCanvasRef.current) {
-                            const caption = bannerCanvasRef.current.getSocialCaption();
-                            navigator.clipboard.writeText(caption);
-                            toast.success("Promo caption copied to clipboard!");
-                          }
-                        }}
-                        className="px-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[10px] rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                      >
-                        📝 Copy Caption
-                      </button>
-                    </div>
-
-                    {/* Optional Cloud Integrations (Future) */}
-                    <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
-                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
-                        <span>☁️</span> Optional Cloud Integrations
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-                        >
-                          💬 Broadcast WhatsApp
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-                        >
-                          📢 Share on Facebook
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </div>
 

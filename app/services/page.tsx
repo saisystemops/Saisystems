@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { services, serviceCategories, getServicesByCategory } from "@/lib/data/services";
+import { serviceCategories, getServicesByCategory } from "@/lib/data/services";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {

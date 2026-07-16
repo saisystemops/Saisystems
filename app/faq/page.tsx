@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { faqs, faqCategories } from "@/lib/data/faqs";
+import { faqs } from "@/lib/data/faqs";
 import FAQAccordion from "@/components/home/FAQAccordion";
 
 export const metadata: Metadata = {

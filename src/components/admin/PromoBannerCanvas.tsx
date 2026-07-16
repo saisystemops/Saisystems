@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState } from "react";
+import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 
 export interface PromoBannerCanvasProps {
@@ -26,6 +26,16 @@ export interface PromoBannerCanvasProps {
   offsetY: number;
   rotation: number;
   localImageFile: File | null;
+  zoom2?: number;
+  offsetX2?: number;
+  offsetY2?: number;
+  rotation2?: number;
+  localImageFile2?: File | null;
+  zoom3?: number;
+  offsetX3?: number;
+  offsetY3?: number;
+  rotation3?: number;
+  localImageFile3?: File | null;
   brandName?: string;
   brandSubtext?: string;
   tagline?: string;
@@ -38,13 +48,17 @@ export interface PromoBannerCanvasProps {
   emiTenure?: number;
   customEmiText?: string;
   removeBg?: boolean;
+  removeBg2?: boolean;
+  removeBg3?: boolean;
+  imageMode?: "single" | "grid3";
+  activeImageTab?: number;
   layoutStyle?: "classic" | "hero-center" | "split-modern";
   bgPatternOpacity?: number;
   showLogo?: boolean;
   showQrCode?: boolean;
   showProductShadow?: boolean;
   fontFamily?: string;
-  onOffsetChange?: (x: number, y: number) => void;
+  onOffsetChange?: (x: number, y: number, index: number) => void;
   badgePosition?: "center" | "left" | "right";
 }
 
@@ -67,6 +81,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     const [processedImg, setProcessedImg] = useState<HTMLCanvasElement | HTMLImageElement | null>(null);
     const [imageLoading, setImageLoading] = useState(false);
     const [imageLoadError, setImageLoadError] = useState(false);
+
+    // Track loaded state of product image 2 & 3
+    const [productImg2, setProductImg2] = useState<HTMLImageElement | null>(null);
+    const [productImgSrc2, setProductImgSrc2] = useState<string | null>(null);
+    const [processedImg2, setProcessedImg2] = useState<HTMLCanvasElement | HTMLImageElement | null>(null);
+    const [imageLoading2, setImageLoading2] = useState(false);
+    const [imageLoadError2, setImageLoadError2] = useState(false);
+
+    const [productImg3, setProductImg3] = useState<HTMLImageElement | null>(null);
+    const [productImgSrc3, setProductImgSrc3] = useState<string | null>(null);
+    const [processedImg3, setProcessedImg3] = useState<HTMLCanvasElement | HTMLImageElement | null>(null);
+    const [imageLoading3, setImageLoading3] = useState(false);
+    const [imageLoadError3, setImageLoadError3] = useState(false);
+
     const [isTainted, setIsTainted] = useState(false);
     const [qrImg, setQrImg] = useState<HTMLImageElement | null>(null);
 
@@ -76,11 +104,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
 
     const handleMouseDown = (e: React.MouseEvent) => {
       isDraggingRef.current = true;
+      let startOffsetX = props.offsetX;
+      let startOffsetY = props.offsetY;
+      if (props.activeImageTab === 2) {
+        startOffsetX = props.offsetX2 || 0;
+        startOffsetY = props.offsetY2 || 0;
+      } else if (props.activeImageTab === 3) {
+        startOffsetX = props.offsetX3 || 0;
+        startOffsetY = props.offsetY3 || 0;
+      }
       dragStartRef.current = {
         x: e.clientX,
         y: e.clientY,
-        offsetX: props.offsetX,
-        offsetY: props.offsetY
+        offsetX: startOffsetX,
+        offsetY: startOffsetY
       };
     };
 
@@ -96,7 +133,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         }
         const nextX = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetX + dx * scale)));
         const nextY = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetY + dy * scale)));
-        props.onOffsetChange(nextX, nextY);
+        props.onOffsetChange(nextX, nextY, props.activeImageTab || 1);
       }
     };
 
@@ -107,11 +144,20 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
     const handleTouchStart = (e: React.TouchEvent) => {
       if (e.touches.length !== 1) return;
       isDraggingRef.current = true;
+      let startOffsetX = props.offsetX;
+      let startOffsetY = props.offsetY;
+      if (props.activeImageTab === 2) {
+        startOffsetX = props.offsetX2 || 0;
+        startOffsetY = props.offsetY2 || 0;
+      } else if (props.activeImageTab === 3) {
+        startOffsetX = props.offsetX3 || 0;
+        startOffsetY = props.offsetY3 || 0;
+      }
       dragStartRef.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
-        offsetX: props.offsetX,
-        offsetY: props.offsetY
+        offsetX: startOffsetX,
+        offsetY: startOffsetY
       };
     };
 
@@ -127,7 +173,7 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         }
         const nextX = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetX + dx * scale)));
         const nextY = Math.max(-300, Math.min(300, Math.round(dragStartRef.current.offsetY + dy * scale)));
-        props.onOffsetChange(nextX, nextY);
+        props.onOffsetChange(nextX, nextY, props.activeImageTab || 1);
       }
     };
 
@@ -135,80 +181,98 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       isDraggingRef.current = false;
     };
 
-    // Custom helper to remove white/light studio backgrounds dynamically using queue-based flood-fill
-    const removeImageBackground = (img: HTMLImageElement): HTMLCanvasElement => {
-      const tempCanvas = document.createElement("canvas");
-      const w = img.naturalWidth || img.width;
-      const h = img.naturalHeight || img.height;
-      tempCanvas.width = w;
-      tempCanvas.height = h;
-      
-      const tempCtx = tempCanvas.getContext("2d");
-      if (!tempCtx) return tempCanvas;
+    // AI-powered async background removal using @imgly/background-removal
+    const [removeBgProcessing, setRemoveBgProcessing] = useState(false);
+    const [removeBgProcessing2, setRemoveBgProcessing2] = useState(false);
+    const [removeBgProcessing3, setRemoveBgProcessing3] = useState(false);
 
-      tempCtx.drawImage(img, 0, 0);
+    const removeImageBackgroundAI = useCallback(async (
+      imgElement: HTMLImageElement,
+      onDone: (result: HTMLImageElement | HTMLCanvasElement) => void,
+      onFail: () => void,
+      setLoading: (v: boolean) => void
+    ) => {
+      setLoading(true);
       try {
-        const imgData = tempCtx.getImageData(0, 0, w, h);
-        const data = imgData.data;
-        
-        // Use flood-fill starting from the image borders to avoid stripping white/light colors inside the product itself
-        const visited = new Uint8Array(w * h);
-        const queue: number[] = [];
-        const threshold = 235;
+        // Dynamically import the library so it doesn't block initial load
+        const { removeBackground } = await import("@imgly/background-removal");
 
-        const pushPixel = (x: number, y: number) => {
-          const idx = y * w + x;
-          if (visited[idx]) return;
-          visited[idx] = 1;
-          const offset = idx * 4;
-          const r = data[offset];
-          const g = data[offset + 1];
-          const b = data[offset + 2];
-          if (r > threshold && g > threshold && b > threshold) {
-            queue.push(idx);
-          }
+        // Convert HTMLImageElement -> Blob
+        const srcCanvas = document.createElement("canvas");
+        srcCanvas.width = imgElement.naturalWidth || imgElement.width;
+        srcCanvas.height = imgElement.naturalHeight || imgElement.height;
+        const srcCtx = srcCanvas.getContext("2d");
+        if (!srcCtx) { onFail(); return; }
+        srcCtx.drawImage(imgElement, 0, 0);
+        const blob: Blob = await new Promise((res, rej) =>
+          srcCanvas.toBlob(b => b ? res(b) : rej(new Error("toBlob failed")), "image/png")
+        );
+
+        // Run the AI model
+        const resultBlob = await removeBackground(blob, {
+          output: { format: "image/png", quality: 0.85 },
+          // Silence verbose WASM logs in production
+          debug: false,
+        });
+
+        const resultUrl = URL.createObjectURL(resultBlob);
+        const resultImg = new Image();
+        resultImg.onload = () => {
+          URL.revokeObjectURL(resultUrl);
+          setLoading(false);
+          onDone(resultImg);
         };
-
-        // Push border pixels
-        for (let x = 0; x < w; x++) {
-          pushPixel(x, 0);
-          pushPixel(x, h - 1);
-        }
-        for (let y = 1; y < h - 1; y++) {
-          pushPixel(0, y);
-          pushPixel(w - 1, y);
-        }
-
-        // BFS traversal
-        let head = 0;
-        while (head < queue.length) {
-          const idx = queue[head++];
-          const x = idx % w;
-          const y = Math.floor(idx / w);
-
-          const offset = idx * 4;
-          const r = data[offset];
-          const g = data[offset + 1];
-          const b = data[offset + 2];
-          
-          // Apply soft feathering to edges based on proximity to pure white (255)
-          const avg = (r + g + b) / 3;
-          const alpha = Math.max(0, Math.min(255, (255 - avg) * (255 / (255 - threshold))));
-          data[offset + 3] = Math.round(alpha);
-
-          // Check 4-way neighbors
-          if (x > 0) pushPixel(x - 1, y);
-          if (x < w - 1) pushPixel(x + 1, y);
-          if (y > 0) pushPixel(x, y - 1);
-          if (y < h - 1) pushPixel(x, y + 1);
-        }
-
-        tempCtx.putImageData(imgData, 0, 0);
+        resultImg.onerror = () => {
+          URL.revokeObjectURL(resultUrl);
+          setLoading(false);
+          onFail();
+        };
+        resultImg.src = resultUrl;
       } catch (e) {
-        console.error("Failed to read image pixels (likely CORS limitation):", e);
+        console.error("AI background removal failed, falling back to original:", e);
+        setLoading(false);
+        onFail();
       }
-      return tempCanvas;
-    };
+    }, []);
+
+    const drawFooterBadges = (
+      ctx: CanvasRenderingContext2D,
+      startX: number,
+      startY: number,
+      dealTag: string,
+      accessory: string,
+      fontSize = 11,
+      height = 24
+    ) => {
+      if (!dealTag && !accessory) return;
+      
+      ctx.save();
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      
+      let currentX = startX;
+      
+      if (dealTag) {
+        const width = ctx.measureText(dealTag).width + 16;
+        ctx.fillStyle = "#dc2626";
+        drawRoundedRect(ctx, currentX, startY, width, height, 5);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.fillText(dealTag, currentX + width / 2, startY + height / 2 + 1);
+        currentX += width + 8;
+      }
+      
+      if (accessory) {
+        const width = ctx.measureText(accessory).width + 16;
+        ctx.fillStyle = "#059669";
+        drawRoundedRect(ctx, currentX, startY, width, height, 5);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.fillText(accessory, currentX + width / 2, startY + height / 2 + 1);
+      }
+      ctx.restore();
+    };;
 
     // Pre-load official logo-feather.png on mount
     useEffect(() => {
@@ -270,25 +334,144 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       };
     }, [props.product.imageUrl, props.localImageFile]);
 
-    // Process image background removal dynamically
+    // Process image 1 background removal using AI
     useEffect(() => {
-      if (!productImg) {
-        setProcessedImg(null);
-        return;
-      }
-
+      if (!productImg) { setProcessedImg(null); return; }
       if (props.removeBg) {
-        try {
-          const processed = removeImageBackground(productImg);
-          setProcessedImg(processed);
-        } catch (e) {
-          console.error("Failed to run background remover, fallback to raw image:", e);
-          setProcessedImg(productImg);
-        }
+        removeImageBackgroundAI(
+          productImg,
+          (result) => setProcessedImg(result),
+          () => setProcessedImg(productImg),
+          setRemoveBgProcessing
+        );
       } else {
         setProcessedImg(productImg);
       }
-    }, [productImg, props.removeBg]);
+    }, [productImg, props.removeBg, removeImageBackgroundAI]);
+
+    // Handle product photo 2 loading
+    useEffect(() => {
+      let srcUrl = "";
+      
+      if (props.localImageFile2) {
+        srcUrl = URL.createObjectURL(props.localImageFile2);
+      } else if ((props.product as any).imageUrl2) {
+        srcUrl = (props.product as any).imageUrl2;
+        if (srcUrl.startsWith("http") && !srcUrl.includes("/api/admin/proxy-image")) {
+          srcUrl = `/api/admin/proxy-image?url=${encodeURIComponent(srcUrl)}`;
+        }
+      }
+
+      if (!srcUrl) {
+        setProductImg2(null);
+        setProductImgSrc2(null);
+        setImageLoading2(false);
+        setImageLoadError2(false);
+        return;
+      }
+
+      setImageLoading2(true);
+      setImageLoadError2(false);
+      const img = new Image();
+      if (srcUrl.startsWith("http")) {
+        img.crossOrigin = "anonymous";
+      }
+      img.src = srcUrl;
+      img.onload = () => {
+        setProductImg2(img);
+        setProductImgSrc2(srcUrl);
+        setImageLoading2(false);
+      };
+      img.onerror = () => {
+        console.error("Failed to load product image 2:", srcUrl);
+        setProductImg2(null);
+        setImageLoading2(false);
+        setImageLoadError2(true);
+      };
+
+      return () => {
+        if (srcUrl && srcUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(srcUrl);
+        }
+      };
+    }, [(props.product as any).imageUrl2, props.localImageFile2]);
+
+    // Process image 2 background removal using AI
+    useEffect(() => {
+      if (!productImg2) { setProcessedImg2(null); return; }
+      if (props.removeBg2) {
+        removeImageBackgroundAI(
+          productImg2,
+          (result) => setProcessedImg2(result),
+          () => setProcessedImg2(productImg2),
+          setRemoveBgProcessing2
+        );
+      } else {
+        setProcessedImg2(productImg2);
+      }
+    }, [productImg2, props.removeBg2, removeImageBackgroundAI]);
+
+    // Handle product photo 3 loading
+    useEffect(() => {
+      let srcUrl = "";
+      
+      if (props.localImageFile3) {
+        srcUrl = URL.createObjectURL(props.localImageFile3);
+      } else if ((props.product as any).imageUrl3) {
+        srcUrl = (props.product as any).imageUrl3;
+        if (srcUrl.startsWith("http") && !srcUrl.includes("/api/admin/proxy-image")) {
+          srcUrl = `/api/admin/proxy-image?url=${encodeURIComponent(srcUrl)}`;
+        }
+      }
+
+      if (!srcUrl) {
+        setProductImg3(null);
+        setProductImgSrc3(null);
+        setImageLoading3(false);
+        setImageLoadError3(false);
+        return;
+      }
+
+      setImageLoading3(true);
+      setImageLoadError3(false);
+      const img = new Image();
+      if (srcUrl.startsWith("http")) {
+        img.crossOrigin = "anonymous";
+      }
+      img.src = srcUrl;
+      img.onload = () => {
+        setProductImg3(img);
+        setProductImgSrc3(srcUrl);
+        setImageLoading3(false);
+      };
+      img.onerror = () => {
+        console.error("Failed to load product image 3:", srcUrl);
+        setProductImg3(null);
+        setImageLoading3(false);
+        setImageLoadError3(true);
+      };
+
+      return () => {
+        if (srcUrl && srcUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(srcUrl);
+        }
+      };
+    }, [(props.product as any).imageUrl3, props.localImageFile3]);
+
+    // Process image 3 background removal using AI
+    useEffect(() => {
+      if (!productImg3) { setProcessedImg3(null); return; }
+      if (props.removeBg3) {
+        removeImageBackgroundAI(
+          productImg3,
+          (result) => setProcessedImg3(result),
+          () => setProcessedImg3(productImg3),
+          setRemoveBgProcessing3
+        );
+      } else {
+        setProcessedImg3(productImg3);
+      }
+    }, [productImg3, props.removeBg3, removeImageBackgroundAI]);
 
     // Pre-load QR Code for WhatsApp direct link
     useEffect(() => {
@@ -332,6 +515,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.offsetX,
       props.offsetY,
       props.rotation,
+      props.zoom2,
+      props.offsetX2,
+      props.offsetY2,
+      props.rotation2,
+      props.zoom3,
+      props.offsetX3,
+      props.offsetY3,
+      props.rotation3,
       props.brandName,
       props.brandSubtext,
       props.tagline,
@@ -344,7 +535,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       logoLoaded,
       productImg,
       processedImg,
+      productImg2,
+      processedImg2,
+      productImg3,
+      processedImg3,
       props.removeBg,
+      props.removeBg2,
+      props.removeBg3,
+      props.imageMode,
       qrImg,
       props.layoutStyle,
       props.bgPatternOpacity,
@@ -381,6 +579,14 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.offsetX,
       props.offsetY,
       props.rotation,
+      props.zoom2,
+      props.offsetX2,
+      props.offsetY2,
+      props.rotation2,
+      props.zoom3,
+      props.offsetX3,
+      props.offsetY3,
+      props.rotation3,
       props.brandName,
       props.brandSubtext,
       props.tagline,
@@ -392,6 +598,12 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
       props.showEmi,
       logoLoaded,
       productImg,
+      productImg2,
+      productImg3,
+      props.removeBg,
+      props.removeBg2,
+      props.removeBg3,
+      props.imageMode,
       qrImg,
       props.layoutStyle,
       props.bgPatternOpacity,
@@ -510,6 +722,106 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           return `rgba(${standardAccents[normalized]}, ${alpha})`;
         }
         return defaultColor;
+      };
+
+      const drawPlatformItem = (cx: number, cy: number, pW: number, pH: number) => {
+        if (props.platformStyle === "pedestal") {
+          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + pH * 0.8, pW * 0.9, pH * 0.9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = Math.max(1.5, pW * 0.007);
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + pH * 0.6, pW * 0.8, pH * 0.8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + pH * 0.6, pW * 0.7, pH * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (props.platformStyle === "ring") {
+          ctx.strokeStyle = activeAccent;
+          ctx.lineWidth = Math.max(2, pW * 0.01);
+          ctx.save();
+          ctx.shadowColor = activeAccent;
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + pH * 0.7, pW * 0.75, pH * 0.5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + pH * 0.85, pW * 0.6, pH * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      };
+
+      const drawImageGridItem = (
+        img: HTMLCanvasElement | HTMLImageElement | null,
+        cx: number,
+        cy: number,
+        maxW: number,
+        zoom: number,
+        offX: number,
+        offY: number,
+        rot: number,
+        showShadow: boolean,
+        placeholderText: string
+      ) => {
+        if (img) {
+          ctx.save();
+          const pWidth = img.width || (img as HTMLCanvasElement).width;
+          const pHeight = img.height || (img as HTMLCanvasElement).height;
+          const baseScale = maxW / pWidth;
+          const finalScale = baseScale * zoom;
+          const drawW = pWidth * finalScale;
+          const drawH = pHeight * finalScale;
+
+          if (showShadow) {
+            ctx.save();
+            const shadowRadius = Math.max(60, Math.min(drawW, drawH) * 0.75);
+            const shadowGrad = ctx.createRadialGradient(
+              cx + offX, cy + offY, 5,
+              cx + offX, cy + offY, shadowRadius
+            );
+            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.3)");
+            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.15)");
+            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.arc(cx + offX, cy + offY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.translate(cx + offX, cy + offY);
+          ctx.rotate((rot * Math.PI) / 180);
+          ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        } else {
+          // Draw dashed placeholder card
+          ctx.save();
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 6]);
+          drawRoundedRect(ctx, cx - maxW / 2, cy - maxW / 3, maxW, (maxW * 2) / 3, 12);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          ctx.fillStyle = "rgba(148, 163, 184, 0.08)";
+          drawRoundedRect(ctx, cx - maxW / 2, cy - maxW / 3, maxW, (maxW * 2) / 3, 12);
+          ctx.fill();
+          
+          ctx.fillStyle = props.cardStyle === "dark" ? "#94a3b8" : "#64748b";
+          ctx.font = "bold 12px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(placeholderText, cx, cy);
+          ctx.restore();
+        }
       };
 
       const bgGradients: Record<string, string[]> = {
@@ -914,169 +1226,161 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         ctx.textAlign = "left";
 
         // Pedestal & Showcase coordinates (Responsive Layout Styles)
+        if (props.imageMode === "grid3") {
+          // Image 1 (Top)
+          const cx1 = showX;
+          const cy1 = showY - 140;
+          const pW1 = pedestalW * 0.65;
+          const pH1 = pedestalH * 0.65;
+          drawPlatformItem(cx1, cy1, pW1, pH1);
+          drawImageGridItem(
+            processedImg,
+            cx1,
+            cy1,
+            pW1 * 0.95,
+            props.zoom,
+            props.offsetX,
+            props.offsetY,
+            props.rotation,
+            props.showProductShadow !== false,
+            "Image 1 (Top)"
+          );
 
-        if (props.platformStyle === "pedestal") {
-          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (props.platformStyle === "ring") {
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 6;
-          ctx.save();
-          ctx.shadowColor = activeAccent;
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
+          // Image 2 (Left)
+          const cx2 = showX - pedestalW * 0.28;
+          const cy2 = showY + 120;
+          const pW2 = pedestalW * 0.5;
+          const pH2 = pedestalH * 0.5;
+          drawPlatformItem(cx2, cy2, pW2, pH2);
+          drawImageGridItem(
+            processedImg2,
+            cx2,
+            cy2,
+            pW2 * 0.95,
+            props.zoom2 || 1.0,
+            props.offsetX2 || 0,
+            props.offsetY2 || 0,
+            props.rotation2 || 0,
+            props.showProductShadow !== false,
+            "Image 2 (Left)"
+          );
+
+          // Image 3 (Right)
+          const cx3 = showX + pedestalW * 0.28;
+          const cy3 = showY + 120;
+          const pW3 = pedestalW * 0.5;
+          const pH3 = pedestalH * 0.5;
+          drawPlatformItem(cx3, cy3, pW3, pH3);
+          drawImageGridItem(
+            processedImg3,
+            cx3,
+            cy3,
+            pW3 * 0.95,
+            props.zoom3 || 1.0,
+            props.offsetX3 || 0,
+            props.offsetY3 || 0,
+            props.rotation3 || 0,
+            props.showProductShadow !== false,
+            "Image 3 (Right)"
+          );
         } else {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (props.product.category === "desktops") {
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(showX - 40, showY + 60);
-          ctx.lineTo(showX - 25, showY);
-          ctx.lineTo(showX + 25, showY);
-          ctx.lineTo(showX + 40, showY + 60);
-          ctx.fill();
-          ctx.stroke();
-        }
-
-        if (processedImg) {
-          ctx.save();
-          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
-          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
-          const baseScale = (pedestalW * 0.95) / pWidth;
-          const finalScale = baseScale * props.zoom;
-          const drawW = pWidth * finalScale;
-          const drawH = pHeight * finalScale;
-
-          // Draw soft radial backdrop shadow
-          if (props.showProductShadow !== false) {
-            ctx.save();
-            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
-            const shadowGrad = ctx.createRadialGradient(
-              showX + props.offsetX, showY + props.offsetY, 10,
-              showX + props.offsetX, showY + props.offsetY, shadowRadius
-            );
-            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
-            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
-            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
-            ctx.fillStyle = shadowGrad;
+          if (props.platformStyle === "pedestal") {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
             ctx.beginPath();
-            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (props.platformStyle === "ring") {
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 6;
+            ctx.save();
+            ctx.shadowColor = activeAccent;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
             ctx.restore();
+          } else {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
           }
 
-          ctx.translate(showX + props.offsetX, showY + props.offsetY);
-          ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
-          ctx.restore();
-        } else {
-          ctx.save();
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 4;
-          drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = "#f1f5f9";
-          ctx.fillRect(showX - 148, showY - 128, 296, 174);
-          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
-          ctx.font = "bold 20px Arial";
-          ctx.fillText(`${brandName} ${brandSubtext}`, showX - 70, showY - 30);
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(showX - 200, showY + 70, 400, 15);
-          ctx.restore();
+          if (props.product.category === "desktops") {
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(showX - 40, showY + 60);
+            ctx.lineTo(showX - 25, showY);
+            ctx.lineTo(showX + 25, showY);
+            ctx.lineTo(showX + 40, showY + 60);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          if (processedImg) {
+            ctx.save();
+            const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+            const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
+            const baseScale = (pedestalW * 0.95) / pWidth;
+            const finalScale = baseScale * props.zoom;
+            const drawW = pWidth * finalScale;
+            const drawH = pHeight * finalScale;
+
+            // Draw soft radial backdrop shadow
+            if (props.showProductShadow !== false) {
+              ctx.save();
+              const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+              const shadowGrad = ctx.createRadialGradient(
+                showX + props.offsetX, showY + props.offsetY, 10,
+                showX + props.offsetX, showY + props.offsetY, shadowRadius
+              );
+              shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+              shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+              shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+              ctx.fillStyle = shadowGrad;
+              ctx.beginPath();
+              ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+
+            ctx.translate(showX + props.offsetX, showY + props.offsetY);
+            ctx.rotate((props.rotation * Math.PI) / 180);
+            ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 4;
+            drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#f1f5f9";
+            ctx.fillRect(showX - 148, showY - 128, 296, 174);
+            ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText(`${brandName} ${brandSubtext}`, showX - 70, showY - 30);
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(showX - 200, showY + 70, 400, 15);
+            ctx.restore();
+          }
         }
 
-        // Static badges with position selector (not affected by image panning/zoom)
-        const badgeY = 310;
-        const bPos = props.badgePosition || "center";
-        if (dealTag && accessory) {
-          let startX = W / 2 - 355 / 2;
-          if (bPos === "left") startX = 60;
-          else if (bPos === "right") startX = W - 60 - 355;
-          
-          // Deal Tag
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 150, 36, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 12px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 75, badgeY + 22);
-          ctx.restore();
-
-          // Accessory Tag
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX + 165, badgeY, 190, 36, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 12px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 165 + 95, badgeY + 22);
-          ctx.restore();
-        } else if (dealTag) {
-          let startX = W / 2 - 150 / 2;
-          if (bPos === "left") startX = 60;
-          else if (bPos === "right") startX = W - 60 - 150;
-          
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 150, 36, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 12px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 75, badgeY + 22);
-          ctx.restore();
-        } else if (accessory) {
-          let startX = W / 2 - 190 / 2;
-          if (bPos === "left") startX = 60;
-          else if (bPos === "right") startX = W - 60 - 190;
-          
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 190, 36, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 12px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 95, badgeY + 22);
-          ctx.restore();
-        }
-
+        // Relocated Deal Tag & Accessories badges to footer pricing area
         // Specs List (Wide cards centered or grid, Y starts at 750)
         const specStartY = isGridSpecs ? 960 : 800;
         const specCardW = isGridSpecs ? 470 : 980;
@@ -1241,6 +1545,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.font = "bold 14px Arial, sans-serif";
           ctx.fillText(emiLabel, priceX, originalVal ? priceY + 132 : priceY + 95);
         }
+
+        drawFooterBadges(ctx, priceX, originalVal ? priceY + 155 : priceY + 118, dealTag, accessory, 11, 24);
 
         // Contact Box
         const contactX = W - 510;
@@ -1496,151 +1802,153 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         });
 
         // Pedestal & Showcase coordinates (Responsive Layout Styles)
+        if (props.imageMode === "grid3") {
+          // Image 1 (Top)
+          const cx1 = showX;
+          const cy1 = showY - 80;
+          const pW1 = pedestalW * 0.6;
+          const pH1 = pedestalH * 0.6;
+          drawPlatformItem(cx1, cy1, pW1, pH1);
+          drawImageGridItem(
+            processedImg,
+            cx1,
+            cy1,
+            pW1 * 0.9,
+            props.zoom,
+            props.offsetX,
+            props.offsetY,
+            props.rotation,
+            props.showProductShadow !== false,
+            "Image 1 (Top)"
+          );
 
-        if (props.platformStyle === "pedestal") {
-          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 60, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 45, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        } else if (props.platformStyle === "ring") {
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 55, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
-          ctx.stroke();
+          // Image 2 (Left)
+          const cx2 = showX - pedestalW * 0.28;
+          const cy2 = showY + 60;
+          const pW2 = pedestalW * 0.45;
+          const pH2 = pedestalH * 0.45;
+          drawPlatformItem(cx2, cy2, pW2, pH2);
+          drawImageGridItem(
+            processedImg2,
+            cx2,
+            cy2,
+            pW2 * 0.9,
+            props.zoom2 || 1.0,
+            props.offsetX2 || 0,
+            props.offsetY2 || 0,
+            props.rotation2 || 0,
+            props.showProductShadow !== false,
+            "Image 2 (Left)"
+          );
+
+          // Image 3 (Right)
+          const cx3 = showX + pedestalW * 0.28;
+          const cy3 = showY + 60;
+          const pW3 = pedestalW * 0.45;
+          const pH3 = pedestalH * 0.45;
+          drawPlatformItem(cx3, cy3, pW3, pH3);
+          drawImageGridItem(
+            processedImg3,
+            cx3,
+            cy3,
+            pW3 * 0.9,
+            props.zoom3 || 1.0,
+            props.offsetX3 || 0,
+            props.offsetY3 || 0,
+            props.rotation3 || 0,
+            props.showProductShadow !== false,
+            "Image 3 (Right)"
+          );
         } else {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 65, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (props.product.category === "desktops") {
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(showX - 25, showY + 45);
-          ctx.lineTo(showX - 15, showY);
-          ctx.lineTo(showX + 15, showY);
-          ctx.lineTo(showX + 25, showY + 45);
-          ctx.fill();
-          ctx.stroke();
-        }
-
-        if (processedImg) {
-          ctx.save();
-          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
-          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
-          const baseScale = (pedestalW * 0.85) / pWidth;
-          const finalScale = baseScale * props.zoom;
-          const drawW = pWidth * finalScale;
-          const drawH = pHeight * finalScale;
-
-          // Draw soft radial backdrop shadow
-          if (props.showProductShadow !== false) {
-            ctx.save();
-            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
-            const shadowGrad = ctx.createRadialGradient(
-              showX + props.offsetX, showY + props.offsetY, 10,
-              showX + props.offsetX, showY + props.offsetY, shadowRadius
-            );
-            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
-            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
-            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
-            ctx.fillStyle = shadowGrad;
+          if (props.platformStyle === "pedestal") {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
             ctx.beginPath();
-            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.ellipse(showX, showY + 60, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 45, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else if (props.platformStyle === "ring") {
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 55, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 65, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
           }
 
-          ctx.translate(showX + props.offsetX, showY + props.offsetY);
-          ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
-          ctx.restore();
-        } else {
-          ctx.save();
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 3;
-          drawRoundedRect(ctx, showX - 110, showY - 100, 220, 140, 8);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = "#f1f5f9";
-          ctx.fillRect(showX - 102, showY - 92, 204, 116);
-          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
-          ctx.font = "bold 14px Arial";
-          ctx.fillText("SAI SYSTEMS", showX - 50, showY - 25);
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(showX - 130, showY + 40, 260, 10);
-          ctx.restore();
+          if (props.product.category === "desktops") {
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(showX - 25, showY + 45);
+            ctx.lineTo(showX - 15, showY);
+            ctx.lineTo(showX + 15, showY);
+            ctx.lineTo(showX + 25, showY + 45);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          if (processedImg) {
+            ctx.save();
+            const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+            const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
+            const baseScale = (pedestalW * 0.85) / pWidth;
+            const finalScale = baseScale * props.zoom;
+            const drawW = pWidth * finalScale;
+            const drawH = pHeight * finalScale;
+
+            // Draw soft radial backdrop shadow
+            if (props.showProductShadow !== false) {
+              ctx.save();
+              const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+              const shadowGrad = ctx.createRadialGradient(
+                showX + props.offsetX, showY + props.offsetY, 10,
+                showX + props.offsetX, showY + props.offsetY, shadowRadius
+              );
+              shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+              shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+              shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+              ctx.fillStyle = shadowGrad;
+              ctx.beginPath();
+              ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+
+            ctx.translate(showX + props.offsetX, showY + props.offsetY);
+            ctx.rotate((props.rotation * Math.PI) / 180);
+            ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 3;
+            drawRoundedRect(ctx, showX - 110, showY - 100, 220, 140, 8);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#f1f5f9";
+            ctx.fillRect(showX - 102, showY - 92, 204, 116);
+            ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+            ctx.font = "bold 14px Arial";
+            ctx.fillText("SAI SYSTEMS", showX - 50, showY - 25);
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(showX - 130, showY + 40, 260, 10);
+            ctx.restore();
+          }
         }
 
-        // Static badges with position selector above product showcase
-        const badgeY = showY - 120;
-        const bPos = props.badgePosition || "center";
-        if (dealTag && accessory) {
-          let startX = showX - 300 / 2;
-          if (bPos === "left") startX = showX - 230;
-          else if (bPos === "right") startX = showX + 230 - 300;
-          
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          drawRoundedRect(ctx, startX, badgeY, 130, 32, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 11px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 65, badgeY + 20);
-          ctx.restore();
-
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          drawRoundedRect(ctx, startX + 140, badgeY, 160, 32, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 11px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 140 + 80, badgeY + 20);
-          ctx.restore();
-        } else if (dealTag) {
-          let startX = showX - 130 / 2;
-          if (bPos === "left") startX = showX - 230;
-          else if (bPos === "right") startX = showX + 230 - 130;
-          
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          drawRoundedRect(ctx, startX, badgeY, 130, 32, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 11px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 65, badgeY + 20);
-          ctx.restore();
-        } else if (accessory) {
-          let startX = showX - 160 / 2;
-          if (bPos === "left") startX = showX - 230;
-          else if (bPos === "right") startX = showX + 230 - 160;
-          
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          drawRoundedRect(ctx, startX, badgeY, 160, 32, 8);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 11px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 80, badgeY + 20);
-          ctx.restore();
-        }
-
+        // Relocated Deal Tag & Accessories badges to footer pricing area
         // Trust Policies (Stacked vertically on the Right)
         const trustX = 920;
         const trustStartY = 130;
@@ -1701,6 +2009,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.font = "bold 11px Arial, sans-serif";
           ctx.fillText(emiLabel, priceX, originalVal ? priceY + 68 : priceY + 32);
         }
+
+        drawFooterBadges(ctx, priceX, originalVal ? priceY + 86 : priceY + 50, dealTag, accessory, 9.5, 20);
 
         // Bottom contact rows (drawn horizontally next to price)
         const contactRowY = footerY + 75;
@@ -1936,167 +2246,161 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
         });
 
         // Pedestal & Showcase coordinates (Responsive Layout Styles)
+        if (props.imageMode === "grid3") {
+          // Image 1 (Top)
+          const cx1 = showX;
+          const cy1 = showY - 110;
+          const pW1 = pedestalW * 0.62;
+          const pH1 = pedestalH * 0.62;
+          drawPlatformItem(cx1, cy1, pW1, pH1);
+          drawImageGridItem(
+            processedImg,
+            cx1,
+            cy1,
+            pW1 * 0.92,
+            props.zoom,
+            props.offsetX,
+            props.offsetY,
+            props.rotation,
+            props.showProductShadow !== false,
+            "Image 1 (Top)"
+          );
 
-        if (props.platformStyle === "pedestal") {
-          ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (props.platformStyle === "ring") {
-          ctx.strokeStyle = activeAccent;
-          ctx.lineWidth = 6;
-          ctx.save();
-          ctx.shadowColor = activeAccent;
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
+          // Image 2 (Left)
+          const cx2 = showX - pedestalW * 0.28;
+          const cy2 = showY + 90;
+          const pW2 = pedestalW * 0.48;
+          const pH2 = pedestalH * 0.48;
+          drawPlatformItem(cx2, cy2, pW2, pH2);
+          drawImageGridItem(
+            processedImg2,
+            cx2,
+            cy2,
+            pW2 * 0.92,
+            props.zoom2 || 1.0,
+            props.offsetX2 || 0,
+            props.offsetY2 || 0,
+            props.rotation2 || 0,
+            props.showProductShadow !== false,
+            "Image 2 (Left)"
+          );
+
+          // Image 3 (Right)
+          const cx3 = showX + pedestalW * 0.28;
+          const cy3 = showY + 90;
+          const pW3 = pedestalW * 0.48;
+          const pH3 = pedestalH * 0.48;
+          drawPlatformItem(cx3, cy3, pW3, pH3);
+          drawImageGridItem(
+            processedImg3,
+            cx3,
+            cy3,
+            pW3 * 0.92,
+            props.zoom3 || 1.0,
+            props.offsetX3 || 0,
+            props.offsetY3 || 0,
+            props.rotation3 || 0,
+            props.showProductShadow !== false,
+            "Image 3 (Right)"
+          );
         } else {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
-          ctx.beginPath();
-          ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (props.product.category === "desktops") {
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(showX - 40, showY + 60);
-          ctx.lineTo(showX - 25, showY);
-          ctx.lineTo(showX + 25, showY);
-          ctx.lineTo(showX + 40, showY + 60);
-          ctx.fill();
-          ctx.stroke();
-        }
-
-        if (processedImg) {
-          ctx.save();
-          const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
-          const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
-          const baseScale = (pedestalW * 0.9) / pWidth;
-          const finalScale = baseScale * props.zoom;
-          const drawW = pWidth * finalScale;
-          const drawH = pHeight * finalScale;
-
-          // Draw soft radial backdrop shadow
-          if (props.showProductShadow !== false) {
-            ctx.save();
-            const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
-            const shadowGrad = ctx.createRadialGradient(
-              showX + props.offsetX, showY + props.offsetY, 10,
-              showX + props.offsetX, showY + props.offsetY, shadowRadius
-            );
-            shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
-            shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
-            shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
-            ctx.fillStyle = shadowGrad;
+          if (props.platformStyle === "pedestal") {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.1)";
             ctx.beginPath();
-            ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.ellipse(showX, showY + 80, pedestalW * 0.9, pedestalH * 0.9, 0, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 60, pedestalW * 0.8, pedestalH * 0.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = getRgbaColor(activeAccent, 0.13);
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 60, pedestalW * 0.7, pedestalH * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (props.platformStyle === "ring") {
+            ctx.strokeStyle = activeAccent;
+            ctx.lineWidth = 6;
+            ctx.save();
+            ctx.shadowColor = activeAccent;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 70, pedestalW * 0.75, pedestalH * 0.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
             ctx.restore();
+          } else {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+            ctx.beginPath();
+            ctx.ellipse(showX, showY + 85, pedestalW * 0.6, pedestalH * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
           }
 
-          ctx.translate(showX + props.offsetX, showY + props.offsetY);
-          ctx.rotate((props.rotation * Math.PI) / 180);
-          ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
-          ctx.restore();
-        } else {
-          ctx.save();
-          ctx.fillStyle = "#334155";
-          ctx.strokeStyle = "#475569";
-          ctx.lineWidth = 4;
-          drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = "#f1f5f9";
-          ctx.fillRect(showX - 148, showY - 128, 296, 174);
-          ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
-          ctx.font = "bold 20px Arial";
-          ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(showX - 200, showY + 70, 400, 15);
-          ctx.restore();
+          if (props.product.category === "desktops") {
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(showX - 40, showY + 60);
+            ctx.lineTo(showX - 25, showY);
+            ctx.lineTo(showX + 25, showY);
+            ctx.lineTo(showX + 40, showY + 60);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          if (processedImg) {
+            ctx.save();
+            const pWidth = processedImg.width || (processedImg as HTMLCanvasElement).width;
+            const pHeight = processedImg.height || (processedImg as HTMLCanvasElement).height;
+            const baseScale = (pedestalW * 0.9) / pWidth;
+            const finalScale = baseScale * props.zoom;
+            const drawW = pWidth * finalScale;
+            const drawH = pHeight * finalScale;
+
+            // Draw soft radial backdrop shadow
+            if (props.showProductShadow !== false) {
+              ctx.save();
+              const shadowRadius = Math.max(120, Math.min(drawW, drawH) * 0.75);
+              const shadowGrad = ctx.createRadialGradient(
+                showX + props.offsetX, showY + props.offsetY, 10,
+                showX + props.offsetX, showY + props.offsetY, shadowRadius
+              );
+              shadowGrad.addColorStop(0, "rgba(15, 23, 42, 0.35)");
+              shadowGrad.addColorStop(0.35, "rgba(15, 23, 42, 0.2)");
+              shadowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
+              ctx.fillStyle = shadowGrad;
+              ctx.beginPath();
+              ctx.arc(showX + props.offsetX, showY + props.offsetY, shadowRadius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+
+            ctx.translate(showX + props.offsetX, showY + props.offsetY);
+            ctx.rotate((props.rotation * Math.PI) / 180);
+            ctx.drawImage(processedImg, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.fillStyle = "#334155";
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 4;
+            drawRoundedRect(ctx, showX - 160, showY - 140, 320, 210, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#f1f5f9";
+            ctx.fillRect(showX - 148, showY - 128, 296, 174);
+            ctx.fillStyle = "rgba(148, 163, 184, 0.2)";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("SAI SYSTEMS", showX - 70, showY - 30);
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(showX - 200, showY + 70, 400, 15);
+            ctx.restore();
+          }
         }
 
-        // Static badges with position selector above product showcase
-        const badgeY = showY - 160;
-        const bPos = props.badgePosition || "center";
-        if (dealTag && accessory) {
-          let startX = showX - 395 / 2;
-          if (bPos === "left") startX = showX - 280;
-          else if (bPos === "right") startX = showX + 280 - 395;
-          
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 170, 42, 10);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 85, badgeY + 26);
-          ctx.restore();
-
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX + 185, badgeY, 210, 42, 10);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 185 + 105, badgeY + 26);
-          ctx.restore();
-        } else if (dealTag) {
-          let startX = showX - 170 / 2;
-          if (bPos === "left") startX = showX - 280;
-          else if (bPos === "right") startX = showX + 280 - 170;
-          
-          ctx.save();
-          ctx.fillStyle = "#dc2626";
-          ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 170, 42, 10);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(dealTag, startX + 85, badgeY + 26);
-          ctx.restore();
-        } else if (accessory) {
-          let startX = showX - 210 / 2;
-          if (bPos === "left") startX = showX - 280;
-          else if (bPos === "right") startX = showX + 280 - 210;
-          
-          ctx.save();
-          ctx.fillStyle = "#059669";
-          ctx.shadowColor = "rgba(5, 150, 105, 0.4)";
-          ctx.shadowBlur = 10;
-          drawRoundedRect(ctx, startX, badgeY, 210, 42, 10);
-          ctx.fill();
-          ctx.fillStyle = "white";
-          ctx.font = "bold 13px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(accessory, startX + 105, badgeY + 26);
-          ctx.restore();
-        }
-
+        // Static badges with position // Relocated Deal Tag & Accessories badges to footer pricing area
         // Trust policies bar (Only shown in non-hero layouts to avoid horizontal card overlapping)
         if (!isHorizontalSpecs) {
           const trustY = footerY - 95;
@@ -2158,6 +2462,8 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
           ctx.font = "bold 14px Arial, sans-serif";
           ctx.fillText(emiLabel, priceX, originalVal ? priceY + 110 : priceY + 73);
         }
+
+        drawFooterBadges(ctx, priceX, originalVal ? priceY + 132 : priceY + 95, dealTag, accessory, 11, 24);
 
         // Contact Box
         const contactX = W - 510;
@@ -2436,6 +2742,17 @@ const PromoBannerCanvas = forwardRef<PromoBannerCanvasHandle, PromoBannerCanvasP
             <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-white text-xs">
               <span className="animate-spin text-lg">⏳</span>
               <span>Fetching remote product photo...</span>
+            </div>
+          )}
+          {removeBgProcessing && !imageLoading && (
+            <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center gap-2.5 text-white text-xs">
+              <div className="flex gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+              <span className="font-semibold text-orange-300">AI Removing Background...</span>
+              <span className="text-[10px] text-slate-400">This takes 5–15 sec on first use</span>
             </div>
           )}
         </div>

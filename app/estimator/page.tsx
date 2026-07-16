@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Wrench, Cpu, AlertTriangle, ArrowRight, HelpCircle, Check, ShieldCheck, Zap, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { services } from "@/lib/data/services";
 import { brands } from "@/lib/data/brands";
 
 interface Estimate {
