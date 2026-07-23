@@ -35,27 +35,11 @@ const PRESETS: Record<string, {
   platformStyle: "pedestal" | "ring" | "shadow";
 }> = {
   eco_green: { name: "🟢 Refurb Eco Green", themeColor: "green", bgPattern: "circuit", accentColor: "green", cardStyle: "glass", platformStyle: "pedestal" },
-  midnight_blue: { name: "🔵 Midnight Grid Blue", themeColor: "blue", bgPattern: "grid", accentColor: "cyan", cardStyle: "dark", platformStyle: "ring" },
-  luxury_gold: { name: "🟡 Luxury Black Gold", themeColor: "gold", bgPattern: "fiber", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
-  slate_corp: { name: "⚪ Corporate Slate", themeColor: "slate", bgPattern: "circuit", accentColor: "orange", cardStyle: "light", platformStyle: "shadow" },
+  midnight_blue: { name: "🔵 Midnight Tech Blue", themeColor: "blue", bgPattern: "grid", accentColor: "cyan", cardStyle: "dark", platformStyle: "ring" },
+  luxury_gold: { name: "🟡 Luxury Black & Gold", themeColor: "gold", bgPattern: "fiber", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
   hot_red: { name: "🔴 Hot Deal Crimson", themeColor: "burgundy", bgPattern: "grid", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
-  cyberpunk: { name: "🟣 Cyberpunk Neon", themeColor: "neon", bgPattern: "grid", accentColor: "purple", cardStyle: "glass", platformStyle: "ring" },
-  sunset: { name: "🌅 Sunset Glow", themeColor: "sunset", bgPattern: "circuit", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
-  ocean: { name: "🌊 Ocean Breeze", themeColor: "ocean", bgPattern: "fiber", accentColor: "cyan", cardStyle: "glass", platformStyle: "shadow" },
-  electric_purple: { name: "⚡ Electric Violet", themeColor: "royal", bgPattern: "grid", accentColor: "purple", cardStyle: "dark", platformStyle: "ring" },
-  rose_gold: { name: "🌸 Rose Gold Elite", themeColor: "rose", bgPattern: "circuit", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
-  silver_frost: { name: "❄️ Nordic Silver Frost", themeColor: "frost", bgPattern: "circuit", accentColor: "cyan", cardStyle: "light", platformStyle: "shadow" },
-  carbon_dark: { name: "⚫ Carbon Tech Slate", themeColor: "dark", bgPattern: "grid", accentColor: "gold", cardStyle: "dark", platformStyle: "shadow" },
-  volcano: { name: "🌋 Volcanic Orange", themeColor: "sunset", bgPattern: "grid", accentColor: "orange", cardStyle: "dark", platformStyle: "pedestal" },
-  moss: { name: "🌲 Deep Forest Moss", themeColor: "green", bgPattern: "fiber", accentColor: "green", cardStyle: "glass", platformStyle: "pedestal" },
-  matrix: { name: "📟 Matrix Code Terminal", themeColor: "matrix", bgPattern: "grid", accentColor: "green", cardStyle: "dark", platformStyle: "ring" },
-  light_minimal: { name: "🔲 Ultra-Minimal Light", themeColor: "minimal", bgPattern: "grid", accentColor: "orange", cardStyle: "light", platformStyle: "shadow" },
-  royal_gold: { name: "👑 Royal Purple & Gold", themeColor: "royal", bgPattern: "circuit", accentColor: "gold", cardStyle: "dark", platformStyle: "pedestal" },
-  burgundy: { name: "🍷 Vintage Burgundy", themeColor: "burgundy", bgPattern: "fiber", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
-  mint_fresh: { name: "🍃 Mint Freshness", themeColor: "mint", bgPattern: "circuit", accentColor: "green", cardStyle: "light", platformStyle: "shadow" },
-  gold_rush: { name: "🪙 Gold Rush Treasure", themeColor: "goldrush", bgPattern: "grid", accentColor: "gold", cardStyle: "glass", platformStyle: "pedestal" },
-  classic_teal: { name: "💎 Classic Teal Ocean", themeColor: "teal", bgPattern: "circuit", accentColor: "cyan", cardStyle: "glass", platformStyle: "ring" },
-  glass_cyber: { name: "🔮 Holographic Cyber", themeColor: "neon", bgPattern: "circuit", accentColor: "cyan", cardStyle: "glass", platformStyle: "ring" }
+  cyberpunk: { name: "🟣 Cyber Neon Violet", themeColor: "neon", bgPattern: "grid", accentColor: "purple", cardStyle: "glass", platformStyle: "ring" },
+  light_minimal: { name: "⚪ Clean Studio Light", themeColor: "minimal", bgPattern: "grid", accentColor: "orange", cardStyle: "light", platformStyle: "shadow" }
 };
 
 type DBStatus = {
@@ -548,7 +532,7 @@ export default function AdminPage() {
     inStock: true,
     whatsappLink: "",
     dealTag: "Limited Offer",
-    includedAccessory: "Laptop Bag & Charger"
+    includedAccessory: "Laptop Bag, Charger, Wired Mouse & Power Adapter"
   });
   const [bannerRatio, setBannerRatio] = useState<"1:1" | "9:16" | "16:9">("1:1");
   const [bannerLayoutStyle, setBannerLayoutStyle] = useState<"classic" | "hero-center" | "split-modern">("classic");
@@ -582,13 +566,25 @@ export default function AdminPage() {
   const [bannerBadgePosition, setBannerBadgePosition] = useState<"center" | "left" | "right">("center");
 
   const getAccentHex = (name: string): string => {
-    switch (name) {
+    if (!name) return "#f97316";
+    if (name.startsWith("#")) return name;
+    switch (name.toLowerCase()) {
       case "orange": return "#f97316";
-      case "emerald": return "#10b981";
+      case "emerald":
+      case "green": return "#10b981";
       case "blue": return "#3b82f6";
+      case "cyan": return "#06b6d4";
       case "indigo": return "#6366f1";
       case "rose": return "#f43f5e";
-      default: return name.startsWith("#") ? name : "#f97316";
+      case "gold":
+      case "yellow": return "#eab308";
+      case "purple":
+      case "violet": return "#a855f7";
+      case "red": return "#ef4444";
+      case "teal": return "#14b8a6";
+      case "pink": return "#ec4899";
+      case "slate": return "#64748b";
+      default: return "#f97316";
     }
   };
   const [bannerLocalImageFile, setBannerLocalImageFile] = useState<File | null>(null);
@@ -2471,204 +2467,271 @@ export default function AdminPage() {
                                 </button>
                               </div>
                             </div>
-
                           </div>
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )
-          }
+            )}
 
-          {activeSection === "banners" && (
-            /* ── SECTION: Standalone Promo Banner Studio ─────────────────────── */
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                
-                {/* Left Column: Input Panel */}
-                                {/* Left Column: Visual Controls & Configuration */}
-                <div className="space-y-6">
-                  {/* Visual Style Combinators Card */}
-                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 rounded-3xl p-5 sm:p-6 space-y-4">
-                    <div className="space-y-3.5 border-t border-gray-200 dark:border-slate-800 pt-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {activeSection === "banners" && (
+              /* ── SECTION: Standalone Promo Banner Studio ─────────────────────── */
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  
+                  {/* Left Column: Visual Controls & Configuration */}
+                  <div className="space-y-6">
+                    
+                    {/* Card 1: Visual Studio Controls (Compact 40%) */}
+                    <div className="bg-slate-900 border border-slate-800 text-slate-100 shadow-2xl rounded-3xl p-4 sm:p-5 space-y-3.5">
+                    
+                    {/* Header Title */}
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                       <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Preset Theme (20+)</label>
-                        <select
-                          onChange={(e) => applyPreset(e.target.value, "banner")}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          {Object.entries(PRESETS).map(([key, config]) => (
-                            <option key={key} value={key}>
-                              {config.name}
-                            </option>
-                          ))}
-                        </select>
+                        <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <span>🎨</span> Visual Studio Controls
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-medium">Theme presets, colors, aspect ratios &amp; layout options</p>
                       </div>
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Layout Style</label>
-                        <select
-                          value={bannerLayoutStyle}
-                          onChange={(e) => setBannerLayoutStyle(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="classic">Classic Banner</option>
-                          <option value="hero-center">Hero Center Product</option>
-                          <option value="split-modern">Modern 50/50 Split</option>
-                        </select>
-                      </div>
+                      <span className="px-2.5 py-1 bg-orange-500/20 border border-orange-500/30 text-orange-400 text-[9px] font-black rounded-full uppercase tracking-wider">
+                        Studio 2.0
+                      </span>
+                    </div>
 
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Typography Font</label>
-                        <select
-                          value={bannerFontFamily}
-                          onChange={(e) => setBannerFontFamily(e.target.value)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="Arial">Arial (System)</option>
-                          <option value="Outfit">Outfit (Sleek)</option>
-                          <option value="Inter">Inter (Premium)</option>
-                          <option value="Montserrat">Montserrat (Display)</option>
-                          <option value="Playfair Display">Playfair (Serif)</option>
-                        </select>
-                      </div>
+                    <div className="space-y-3">
+                      {/* Theme & Layout Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Preset Theme</label>
+                          <select
+                            onChange={(e) => applyPreset(e.target.value, "banner")}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
+                          >
+                            {Object.entries(PRESETS).map(([key, config]) => (
+                              <option key={key} value={key} className="bg-slate-900 text-white font-bold py-1.5">
+                                {config.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Brand Accent Color</label>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="color"
-                            value={getAccentHex(bannerAccentColor)}
-                            onChange={(e) => setBannerAccentColor(e.target.value)}
-                            className="w-7 h-7 rounded border border-gray-300 dark:border-white/10 p-0 cursor-pointer bg-transparent shrink-0"
-                            title="Choose color"
-                          />
-                          <input
-                            type="text"
-                            value={bannerAccentColor}
-                            onChange={(e) => setBannerAccentColor(e.target.value)}
-                            placeholder="#f97316"
-                            className="w-full min-w-0 bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none font-mono"
-                          />
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Layout Style</label>
+                          <select
+                            value={bannerLayoutStyle}
+                            onChange={(e) => setBannerLayoutStyle(e.target.value as any)}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
+                          >
+                            <option value="classic" className="bg-slate-900 text-white font-bold py-1.5">Classic Banner</option>
+                            <option value="hero-center" className="bg-slate-900 text-white font-bold py-1.5">Hero Center Product</option>
+                            <option value="split-modern" className="bg-slate-900 text-white font-bold py-1.5">Modern 50/50 Split</option>
+                          </select>
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Badge Position</label>
-                        <select
-                          value={bannerBadgePosition}
-                          onChange={(e) => setBannerBadgePosition(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="center">Center</option>
-                          <option value="left">Left Corner</option>
-                          <option value="right">Right Corner</option>
-                        </select>
+                      {/* Typography & Accent Color Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Typography Font</label>
+                          <select
+                            value={bannerFontFamily}
+                            onChange={(e) => setBannerFontFamily(e.target.value)}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
+                          >
+                            <option value="Arial" className="bg-slate-900 text-white font-bold py-1.5">Arial (System)</option>
+                            <option value="Outfit" className="bg-slate-900 text-white font-bold py-1.5">Outfit (Sleek)</option>
+                            <option value="Inter" className="bg-slate-900 text-white font-bold py-1.5">Inter (Premium)</option>
+                            <option value="Montserrat" className="bg-slate-900 text-white font-bold py-1.5">Montserrat (Display)</option>
+                            <option value="Playfair Display" className="bg-slate-900 text-white font-bold py-1.5">Playfair (Serif)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Brand Accent Color</label>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="color"
+                              value={getAccentHex(bannerAccentColor)}
+                              onChange={(e) => setBannerAccentColor(e.target.value)}
+                              className="w-7 h-7 rounded-lg border border-slate-700 p-0 cursor-pointer bg-transparent shrink-0"
+                              title="Choose accent color"
+                            />
+                            <input
+                              type="text"
+                              value={bannerAccentColor}
+                              onChange={(e) => setBannerAccentColor(e.target.value)}
+                              placeholder="#f97316"
+                              className="w-full min-w-0 bg-slate-800 border border-slate-700 p-1.5 rounded-xl text-xs text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                            {[
+                              { name: "orange", hex: "#f97316" },
+                              { name: "cyan", hex: "#06b6d4" },
+                              { name: "gold", hex: "#eab308" },
+                              { name: "green", hex: "#10b981" },
+                              { name: "purple", hex: "#a855f7" },
+                              { name: "rose", hex: "#f43f5e" },
+                              { name: "blue", hex: "#3b82f6" },
+                            ].map((c) => (
+                              <button
+                                key={c.name}
+                                type="button"
+                                onClick={() => setBannerAccentColor(c.name)}
+                                className={`w-3.5 h-3.5 rounded-full border-2 transition-all cursor-pointer ${
+                                  bannerAccentColor === c.name || bannerAccentColor === c.hex
+                                    ? "ring-2 ring-orange-400 scale-125 border-white shadow-md"
+                                    : "border-slate-700 opacity-80 hover:opacity-100 hover:scale-110"
+                                }`}
+                                style={{ backgroundColor: c.hex }}
+                                title={`Set accent to ${c.name}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="col-span-2 grid grid-cols-3 gap-2 pt-1.5">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+                      {/* Badge Position & Aspect Ratio Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Badge Position</label>
+                          <select
+                            value={bannerBadgePosition}
+                            onChange={(e) => setBannerBadgePosition(e.target.value as any)}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
+                          >
+                            <option value="center" className="bg-slate-900 text-white font-bold py-1.5">Center</option>
+                            <option value="left" className="bg-slate-900 text-white font-bold py-1.5">Left Corner</option>
+                            <option value="right" className="bg-slate-900 text-white font-bold py-1.5">Right Corner</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Aspect Ratio</label>
+                          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => setBannerRatio("1:1")}
+                              className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all cursor-pointer ${
+                                bannerRatio === "1:1" ? "bg-orange-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-slate-800"
+                              }`}
+                            >
+                              1:1
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBannerRatio("9:16")}
+                              className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all cursor-pointer ${
+                                bannerRatio === "9:16" ? "bg-orange-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-slate-800"
+                              }`}
+                            >
+                              9:16
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBannerRatio("16:9")}
+                              className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all cursor-pointer ${
+                                bannerRatio === "16:9" ? "bg-orange-500 text-white shadow-md" : "text-slate-300 hover:text-white hover:bg-slate-800"
+                              }`}
+                            >
+                              16:9
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Display Toggles */}
+                      <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-800">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white bg-slate-800 p-2 rounded-xl border border-slate-700 hover:border-orange-500/50 transition-all shadow-sm">
                           <input
                             type="checkbox"
                             checked={bannerShowLogo}
                             onChange={(e) => setBannerShowLogo(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                            className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
                           />
-                          Show Logo
+                          <span className="text-white font-bold text-[11px]">Show Logo</span>
                         </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white bg-slate-800 p-2 rounded-xl border border-slate-700 hover:border-orange-500/50 transition-all shadow-sm">
                           <input
                             type="checkbox"
                             checked={bannerShowQrCode}
                             onChange={(e) => setBannerShowQrCode(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                            className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
                           />
-                          Show QR Code
+                          <span className="text-white font-bold text-[11px]">Show QR Code</span>
                         </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[9px] font-bold text-gray-650 dark:text-gray-400">
+
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white bg-slate-800 p-2 rounded-xl border border-slate-700 hover:border-orange-500/50 transition-all shadow-sm">
                           <input
                             type="checkbox"
                             checked={bannerShowProductShadow}
                             onChange={(e) => setBannerShowProductShadow(e.target.checked)}
-                            className="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer"
+                            className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
                           />
-                          Backdrop Shadow
+                          <span className="text-white font-bold text-[11px]">Backdrop Shadow</span>
                         </label>
                       </div>
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Aspect Ratio</label>
-                        <div className="flex bg-gray-100 dark:bg-gray-955 p-0.5 rounded-md border border-gray-200 dark:border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("1:1")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "1:1" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+
+                      {/* Image Layout Mode & Photo Upload */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2.5 border-t border-slate-800">
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Image Layout Mode</label>
+                          <select
+                            value={bannerImageMode}
+                            onChange={(e) => setBannerImageMode(e.target.value as any)}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
                           >
-                            1:1
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("9:16")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "9:16" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
+                            <option value="single" className="bg-slate-900 text-white font-bold py-1.5">Single Product Image</option>
+                            <option value="grid3" className="bg-slate-900 text-white font-bold py-1.5">3-Image Showcase Grid</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1">Platform Pedestal</label>
+                          <select
+                            value={bannerPlatformStyle}
+                            onChange={(e) => setBannerPlatformStyle(e.target.value as any)}
+                            className="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-sm"
                           >
-                            9:16
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBannerRatio("16:9")}
-                            className={`flex-1 text-[9px] font-bold py-1 rounded ${bannerRatio === "16:9" ? "bg-orange-500 text-white" : "text-gray-500 hover:text-white"}`}
-                          >
-                            16:9
-                          </button>
+                            <option value="pedestal" className="bg-slate-900 text-white font-bold py-1.5">Perspective Pedestal</option>
+                            <option value="ring" className="bg-slate-900 text-white font-bold py-1.5">Floating Neon Ring</option>
+                            <option value="shadow" className="bg-slate-900 text-white font-bold py-1.5">Simple Shadow Base</option>
+                          </select>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-[10px]">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Image Layout Mode</label>
-                        <select
-                          value={bannerImageMode}
-                          onChange={(e) => setBannerImageMode(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-955 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="single">Single Product Image</option>
-                          <option value="grid3">3-Image Showcase Grid</option>
-                        </select>
-                      </div>
-                    </div>
+                      {bannerImageMode === "grid3" && (
+                        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveImageTab(1)}
+                            className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all ${activeImageTab === 1 ? "bg-orange-500 text-white shadow-md" : "text-slate-400 hover:text-white bg-slate-900"}`}
+                          >
+                            Image 1 (Top)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveImageTab(2)}
+                            className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all ${activeImageTab === 2 ? "bg-orange-500 text-white shadow-md" : "text-slate-400 hover:text-white bg-slate-900"}`}
+                          >
+                            Image 2 (Left)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveImageTab(3)}
+                            className={`flex-1 text-xs font-black py-1.5 rounded-lg transition-all ${activeImageTab === 3 ? "bg-orange-500 text-white shadow-md" : "text-slate-400 hover:text-white bg-slate-900"}`}
+                          >
+                            Image 3 (Right)
+                          </button>
+                        </div>
+                      )}
 
-                    {bannerImageMode === "grid3" && (
-                      <div className="flex bg-slate-900/60 p-1 rounded-lg border border-slate-800 gap-1 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setActiveImageTab(1)}
-                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 1 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
-                        >
-                          Image 1 (Top)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveImageTab(2)}
-                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 2 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
-                        >
-                          Image 2 (Left)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveImageTab(3)}
-                          className={`flex-1 text-[10px] font-black py-1.5 rounded-md transition-all ${activeImageTab === 3 ? "bg-orange-500 text-white shadow-md" : "text-gray-400 hover:text-white bg-slate-955/20"}`}
-                        >
-                          Image 3 (Right)
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 text-[10px] mt-1">
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">
+                      <div className="bg-slate-800 border border-slate-700 p-3 rounded-2xl">
+                        <label className="block text-[10px] font-black text-slate-300 uppercase tracking-wide mb-1.5">
                           {bannerImageMode === "grid3"
                             ? `Upload Photo ${activeImageTab} (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})`
                             : "Upload Custom Photo"
@@ -2689,10 +2752,10 @@ export default function AdminPage() {
                               }
                             }
                           }}
-                          className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20"
+                          className="w-full text-xs text-slate-200 font-medium file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-black file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer"
                         />
                         {((bannerImageMode === "grid3" && activeImageTab === 1) || bannerImageMode !== "grid3" ? bannerLocalImageFile : activeImageTab === 2 ? bannerLocalImageFile2 : bannerLocalImageFile3) && (
-                          <div className="mt-1 flex items-center justify-between">
+                          <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-slate-700">
                             <button
                               type="button"
                               onClick={() => {
@@ -2704,11 +2767,11 @@ export default function AdminPage() {
                                   setBannerLocalImageFile(null);
                                 }
                               }}
-                              className="text-[9px] text-red-500 font-bold hover:underline"
+                              className="text-xs text-rose-400 font-bold hover:underline cursor-pointer"
                             >
                               × Clear Custom Photo
                             </button>
-                            <label className="flex items-center gap-1 cursor-pointer select-none">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
                               <input
                                 type="checkbox"
                                 checked={
@@ -2729,34 +2792,45 @@ export default function AdminPage() {
                                     setRemoveBg(e.target.checked);
                                   }
                                 }}
-                                className="w-3 h-3 text-orange-500 rounded border-gray-300 dark:border-white/10 focus:ring-orange-500"
+                                className="w-4 h-4 text-orange-500 rounded border-slate-600 focus:ring-orange-500 cursor-pointer"
                               />
-                              <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase">Remove Bg</span>
+                              <span className="text-xs font-black text-white uppercase">Remove Bg (AI)</span>
                             </label>
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
 
-                      <div>
-                        <label className="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Platform Pedestal</label>
-                        <select
-                          value={bannerPlatformStyle}
-                          onChange={(e) => setBannerPlatformStyle(e.target.value as any)}
-                          className="w-full bg-gray-55 dark:bg-gray-950 border border-gray-300 dark:border-white/10 p-1.5 rounded-md text-[10px] text-gray-800 dark:text-white focus:outline-none"
-                        >
-                          <option value="pedestal">Perspective Pedestal</option>
-                          <option value="ring">Floating Neon Ring</option>
-                          <option value="shadow">Simple Shadow Base</option>
-                        </select>
+                  {/* Card 2: Precision Photo Adjustments (Dedicated Card 60%) */}
+                  <div className="bg-slate-900 border border-slate-800 text-slate-100 shadow-2xl rounded-3xl p-4 sm:p-5 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <div className="text-xs font-black text-orange-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <span>🎛️</span> Precision Photo Adjustments
                       </div>
+                      <span className="text-slate-400 font-mono text-[9px] uppercase tracking-wider">Interactive 60fps</span>
                     </div>
 
-                    {/* Slider Controls */}
-                    <div className="bg-gray-50 dark:bg-gray-955 border border-gray-200 dark:border-slate-800 p-3 rounded-xl space-y-2">
+                    <div className="bg-slate-950 border border-slate-800/80 p-3.5 rounded-2xl space-y-3 shadow-inner">
+                      {/* ZOOM */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
-                          {bannerImageMode === "grid3" ? `ZOOM (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "ZOOM:"}
+                        <span className="text-[10px] text-slate-300 w-16 font-extrabold shrink-0 uppercase">
+                          {bannerImageMode === "grid3" ? `Zoom (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})` : "Zoom"}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = -0.05;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerZoom((z) => Math.max(0.2, +(z + step).toFixed(2)));
+                              else if (activeImageTab === 2) setBannerZoom2((z) => Math.max(0.2, +(z + step).toFixed(2)));
+                              else if (activeImageTab === 3) setBannerZoom3((z) => Math.max(0.2, +(z + step).toFixed(2)));
+                            } else setBannerZoom((z) => Math.max(0.2, +(z + step).toFixed(2)));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="range"
                           min="0.2"
@@ -2781,22 +2855,53 @@ export default function AdminPage() {
                               setBannerZoom(val);
                             }
                           }}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                          className="flex-1 accent-orange-500 h-1.5 rounded-lg cursor-pointer"
                         />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = 0.05;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerZoom((z) => Math.min(2.5, +(z + step).toFixed(2)));
+                              else if (activeImageTab === 2) setBannerZoom2((z) => Math.min(2.5, +(z + step).toFixed(2)));
+                              else if (activeImageTab === 3) setBannerZoom3((z) => Math.min(2.5, +(z + step).toFixed(2)));
+                            } else setBannerZoom((z) => Math.min(2.5, +(z + step).toFixed(2)));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs font-mono text-orange-400 font-black w-12 text-right">
+                          {(bannerImageMode === "grid3"
                             ? activeImageTab === 1
                               ? bannerZoom
                               : activeImageTab === 2
                               ? bannerZoom2
                               : bannerZoom3
                             : bannerZoom
-                          ).toFixed(2)}x</span>
+                          ).toFixed(2)}x
+                        </span>
                       </div>
 
+                      {/* MOVE X */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
-                          {bannerImageMode === "grid3" ? `MOVE X (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "MOVE X:"}
+                        <span className="text-[10px] text-slate-300 w-16 font-extrabold shrink-0 uppercase">
+                          {bannerImageMode === "grid3" ? `Move X (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})` : "Move X"}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = -5;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetX((x) => Math.max(-250, x + step));
+                              else if (activeImageTab === 2) setBannerOffsetX2((x) => Math.max(-250, x + step));
+                              else if (activeImageTab === 3) setBannerOffsetX3((x) => Math.max(-250, x + step));
+                            } else setBannerOffsetX((x) => Math.max(-250, x + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="range"
                           min="-250"
@@ -2821,22 +2926,53 @@ export default function AdminPage() {
                               setBannerOffsetX(val);
                             }
                           }}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                          className="flex-1 accent-orange-500 h-1.5 rounded-lg cursor-pointer"
                         />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = 5;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetX((x) => Math.min(250, x + step));
+                              else if (activeImageTab === 2) setBannerOffsetX2((x) => Math.min(250, x + step));
+                              else if (activeImageTab === 3) setBannerOffsetX3((x) => Math.min(250, x + step));
+                            } else setBannerOffsetX((x) => Math.min(250, x + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs font-mono text-orange-400 font-black w-12 text-right">
+                          {(bannerImageMode === "grid3"
                             ? activeImageTab === 1
                               ? bannerOffsetX
                               : activeImageTab === 2
                               ? bannerOffsetX2
                               : bannerOffsetX3
                             : bannerOffsetX
-                          )}px</span>
+                          )}px
+                        </span>
                       </div>
 
+                      {/* MOVE Y */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
-                          {bannerImageMode === "grid3" ? `MOVE Y (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "MOVE Y:"}
+                        <span className="text-[10px] text-slate-300 w-16 font-extrabold shrink-0 uppercase">
+                          {bannerImageMode === "grid3" ? `Move Y (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})` : "Move Y"}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = -5;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetY((y) => Math.max(-250, y + step));
+                              else if (activeImageTab === 2) setBannerOffsetY2((y) => Math.max(-250, y + step));
+                              else if (activeImageTab === 3) setBannerOffsetY3((y) => Math.max(-250, y + step));
+                            } else setBannerOffsetY((y) => Math.max(-250, y + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="range"
                           min="-250"
@@ -2861,26 +2997,57 @@ export default function AdminPage() {
                               setBannerOffsetY(val);
                             }
                           }}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                          className="flex-1 accent-orange-500 h-1.5 rounded-lg cursor-pointer"
                         />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = 5;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerOffsetY((y) => Math.min(250, y + step));
+                              else if (activeImageTab === 2) setBannerOffsetY2((y) => Math.min(250, y + step));
+                              else if (activeImageTab === 3) setBannerOffsetY3((y) => Math.min(250, y + step));
+                            } else setBannerOffsetY((y) => Math.min(250, y + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs font-mono text-orange-400 font-black w-12 text-right">
+                          {(bannerImageMode === "grid3"
                             ? activeImageTab === 1
                               ? bannerOffsetY
                               : activeImageTab === 2
                               ? bannerOffsetY2
                               : bannerOffsetY3
                             : bannerOffsetY
-                          )}px</span>
+                          )}px
+                        </span>
                       </div>
 
+                      {/* ROTATE */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">
-                          {bannerImageMode === "grid3" ? `ROTATE (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"}):` : "ROTATE:"}
+                        <span className="text-[10px] text-slate-300 w-16 font-extrabold shrink-0 uppercase">
+                          {bannerImageMode === "grid3" ? `Rotate (${activeImageTab === 1 ? "Top" : activeImageTab === 2 ? "Left" : "Right"})` : "Rotate"}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = -1;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerRotation((r) => Math.max(-45, r + step));
+                              else if (activeImageTab === 2) setBannerRotation2((r) => Math.max(-45, r + step));
+                              else if (activeImageTab === 3) setBannerRotation3((r) => Math.max(-45, r + step));
+                            } else setBannerRotation((r) => Math.max(-45, r + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="range"
-                          min="-180"
-                          max="180"
+                          min="-45"
+                          max="45"
                           step="1"
                           value={
                             bannerImageMode === "grid3"
@@ -2901,20 +3068,44 @@ export default function AdminPage() {
                               setBannerRotation(val);
                             }
                           }}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                          className="flex-1 accent-orange-500 h-1.5 rounded-lg cursor-pointer"
                         />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{(bannerImageMode === "grid3"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const step = 1;
+                            if (bannerImageMode === "grid3") {
+                              if (activeImageTab === 1) setBannerRotation((r) => Math.min(45, r + step));
+                              else if (activeImageTab === 2) setBannerRotation2((r) => Math.min(45, r + step));
+                              else if (activeImageTab === 3) setBannerRotation3((r) => Math.min(45, r + step));
+                            } else setBannerRotation((r) => Math.min(45, r + step));
+                          }}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs font-mono text-orange-400 font-black w-12 text-right">
+                          {(bannerImageMode === "grid3"
                             ? activeImageTab === 1
                               ? bannerRotation
                               : activeImageTab === 2
                               ? bannerRotation2
                               : bannerRotation3
                             : bannerRotation
-                          )}°</span>
+                          )}°
+                        </span>
                       </div>
 
+                      {/* PATTERN OPACITY */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-400 w-12 font-bold shrink-0">PATTERN:</span>
+                        <span className="text-[10px] text-slate-300 w-16 font-extrabold shrink-0 uppercase">Pattern</span>
+                        <button
+                          type="button"
+                          onClick={() => setBannerBgPatternOpacity((p) => Math.max(0, +(p - 0.1).toFixed(2)))}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="range"
                           min="0.0"
@@ -2922,12 +3113,22 @@ export default function AdminPage() {
                           step="0.05"
                           value={bannerBgPatternOpacity}
                           onChange={(e) => setBannerBgPatternOpacity(parseFloat(e.target.value))}
-                          className="flex-1 accent-orange-500 h-1 rounded-lg cursor-pointer"
+                          className="flex-1 accent-orange-500 h-1.5 rounded-lg cursor-pointer"
                         />
-                        <span className="text-[9px] font-mono text-gray-400 w-8 text-right">{Math.round(bannerBgPatternOpacity * 100)}%</span>
+                        <button
+                          type="button"
+                          onClick={() => setBannerBgPatternOpacity((p) => Math.min(1, +(p + 0.1).toFixed(2)))}
+                          className="w-6 h-6 bg-slate-800 border border-slate-700 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-black text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs font-mono text-orange-400 font-black w-12 text-right">
+                          {Math.round(bannerBgPatternOpacity * 100)}%
+                        </span>
                       </div>
 
-                      <div className="flex items-center justify-end pt-1">
+                      {/* RESET BUTTON */}
+                      <div className="flex items-center justify-end pt-2 border-t border-slate-800">
                         <button
                           type="button"
                           onClick={() => {
@@ -2955,7 +3156,7 @@ export default function AdminPage() {
                               setBannerRotation(0);
                             }
                           }}
-                          className="px-2 py-1 bg-gray-150 hover:bg-gray-250 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-bold text-[9px] rounded-md transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1"
+                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-extrabold text-xs rounded-xl transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1.5 shadow-sm"
                         >
                           🔄 Reset Photo Position
                         </button>
@@ -2963,7 +3164,7 @@ export default function AdminPage() {
                     </div>
 
                     {/* Exporters Row */}
-                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-gray-200 dark:border-slate-800">
+                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800">
                       <button
                         type="button"
                         onClick={async () => {
@@ -3003,29 +3204,28 @@ export default function AdminPage() {
                       </button>
                     </div>
 
-                    {/* Optional Cloud Integrations (Future) */}
-                    <div className="bg-gray-55/60 dark:bg-slate-950/20 border border-gray-200/60 dark:border-slate-800/80 p-3 rounded-2xl space-y-2">
-                      <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                    {/* Optional Cloud Integrations */}
+                    <div className="bg-slate-950 border border-slate-800/80 p-3 rounded-2xl space-y-2">
+                      <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
                         <span>☁️</span> Optional Cloud Integrations
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={() => toast.loading("WhatsApp Broadcast API is optional. Configure credentials in environment variables to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                          className="px-2 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
                         >
                           💬 Broadcast WhatsApp
                         </button>
                         <button
                           type="button"
                           onClick={() => toast.loading("Meta Page Auto-Post API is optional. Configure Graph Access Tokens to activate.", { duration: 3000 })}
-                          className="px-2 py-1.5 bg-gray-100 hover:bg-gray-150 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                          className="px-2 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 font-bold text-[9px] rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
                         >
                           📢 Share on Facebook
                         </button>
                       </div>
                     </div>
-                  </div>
                   </div>
 
                   {/* Flyer Configuration & AI Autofill Card */}
@@ -3356,41 +3556,11 @@ export default function AdminPage() {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Original Price (₹)</label>
-                      <input
-                        type="text"
-                        value={bannerProduct.originalPrice || ""}
-                        onChange={(e) => setBannerProduct({ ...bannerProduct, originalPrice: e.target.value })}
-                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Offer Price (₹)</label>
-                      <input
-                        type="text"
-                        value={bannerProduct.price}
-                        onChange={(e) => setBannerProduct({ ...bannerProduct, price: e.target.value })}
-                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Deal Tag (e.g. Save 70%)</label>
-                      <input
-                        type="text"
-                        value={bannerProduct.dealTag || ""}
-                        onChange={(e) => setBannerProduct({ ...bannerProduct, dealTag: e.target.value })}
-                        className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
-                      />
-                    </div>
-                  </div>
-
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Included Accessories (Optional)</label>
+                    <label className="block text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-1">Included Accessories (Featured on Banner)</label>
                     <input
                       type="text"
-                      placeholder="e.g. Laptop Bag & Charger"
+                      placeholder="e.g. Laptop Bag, Charger, Wired Mouse, Power Adapter"
                       value={bannerProduct.includedAccessory || ""}
                       onChange={(e) => setBannerProduct({ ...bannerProduct, includedAccessory: e.target.value })}
                       className="w-full bg-gray-55 dark:bg-white/5 border border-gray-300 dark:border-white/10 px-3 py-2.5 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none focus:border-orange-500/50"
